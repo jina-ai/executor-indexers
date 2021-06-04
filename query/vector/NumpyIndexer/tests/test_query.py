@@ -1,7 +1,7 @@
 import numpy as np
 
 from jina import Document, DocumentArray
-from jina.hub.indexers.vector.NumpyIndexer import NumpyIndexer
+from indexers.query.vector.NumpyIndexer import NumpyIndexer
 
 
 def test_query_vector(tmpdir):
