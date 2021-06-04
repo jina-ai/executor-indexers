@@ -1,4 +1,4 @@
-test_dirs = `find . -name "tests*" -type d`
+test_dirs=`find . -name "tests*" -type d`
 
 EXIT_CODE=0
 
