@@ -11,6 +11,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    packages=['dbms', 'dump', 'query'],
+    package_dir={'jinahub.indexers': ''},
+    packages=['jinahub.indexers'],
     python_requires=">=3.7",
 )
