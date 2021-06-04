@@ -1,4 +1,5 @@
 import setuptools
+from setuptools import find_packages
 
 setuptools.setup(
     name="jina-hub-indexers",
@@ -12,6 +13,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     package_dir={'jinahub.indexers': ''},
-    packages=['jinahub.indexers'],
+    packages=find_packages(),
     python_requires=">=3.7",
 )
