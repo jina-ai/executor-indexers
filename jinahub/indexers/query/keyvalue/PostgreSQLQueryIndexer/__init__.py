@@ -2,16 +2,16 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 from typing import Tuple, Generator, Dict
+
 import numpy as np
-from jina.logging.logger import JinaLogger
-from jina_commons.indexers.dump import export_dump_streaming
-
-from .postgreshandler import PostgreSQLDBMSHandler
 from jina import Executor, requests, DocumentArray
+from jina.logging.logger import JinaLogger
+
+from jinahub.indexers.dbms.PostgreSQLIndexer import PostgreSQLDBMSHandler
 
 
-class PostgreSQLDBMSIndexer(Executor):
-    """:class:`PostgreSQLDBMSIndexer` PostgreSQL based DBMS Indexer.
+class PostgreSQLQueryIndexer(Executor):
+    """:class:`PostgreSQLDBMSIndexer` PostgreSQL based BDMS Indexer.
     Initialize the PostgreSQLDBIndexer.
 
     :param hostname: hostname of the machine
@@ -35,7 +35,6 @@ class PostgreSQLDBMSIndexer(Executor):
         *args,
         **kwargs,
     ):
-        from .postgreshandler import PostgreSQLDBMSHandler
 
         super().__init__(*args, **kwargs)
         self.hostname = hostname
@@ -44,7 +43,7 @@ class PostgreSQLDBMSIndexer(Executor):
         self.password = password
         self.database = database
         self.table = table
-        self.logger = JinaLogger('PostgreSQLDBMSIndexer')
+        self.logger = JinaLogger('PostgreSQLQueryIndexer')
         self.handler = PostgreSQLDBMSHandler(
             hostname=self.hostname,
             port=self.port,
@@ -53,6 +52,8 @@ class PostgreSQLDBMSIndexer(Executor):
             database=self.database,
             table=self.table,
         )
+        # we traverse the matches and retrieve their data
+        self.default_traversal = 'm'
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
@@ -79,59 +80,26 @@ class PostgreSQLDBMSIndexer(Executor):
         """Get the handler to PostgreSQLDBMS."""
         return self.handler
 
-    def get_add_handler(self) -> 'PostgreSQLDBMSHandler':
+    def get_query_handler(self) -> 'PostgreSQLDBMSHandler':
         """Get the handler to PostgresSQLDBMS."""
         return self.handler
 
-    def get_create_handler(self) -> 'PostgreSQLDBMSHandler':
-        """Get the handler to PostgresSQLDBMS."""
-        return self.handler
+    def __exit__(self, *args):
+        """ Make sure the connection to the database is closed."""
 
-    @requests(on='/index')
-    def add(self, docs: DocumentArray, **kwargs):
-        """Add a Document to PostgreSQLDBMS.
+        from psycopg2 import Error
 
-        :param docs: list of Documents
-        """
+        try:
+            self.connection.close()
+            self.cursor.close()
+            self.logger.info('PostgreSQL connection is closed')
+        except (Exception, Error) as error:
+            self.logger.error('Error while closing: ', error)
 
-        with self.handler as postgres_handler:
-            postgres_handler.add(docs)
-
-    @requests(on='/update')
-    def update(self, docs: DocumentArray, **kwargs):
-        """Updated document from the database.
-
-        :param docs: list of Documents
-        """
-
-        with self.handler as postgres_handler:
-            postgres_handler.update(docs)
-
-    @requests(on='/delete')
-    def delete(self, docs: DocumentArray, **kwargs):
-        """Delete document from the database.
-
-        :param docs: list of Documents
-        """
-
-        with self.handler as postgres_handler:
-            postgres_handler.delete(docs)
-
-    @requests(on='/dump')
-    def dump(self, parameters: Dict, **kwargs):
-        """Dump the index
-
-        :param parameters: a dictionary containing the parameters for the dump
-        """
-
-        path = parameters.get('dump_path')
-        if path is None:
-            self.logger.error(f'No "dump_path" provided for {self}')
-
-        shards = int(parameters.get('shards'))
-        if shards is None:
-            self.logger.error(f'No "shards" provided for {self}')
-
-        export_dump_streaming(
-            path, shards=shards, size=self.size, data=self._get_generator()
+    @requests(on='/query')
+    def query(self, docs: DocumentArray, parameters: Dict, **kwargs):
+        docs_to_lookup = parameters.get('traversal_path') or docs.traverse_flat(
+            self.default_traversal
         )
+        with self.handler as postgres_handler:
+            postgres_handler.query(docs_to_lookup)

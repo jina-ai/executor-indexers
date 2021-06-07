@@ -171,3 +171,17 @@ class PostgreSQLDBMSHandler:
             self.logger.info('PostgreSQL connection is closed')
         except (Exception, Error) as error:
             self.logger.error('Error while closing: ', error)
+
+    def query(self, docs: DocumentArray, **kwargs):
+        """Use the Postgre db as a key-value engine, returning the metadata of a document id"""
+        for doc in docs:
+            # retrieve metadata
+            self.cursor.execute(
+                f'SELECT METAS FROM {self.table} WHERE ID = %s;', doc.id
+            )
+            result = self.cursor.fetchone()
+            data = bytes(result[0])
+            retrieved_doc = Document(data)
+            # how to assign all fields but embedding?
+            doc.content = retrieved_doc.content
+            doc.mime_type = doc.mime_type

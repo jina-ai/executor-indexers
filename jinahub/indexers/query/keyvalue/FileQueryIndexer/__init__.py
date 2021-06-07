@@ -25,7 +25,7 @@ class FileQueryIndexer(Executor, FileWriterMixin):
 
     def __init__(
         self,
-        source_path: str,
+        dump_path: str,
         index_filename: Optional[str] = None,
         key_length: int = 36,
         *args,
@@ -41,7 +41,7 @@ class FileQueryIndexer(Executor, FileWriterMixin):
         self._page_size = mmap.ALLOCATIONGRANULARITY
         self.logger = JinaLogger(self.__class__.__name__)
 
-        self._load_dump(source_path)
+        self._load_dump(dump_path)
         self.query_handler = self.get_query_handler()
 
     def __enter__(self):
