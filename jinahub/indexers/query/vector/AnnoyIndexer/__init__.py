@@ -85,7 +85,7 @@ class AnnoyIndexer(Executor):
         chunks = docs.traverse_flat(self.traverse_path)
 
         for idx, doc in enumerate(chunks):
-            self.id_docid_map[idx] = doc.parent_id
+            self.id_docid_map[idx] = doc.id
             self.indexer.add_item(idx, doc.embedding)
 
     @requests(on='/search')
