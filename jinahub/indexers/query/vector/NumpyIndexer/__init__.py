@@ -28,9 +28,13 @@ class NumpyIndexer(Executor):
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
+        if not self._vecs.size:
+            return
+
         if parameters is None:
             parameters = {'top_k': 5}
         doc_embeddings = np.stack(docs.get_attributes('embedding'))
+
         q_emb = _ext_A(_norm(doc_embeddings))
         d_emb = _ext_B(_norm(self._vecs))
         dists = _cosine(q_emb, d_emb)
