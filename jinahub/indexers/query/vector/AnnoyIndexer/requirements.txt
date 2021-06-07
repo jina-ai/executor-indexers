@@ -1,1 +1,3 @@
 annoy==1.17.0
+jina==2.0.0rc5.dev54
+numpy==1.18.5
