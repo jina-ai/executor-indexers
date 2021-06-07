@@ -12,6 +12,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    packages=find_packages(where='jinahub.indexers'),
+    packages=find_packages(where='.', include=['jinahub.*']),
     python_requires=">=3.7",
 )
