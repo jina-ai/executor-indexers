@@ -1,9 +1,17 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
+import psycopg2
+from jina import DocumentArray, Document
+from jina.logging.logger import JinaLogger
 from typing import Optional
 
-from jina.logging.logger import JinaLogger
+
+def doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    return new_doc.SerializeToString()
+
 
 class PostgreSQLDBMSHandler:
     """
@@ -19,14 +27,17 @@ class PostgreSQLDBMSHandler:
     :param kwargs: other keyword arguments
     """
 
-    def __init__(self,
-                 hostname: str = '127.0.0.1',
-                 port: int = 5432,
-                 username: str = 'default_name',
-                 password: str = 'default_pwd',
-                 database: str = 'postgres',
-                 table: Optional[str] = 'default_table',
-                 *args, **kwargs):
+    def __init__(
+        self,
+        hostname: str = '127.0.0.1',
+        port: int = 5432,
+        username: str = 'default_name',
+        password: str = 'default_pwd',
+        database: str = 'postgres',
+        table: Optional[str] = 'default_table',
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.logger = JinaLogger(self.__class__.__name__)
         self.hostname = hostname
@@ -46,11 +57,13 @@ class PostgreSQLDBMSHandler:
         from psycopg2 import Error
 
         try:
-            self.connection = psycopg2.connect(user=self.username,
+            self.connection = psycopg2.connect(
+                user=self.username,
                 password=self.password,
                 database=self.database,
                 host=self.hostname,
-                port=self.port)
+                port=self.port,
+            )
             self.cursor = self.connection.cursor()
             self.logger.info('Successfully connected to the database')
             self.use_table()
@@ -67,13 +80,16 @@ class PostgreSQLDBMSHandler:
         """
         from psycopg2 import Error
 
-        self.cursor.execute('select exists(select * from information_schema.tables where table_name=%s)', (self.table,))
+        self.cursor.execute(
+            'select exists(select * from information_schema.tables where table_name=%s)',
+            (self.table,),
+        )
         if self.cursor.fetchone()[0]:
             self.logger.info('Using existing table')
         else:
             try:
                 self.cursor.execute(
-                   f"CREATE TABLE {self.table} ( \
+                    f"CREATE TABLE {self.table} ( \
                     ID VARCHAR PRIMARY KEY,  \
                     VECS BYTEA,  \
                     METAS BYTEA);"
@@ -82,12 +98,10 @@ class PostgreSQLDBMSHandler:
             except (Exception, Error) as error:
                 self.logger.error('Error while creating table!')
 
-    def add(self, ids, vecs, metas, *args, **kwargs):
-        """ Insert the documents into the database.
+    def add(self, docs: DocumentArray, *args, **kwargs):
+        """Insert the documents into the database.
 
-        :param ids: List of doc ids to be added
-        :param vecs: List of vecs to be added
-        :param metas: List of metas of docs to be added
+        :param docs: list of Documents
         :param args: other arguments
         :param kwargs: other keyword arguments
         :param args: other arguments
@@ -95,47 +109,53 @@ class PostgreSQLDBMSHandler:
         :return record: List of Document's id added
         """
         row_count = 0
-        for i in range(len(ids)):
-            self.cursor.execute(
-                f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
-                (ids[i], vecs[i].tobytes(), metas[i]),
-            )
-            row_count += self.cursor.rowcount
+        for doc in docs:
+            try:
+                self.cursor.execute(
+                    f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
+                    (doc.id, doc.embedding.tobytes(), doc_without_embedding(doc)),
+                )
+                row_count += self.cursor.rowcount
+            except psycopg2.errors.UniqueViolation:
+                self.logger.warning(
+                    f'Document with id {doc.id} already exists in PSQL database. Skipping...'
+                )
+                self.connection.rollback()
         self.connection.commit()
         return row_count
 
-    def update(self, ids, vecs, metas, *args, **kwargs):
-        """ Updated documents from the database.
+    def update(self, docs: DocumentArray, *args, **kwargs):
+        """Updated documents from the database.
 
-        :param ids: Ids of Doc to be updated
-        :param vecs: List of vecs to be updated
-        :param metas: List of metas of docs to be updated
+        :param docs: list of Documents
         :param args: other arguments
         :param kwargs: other keyword arguments
         :return record: List of Document's id after update
         """
         row_count = 0
 
-        for i in range(len(ids)):
+        for doc in docs:
             self.cursor.execute(
                 f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
-                (vecs[i].tobytes(), metas[i], ids[i]),
+                (doc.embedding.tobytes(), doc_without_embedding(doc), doc.id),
             )
             row_count += self.cursor.rowcount
         self.connection.commit()
         return row_count
 
-    def delete(self, ids, *args, **kwargs):
-        """ Delete document from the database.
+    def delete(self, docs: DocumentArray, *args, **kwargs):
+        """Delete document from the database.
 
-        :param ids: ids of Documents to be removed
+        :param docs: list of Documents
         :param args: other arguments
         :param kwargs: other keyword arguments
         :return record: List of Document's id after deletion
-         """
+        """
         row_count = 0
-        for id in ids:
-            self.cursor.execute(f'DELETE FROM {self.table} where (ID) = (%s);', (id,))
+        for doc in docs:
+            self.cursor.execute(
+                f'DELETE FROM {self.table} where (ID) = (%s);', (doc.id,)
+            )
             row_count += self.cursor.rowcount
         self.connection.commit()
         return row_count
@@ -144,6 +164,7 @@ class PostgreSQLDBMSHandler:
         """ Make sure the connection to the database is closed."""
 
         from psycopg2 import Error
+
         try:
             self.connection.close()
             self.cursor.close()

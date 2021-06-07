@@ -1,16 +1,14 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator
+from typing import Tuple, Generator, Dict
 import numpy as np
 
-from jina.executors.indexers.dbms import BaseDBMSIndexer
-from jina.executors.indexers.dump import export_dump_streaming
-
 from .postgreshandler import PostgreSQLDBMSHandler
+from jina import Executor, requests, DocumentArray
 
 
-class PostgreSQLDBMSIndexer(BaseDBMSIndexer):
+class PostgreSQLDBMSIndexer(Executor):
     """:class:`PostgreSQLDBMSIndexer` PostgreSQL based BDMS Indexer.
     Initialize the PostgreSQLDBIndexer.
 
@@ -25,16 +23,18 @@ class PostgreSQLDBMSIndexer(BaseDBMSIndexer):
     """
 
     def __init__(
-            self,
-            hostname: str = '127.0.0.1',
-            port: int = 5432,
-            username: str = 'postgres',
-            password: str = '123456',
-            database: str = 'postgres',
-            table: str = 'default_table',
-            *args,
-            **kwargs
+        self,
+        hostname: str = '127.0.0.1',
+        port: int = 5432,
+        username: str = 'postgres',
+        password: str = '123456',
+        database: str = 'postgres',
+        table: str = 'default_table',
+        *args,
+        **kwargs,
     ):
+        from .postgreshandler import PostgreSQLDBMSHandler
+
         super().__init__(*args, **kwargs)
         self.hostname = hostname
         self.port = port
@@ -42,6 +42,14 @@ class PostgreSQLDBMSIndexer(BaseDBMSIndexer):
         self.password = password
         self.database = database
         self.table = table
+        self.handler = PostgreSQLDBMSHandler(
+            hostname=self.hostname,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+            database=self.database,
+            table=self.table,
+        )
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
@@ -58,21 +66,11 @@ class PostgreSQLDBMSIndexer(BaseDBMSIndexer):
         .. # noqa: DAR201
         """
         with self.handler as postgres_handler:
-            postgres_handler.cursor.execute(f"SELECT COUNT(*) from {self.handler.table}")
+            postgres_handler.cursor.execute(
+                f"SELECT COUNT(*) from {self.handler.table}"
+            )
             records = postgres_handler.cursor.fetchall()
             return records[0][0]
-
-    def post_init(self):
-        """Initialize the PostgresHandler inside the Indexer."""
-        from .postgreshandler import PostgreSQLDBMSHandler
-        super().post_init()
-        self.handler = PostgreSQLDBMSHandler(
-            hostname=self.hostname,
-            port=self.port,
-            username=self.username,
-            password=self.password,
-            database=self.database,
-            table=self.table)
 
     def get_handler(self) -> 'PostgreSQLDBMSHandler':
         """Get the handler to PostgreSQLDBMS."""
@@ -90,45 +88,46 @@ class PostgreSQLDBMSIndexer(BaseDBMSIndexer):
         """Get the handler to PostgresSQLDBMS."""
         return self.handler
 
-    def add(self, ids, vecs, metas, *args, **kwargs):
+    @requests(on='/index')
+    def add(self, docs: DocumentArray, **kwargs):
         """Add a Document to PostgreSQLDBMS.
 
-        :param ids: List of doc ids to be added
-        :param vecs: List of vecs to be added
-        :param metas: List of metas of docs to be added
-         """
-        with self.handler as postgres_handler:
-            postgres_handler.add(ids=ids, vecs=vecs, metas=metas)
+        :param docs: list of Documents
+        """
 
-    def update(self, ids, vecs, metas, *args, **kwargs):
+        with self.handler as postgres_handler:
+            postgres_handler.add(docs)
+
+    @requests(on='/update')
+    def update(self, docs: DocumentArray, **kwargs):
         """Updated document from the database.
 
-        :param ids: Ids of Docs to be updated
-        :param vecs: List of vecs to be updated
-        :param metas: List of metas of docs to be updated
+        :param docs: list of Documents
         """
 
         with self.handler as postgres_handler:
-            postgres_handler.update(ids=ids, vecs=vecs, metas=metas)
+            postgres_handler.update(docs)
 
-    def delete(self, ids, *args, **kwargs):
+    @requests(on='/delete')
+    def delete(self, docs: DocumentArray, **kwargs):
         """Delete document from the database.
 
-        :param ids: Ids of Document to be removed
+        :param docs: list of Documents
         """
 
         with self.handler as postgres_handler:
-            postgres_handler.delete(ids=ids)
+            postgres_handler.delete(docs)
 
-    def dump(self, path, shards):
+    @requests(on='/dump')
+    def dump(self, parameters: Dict, **kwargs):
         """Dump the index
 
-        :param path: the path to which to dump
-        :param shards: the nr of shards to which to dump
+        :param parameters: a dictionary containing the parameters for the dump
         """
+        from indexers.dump import export_dump_streaming
+
+        path = parameters.get('path')
+        shards = parameters.get('shards')
         export_dump_streaming(
-            path,
-            shards=shards,
-            size=self.size,
-            data=self._get_generator()
+            path, shards=shards, size=self.size, data=self._get_generator()
         )
