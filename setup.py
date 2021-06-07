@@ -1,7 +1,8 @@
+from setuptools import find_packages
 import setuptools
 
 setuptools.setup(
-    name="jina-hub-indexers",
+    name="jinahub",
     version="0.0.1",
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
@@ -11,7 +12,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    package_dir={'jinahub.indexers': ''},
-    packages=['jinahub.indexers'],
+    packages=find_packages(where='jinahub.indexers'),
     python_requires=">=3.7",
 )
