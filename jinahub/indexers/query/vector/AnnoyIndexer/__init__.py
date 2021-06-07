@@ -1,9 +1,9 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-import os
-import json
 import errno
+import json
+import os
 from pathlib import Path
 
 from annoy import AnnoyIndex
@@ -29,8 +29,8 @@ class AnnoyIndexer(Executor):
         self,
         top_k: int = 10,
         num_dim: int = 768,
-        num_trees: int = 10,
         metric: str = 'euclidean',
+        num_trees: int = 10,
         traverse_path: list = ['r'],
         **kwargs,
     ):
@@ -38,10 +38,10 @@ class AnnoyIndexer(Executor):
         Initialize an AnnoyIndexer
 
         :param top_k: get tok k vectors
+        :param num_dim: dimension of the vector
         :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
-        :param search_k: At query time annoy will inspect up to search_k nodes which defaults to
-            n_trees * k if not provided (set to -1)
+        :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
         :param args:
         :param kwargs:
         """
@@ -52,16 +52,16 @@ class AnnoyIndexer(Executor):
         self.num_trees = num_trees
         self.id_docid_map = {}
         self.request_type = None
-        self.index_base_dir = f'{os.environ["JINA_WORKSPACE"]}/annoy/'
+        self.index_base_dir = f'{kwargs["metas"]["workspace"]}/annoy/'
         self.index_path = self.index_base_dir + self.ANNOY_INDEX_FILE_NAME
         self.index_map_path = self.index_base_dir + self.ANNOY_INDEX_MAPPING_NAME
-        self.index = AnnoyIndex(self.num_dim, 'angular')
+        self.indexer = AnnoyIndex(self.num_dim, self.metric)
         self.traverse_path = traverse_path
         if os.path.exists(self.index_path) and os.path.exists(self.index_map_path):
             self._load_index()
 
     def _load_index(self):
-        self.index.load(self.index_path)
+        self.indexer.load(self.index_path)
         with open(self.index_map_path, 'r') as f:
             self.id_docid_map = json.load(f)
 
@@ -82,25 +82,17 @@ class AnnoyIndexer(Executor):
                 'Index already exist, please remove workspace and index again.'
             )
 
-        chunks = DocumentArray(
-            list(
-                filter(lambda d: d.mime_type == 'text/plain', docs.traverse_flat(self.traverse_path))
-            )
-        )
+        chunks = docs.traverse_flat(self.traverse_path)
 
         for idx, doc in enumerate(chunks):
             self.id_docid_map[idx] = doc.parent_id
-            self.index.add_item(idx, doc.embedding)
+            self.indexer.add_item(idx, doc.embedding)
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, **kwargs):
-        chunks = DocumentArray(
-            list(
-                filter(lambda d: d.mime_type == 'text/plain', docs.traverse_flat(self.traverse_path))
-            )
-        )
+        chunks = docs.traverse_flat(self.traverse_path)
         for doc in chunks:
-            indices, dists = self.index.get_nns_by_vector(
+            indices, dists = self.indexer.get_nns_by_vector(
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
@@ -110,8 +102,8 @@ class AnnoyIndexer(Executor):
 
     def close(self):
         if self.request_type == '/index':
-            self.index.build(self.num_trees)
+            self.indexer.build(self.num_trees)
             Path(self.index_base_dir).mkdir(parents=True, exist_ok=True)
-            self.index.save(self.index_path)
+            self.indexer.save(self.index_path)
             with open(self.index_map_path, 'w') as f:
                 json.dump(self.id_docid_map, f)
