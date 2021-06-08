@@ -20,16 +20,18 @@ potential TODO:
 class NumpyIndexer(Executor):
     def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
         super().__init__(**kwargs)
+        dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         self.logger = JinaLogger(self.metas.name)
         self.default_top_k = default_top_k
         if dump_path is not None:
+            self.logger.info(f'Importing data from {dump_path}')
             ids, vecs = import_vectors(dump_path, str(self.runtime_args.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
             self._ids_to_idx = {}
         else:
             self.logger.warning(
-                'No data loaded in "NumpyIndexer". Using .rolling_update() to re-initialize it...'
+                'No data loaded in "NumpyIndexer". Use .rolling_update() to re-initialize it...'
             )
 
     @requests(on='/search')
@@ -37,11 +39,7 @@ class NumpyIndexer(Executor):
         if not self._vecs.size:
             return
 
-        if parameters is None:
-            parameters = {'top_k': self.default_top_k}
-
-        top_k = int(parameters['top_k'])
-        self.logger.warning(f'==== top k = {top_k}')
+        top_k = int(parameters.get('top_k', self.default_top_k))
         doc_embeddings = np.stack(docs.get_attributes('embedding'))
 
         q_emb = _ext_A(_norm(doc_embeddings))

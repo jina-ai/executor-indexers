@@ -35,8 +35,6 @@ class PostgreSQLDBMSIndexer(Executor):
         *args,
         **kwargs,
     ):
-        from .postgreshandler import PostgreSQLDBMSHandler
-
         super().__init__(*args, **kwargs)
         self.hostname = hostname
         self.port = port
@@ -44,7 +42,7 @@ class PostgreSQLDBMSIndexer(Executor):
         self.password = password
         self.database = database
         self.table = table
-        self.logger = JinaLogger('PostgreSQLDBMSIndexer')
+        self.logger = JinaLogger(self.metas.name)
         self.handler = PostgreSQLDBMSHandler(
             hostname=self.hostname,
             port=self.port,
@@ -57,7 +55,7 @@ class PostgreSQLDBMSIndexer(Executor):
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
             # always order the dump by id as integer
-            handler.cursor.execute(f"SELECT * from {handler.table} ORDER BY ID::int")
+            handler.cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
             records = handler.cursor.fetchall()
             for rec in records:
                 yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
@@ -70,22 +68,10 @@ class PostgreSQLDBMSIndexer(Executor):
         """
         with self.handler as postgres_handler:
             postgres_handler.cursor.execute(
-                f"SELECT COUNT(*) from {self.handler.table}"
+                f'SELECT COUNT(*) from {self.handler.table}'
             )
             records = postgres_handler.cursor.fetchall()
             return records[0][0]
-
-    def get_handler(self) -> 'PostgreSQLDBMSHandler':
-        """Get the handler to PostgreSQLDBMS."""
-        return self.handler
-
-    def get_add_handler(self) -> 'PostgreSQLDBMSHandler':
-        """Get the handler to PostgresSQLDBMS."""
-        return self.handler
-
-    def get_create_handler(self) -> 'PostgreSQLDBMSHandler':
-        """Get the handler to PostgresSQLDBMS."""
-        return self.handler
 
     @requests(on='/index')
     def add(self, docs: DocumentArray, **kwargs):

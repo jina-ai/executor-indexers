@@ -7,7 +7,7 @@ import numpy as np
 from jina import Executor, requests, DocumentArray
 from jina.logging.logger import JinaLogger
 
-from jinahub.indexers.dbms.PostgreSQLIndexer import PostgreSQLDBMSHandler
+from jinahub.indexers.dbms.PostgreSQLDBMSIndexer import PostgreSQLDBMSHandler
 
 
 class PostgreSQLQueryIndexer(Executor):

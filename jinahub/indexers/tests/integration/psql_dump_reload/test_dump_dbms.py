@@ -1,9 +1,7 @@
-import os
 from collections import OrderedDict
-from pathlib import Path
-from typing import Dict
 
 import numpy as np
+import os
 import pytest
 from jina import Flow, Document, Executor, DocumentArray, requests
 from jina.logging.profile import TimeContext
@@ -11,13 +9,22 @@ from jina_commons.indexers.dump import (
     import_vectors,
     import_metas,
 )
+from pathlib import Path
+from typing import Dict
 
-from jinahub.indexers.dbms.PostgreSQLIndexer import PostgreSQLDBMSIndexer
-
+# required pytest fixture
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.query.compound.NumpyPostgresQueryIndexer import (
-    NumpyPostgresQueryIndexer,
-)
+from jinahub.indexers.tests import docker_compose
+
+# required in order to be found by Flow creation
+# noinspection PyUnresolvedReferences
+from jinahub.indexers.query.compound import NumpyPostgresQueryIndexer
+from jinahub.indexers.dbms.PostgreSQLDBMSIndexer import PostgreSQLDBMSIndexer
+
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
+dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
+query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
 
 
 class Pass(Executor):
@@ -112,7 +119,8 @@ def path_size(dump_path):
 @pytest.mark.parametrize('shards', [3, 7])
 @pytest.mark.parametrize('nr_docs', [10])
 @pytest.mark.parametrize('emb_size', [10])
-def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
     top_k = 5
     docs = list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
     # make sure to delete any overlapping docs
@@ -127,8 +135,8 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
     else:
         os.environ['USES_AFTER'] = 'Pass'
 
-    with Flow.load_config('flow_dbms.yml') as flow_dbms:
-        with Flow.load_config('flow_query.yml') as flow_query:
+    with Flow.load_config(dbms_flow_yml) as flow_dbms:
+        with Flow.load_config(query_flow_yml) as flow_query:
             with TimeContext(f'### indexing {len(docs)} docs'):
                 flow_dbms.post(on='/index', inputs=docs)
 
@@ -179,6 +187,9 @@ def _in_docker():
     _in_docker() or ('GITHUB_WORKFLOW' in os.environ),
     reason='skip the benchmark test on github workflow or docker',
 )
-def test_benchmark(tmpdir):
-    nr_docs = 100000
-    return test_dump_reload(tmpdir, nr_docs=nr_docs, emb_size=128, shards=3)
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_benchmark(tmpdir, docker_compose):
+    nr_docs = 100
+    return test_dump_reload(
+        tmpdir, nr_docs=nr_docs, emb_size=128, shards=3, docker_compose=compose_yml
+    )

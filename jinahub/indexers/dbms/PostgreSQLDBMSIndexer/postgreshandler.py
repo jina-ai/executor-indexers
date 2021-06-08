@@ -57,6 +57,9 @@ class PostgreSQLDBMSHandler:
         from psycopg2 import Error
 
         try:
+            # by default psycopg2 is not auto-committing
+            # this means we can have rollbacks
+            # and maintain ACID-ity
             self.connection = psycopg2.connect(
                 user=self.username,
                 password=self.password,
@@ -89,10 +92,10 @@ class PostgreSQLDBMSHandler:
         else:
             try:
                 self.cursor.execute(
-                    f"CREATE TABLE {self.table} ( \
+                    f'CREATE TABLE {self.table} ( \
                     ID VARCHAR PRIMARY KEY,  \
                     VECS BYTEA,  \
-                    METAS BYTEA);"
+                    METAS BYTEA);'
                 )
                 self.logger.info('Successfully created table')
             except (Exception, Error) as error:
@@ -177,7 +180,7 @@ class PostgreSQLDBMSHandler:
         for doc in docs:
             # retrieve metadata
             self.cursor.execute(
-                f'SELECT METAS FROM {self.table} WHERE ID = %s;', doc.id
+                f'SELECT METAS FROM {self.table} WHERE ID = %s;', (doc.id,)
             )
             result = self.cursor.fetchone()
             data = bytes(result[0])

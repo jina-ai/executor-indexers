@@ -1,3 +1,5 @@
+from copy import copy, deepcopy
+
 import os
 
 import numpy as np
@@ -61,6 +63,8 @@ def test_postgress(tmpdir):
     postgres_indexer.handler.connect()
 
     original_docs = list(get_documents(chunks=0, same_content=False))
+
+    postgres_indexer.handler.delete(original_docs)
 
     added = postgres_indexer.handler.add(original_docs)
     assert added == 10

@@ -8,5 +8,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - id: changed-files
+        uses: jitterbit/get-changed-files@v1
+        continue-on-error: true
       - id: tests
         run: ./scripts/tests.sh
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all }}
