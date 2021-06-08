@@ -82,16 +82,13 @@ class AnnoyIndexer(Executor):
                 'Index already exist, please remove workspace and index again.'
             )
 
-        chunks = docs.traverse_flat(self.traverse_path)
-
-        for idx, doc in enumerate(chunks):
+        for idx, doc in enumerate(docs.traverse_flat(self.traverse_path)):
             self.id_docid_map[idx] = doc.id
             self.indexer.add_item(idx, doc.embedding)
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, **kwargs):
-        chunks = docs.traverse_flat(self.traverse_path)
-        for doc in chunks:
+        for doc in docs.traverse_flat(self.traverse_path):
             indices, dists = self.indexer.get_nns_by_vector(
                 doc.embedding, self.top_k, include_distances=True
             )
