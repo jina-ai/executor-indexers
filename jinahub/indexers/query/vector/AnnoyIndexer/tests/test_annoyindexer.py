@@ -36,12 +36,12 @@ def test_simple_annoy():
     assert len(idx1) == 3
 
 
-def test_annoy_indexer(metas):
-    with AnnoyIndexer(metas=metas, num_dim=10, save_on_close=True) as indexer:
-        indexer.delete()
-        indexer.index(docs)
-
-    with AnnoyIndexer(metas=metas, top_k=4, num_dim=10, save_on_close=False) as indexer:
-        assert isinstance(indexer, AnnoyIndexer)
-        indexer.search(search_doc)
-        assert len(search_doc[0].matches) == 4
+def test_query_vector(tmpdir):
+    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    indexer = AnnoyIndexer(dump_path='tests/dump1', num_dim=7, top_k=5, metas=metas)
+    docs = DocumentArray([Document(embedding=np.random.random(7))])
+    TOP_K = 5
+    indexer.search(docs)
+    assert len(docs) == 1
+    assert len(docs[0].matches) == TOP_K
+    assert len(docs[0].matches[0].embedding) == 7
