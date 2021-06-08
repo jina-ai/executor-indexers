@@ -52,7 +52,6 @@ class AnnoyIndexer(Executor):
         self.num_dim = num_dim
         self.num_trees = num_trees
         self.id_docid_map = {}
-        self.request_type = None
         self.index_base_dir = f'{kwargs["metas"]["workspace"]}/annoy/'
         self.save_on_close = save_on_close
         self.index_path = self.index_base_dir + self.ANNOY_INDEX_FILE_NAME
@@ -78,12 +77,6 @@ class AnnoyIndexer(Executor):
 
     @requests(on='/index')
     def index(self, docs: DocumentArray, **kwargs):
-        self.request_type = '/index'
-        if os.path.exists(self.index_path) or os.path.exists(self.index_map_path):
-            raise FileExistsError(
-                'Index already exist, please remove workspace and index again.'
-            )
-
         for idx, doc in enumerate(docs.traverse_flat(self.traverse_path)):
             self.id_docid_map[idx] = doc.id
             self.indexer.add_item(idx, doc.embedding)
