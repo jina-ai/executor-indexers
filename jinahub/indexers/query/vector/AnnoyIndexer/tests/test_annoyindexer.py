@@ -37,11 +37,11 @@ def test_simple_annoy():
 
 
 def test_annoy_indexer(metas):
-    with AnnoyIndexer(metas=metas,num_dim=10) as indexer:
+    with AnnoyIndexer(metas=metas, num_dim=10, save_on_close=True) as indexer:
         indexer.delete()
         indexer.index(docs)
 
-    with AnnoyIndexer(metas=metas, top_k=4, num_dim=10) as indexer:
+    with AnnoyIndexer(metas=metas, top_k=4, num_dim=10, save_on_close=False) as indexer:
         assert isinstance(indexer, AnnoyIndexer)
         indexer.search(search_doc)
         assert len(search_doc[0].matches) == 4

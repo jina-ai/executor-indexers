@@ -32,6 +32,7 @@ class AnnoyIndexer(Executor):
         metric: str = 'euclidean',
         num_trees: int = 10,
         traverse_path: list = ['r'],
+        save_on_close: bool = True,
         **kwargs,
     ):
         """
@@ -53,6 +54,7 @@ class AnnoyIndexer(Executor):
         self.id_docid_map = {}
         self.request_type = None
         self.index_base_dir = f'{kwargs["metas"]["workspace"]}/annoy/'
+        self.save_on_close = save_on_close
         self.index_path = self.index_base_dir + self.ANNOY_INDEX_FILE_NAME
         self.index_map_path = self.index_base_dir + self.ANNOY_INDEX_MAPPING_NAME
         self.indexer = AnnoyIndex(self.num_dim, self.metric)
@@ -98,7 +100,7 @@ class AnnoyIndexer(Executor):
                 doc.matches.append(match)
 
     def close(self):
-        if self.request_type == '/index':
+        if self.save_on_close:
             self.indexer.build(self.num_trees)
             Path(self.index_base_dir).mkdir(parents=True, exist_ok=True)
             self.indexer.save(self.index_path)
