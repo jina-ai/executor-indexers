@@ -1,9 +1,12 @@
+from copy import copy, deepcopy
+
 import os
 
 import numpy as np
 from jina import Document
 
 from .. import PostgreSQLDBMSIndexer
+from ..postgreshandler import doc_without_embedding
 
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
 c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
@@ -42,17 +45,12 @@ def get_documents(chunks, same_content, nr=10, index_start=0, same_tag_content=N
         yield d
 
 
-def doc_without_embedding(d):
-    new_doc = Document()
-    new_doc.CopyFrom(d)
-    new_doc.ClearField('embedding')
-    return new_doc
-
-
 def validate_db_side(postgres_indexer, expected_data):
     ids, vecs, metas = zip(*expected_data)
     postgres_indexer.handler.connect()
-    postgres_indexer.handler.cursor.execute(f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID')
+    postgres_indexer.handler.cursor.execute(
+        f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID'
+    )
     record = postgres_indexer.handler.cursor.fetchall()
     for i in range(len(expected_data)):
         assert ids[i] == str(record[i][0])
@@ -65,27 +63,27 @@ def test_postgress(tmpdir):
     postgres_indexer.handler.connect()
 
     original_docs = list(get_documents(chunks=0, same_content=False))
-    info_original_docs = [
-        (doc.id, doc.embedding, doc_without_embedding(doc).SerializeToString())
-        for doc in original_docs
-    ]
-    ids, vecs, metas = zip(*info_original_docs)
 
-    added = postgres_indexer.handler.add(ids, vecs, metas)
+    postgres_indexer.handler.delete(original_docs)
+
+    added = postgres_indexer.handler.add(original_docs)
     assert added == 10
+
+    info_original_docs = [
+        (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in original_docs
+    ]
     validate_db_side(postgres_indexer, info_original_docs)
 
     new_docs = list(get_documents(chunks=False, nr=10, same_content=True))
+    updated = postgres_indexer.handler.update(new_docs)
+    assert updated == 10
+
     info_new_docs = [
-        (doc.id, doc.embedding, doc_without_embedding(doc).SerializeToString())
-        for doc in new_docs
+        (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in new_docs
     ]
     ids, vecs, metas = zip(*info_new_docs)
-
-    updated = postgres_indexer.handler.update(ids, vecs, metas)
     expected_info = [(ids[0], vecs[0], metas[0])]
-    assert updated == 10
     validate_db_side(postgres_indexer, expected_info)
 
-    deleted = postgres_indexer.handler.delete(ids)
+    deleted = postgres_indexer.handler.delete(new_docs)
     assert deleted == 10

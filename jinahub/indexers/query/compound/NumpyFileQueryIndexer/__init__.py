@@ -10,9 +10,9 @@ from jina.hub.indexers.vector.NumpyIndexer import NumpyIndexer
 
 
 class NumpyFileQueryIndexer(Executor):
-    def __init__(self, source_path, *args, **kwargs):
-        self._vec_indexer = NumpyIndexer(source_path=source_path, *args, **kwargs)
-        self._kv_indexer = FileQueryIndexer(source_path=source_path, *args, **kwargs)
+    def __init__(self, dump_path, *args, **kwargs):
+        self._vec_indexer = NumpyIndexer(dump_path=dump_path, *args, **kwargs)
+        self._kv_indexer = FileQueryIndexer(dump_path=dump_path, *args, **kwargs)
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
