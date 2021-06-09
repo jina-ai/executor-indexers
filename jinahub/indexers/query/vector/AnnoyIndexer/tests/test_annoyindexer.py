@@ -56,4 +56,7 @@ def test_query_vector(tmpdir):
     assert len(docs[0].matches[0].embedding) == 7
     assert docs[0].matches[0].embedding in vecs
 
-    assert indexer.query_by_id(0) in vecs[0]
+    da = DocumentArray([Document(id=0),Document(id=1),Document(id=2)])
+    indexer.fill_embedding(da)
+    for i, doc in enumerate(da):
+        assert list(doc.embedding)
