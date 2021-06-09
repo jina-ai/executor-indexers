@@ -1,7 +1,3 @@
-from copy import copy, deepcopy
-
-import os
-
 import numpy as np
 from jina import Document
 from jina.logging.profile import TimeContext
@@ -51,13 +47,13 @@ def validate_db_side(postgres_indexer, expected_data):
     with postgres_indexer.handler as handler:
         cursor = handler.connection.cursor()
         cursor.execute(
-            f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID'
+            f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID::int'
         )
         record = cursor.fetchall()
         for i in range(len(expected_data)):
-            assert ids[i] == str(record[i][0])
+            np.testing.assert_equal(ids[i], str(record[i][0]))
             np.testing.assert_equal(vecs[i], np.frombuffer(record[i][1]))
-            assert metas[i] == bytes(record[i][2])
+            np.testing.assert_equal(metas[i], bytes(record[i][2]))
 
 
 def test_postgres(tmpdir):
@@ -69,15 +65,7 @@ def test_postgres(tmpdir):
 
     with TimeContext(f'### indexing {len(original_docs)} docs'):
         postgres_indexer.add(original_docs)
-    assert postgres_indexer.size == NR_DOCS
-
-    new_docs = list(
-        get_documents(nr=NR_DOCS, chunks=0, same_content=False, index_start=NR_DOCS)
-    )
-
-    with TimeContext(f'### indexing {len(new_docs)} docs'):
-        postgres_indexer.add(new_docs)
-    assert postgres_indexer.size == NR_DOCS * 2
+    np.testing.assert_equal(postgres_indexer.size, NR_DOCS)
 
     info_original_docs = [
         (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in original_docs
@@ -95,4 +83,4 @@ def test_postgres(tmpdir):
     validate_db_side(postgres_indexer, expected_info)
 
     postgres_indexer.delete(new_docs)
-    assert postgres_indexer.size == len(original_docs) - len(new_docs)
+    np.testing.assert_equal(postgres_indexer.size, len(original_docs) - len(new_docs))

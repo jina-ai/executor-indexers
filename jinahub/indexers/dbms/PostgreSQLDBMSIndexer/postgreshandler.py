@@ -3,6 +3,7 @@ __license__ = "Apache-2.0"
 
 import psycopg2
 from psycopg2 import pool
+import psycopg2.extras
 
 from jina import DocumentArray, Document
 from jina.logging.logger import JinaLogger
@@ -92,6 +93,7 @@ class PostgreSQLDBMSHandler:
                 self.logger.info('Successfully created table')
             except (Exception, psycopg2.Error) as error:
                 self.logger.error('Error while creating table!')
+        connection.commit()
         self._close_connection(connection)
 
     def add(self, docs: DocumentArray, *args, **kwargs):
@@ -104,22 +106,22 @@ class PostgreSQLDBMSHandler:
         :param kwargs: other keyword arguments
         :return record: List of Document's id added
         """
-        row_count = 0
         cursor = self.connection.cursor()
-        for doc in docs:
-            try:
-                cursor.execute(
-                    f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
-                    (doc.id, doc.embedding.tobytes(), doc_without_embedding(doc)),
-                )
-                row_count += cursor.rowcount
-            except psycopg2.errors.UniqueViolation:
-                self.logger.warning(
-                    f'Document with id {doc.id} already exists in PSQL database. Skipping...'
-                )
-                self.connection.rollback()
+        try:
+            psycopg2.extras.execute_batch(
+                cursor,
+                f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
+                [
+                    (doc.id, doc.embedding.tobytes(), doc_without_embedding(doc))
+                    for doc in docs
+                ],
+            )
+        except psycopg2.errors.UniqueViolation as e:
+            self.logger.warning(
+                f'Document already exists in PSQL database. {e}. Skipping entire transaction...'
+            )
+            self.connection.rollback()
         self.connection.commit()
-        return row_count
 
     def update(self, docs: DocumentArray, *args, **kwargs):
         """Updated documents from the database.
@@ -129,16 +131,16 @@ class PostgreSQLDBMSHandler:
         :param kwargs: other keyword arguments
         :return record: List of Document's id after update
         """
-        row_count = 0
         cursor = self.connection.cursor()
-        for doc in docs:
-            cursor.execute(
-                f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
-                (doc.embedding.tobytes(), doc_without_embedding(doc), doc.id),
-            )
-            row_count += cursor.rowcount
+        psycopg2.extras.execute_batch(
+            cursor,
+            f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
+            [
+                (doc.embedding.tobytes(), doc_without_embedding(doc), doc.id)
+                for doc in docs
+            ],
+        )
         self.connection.commit()
-        return row_count
 
     def delete(self, docs: DocumentArray, *args, **kwargs):
         """Delete document from the database.
@@ -148,19 +150,20 @@ class PostgreSQLDBMSHandler:
         :param kwargs: other keyword arguments
         :return record: List of Document's id after deletion
         """
-        row_count = 0
         cursor = self.connection.cursor()
-        for doc in docs:
-            cursor.execute(f'DELETE FROM {self.table} where (ID) = (%s);', (doc.id,))
-            row_count += cursor.rowcount
+        psycopg2.extras.execute_batch(
+            cursor,
+            f'DELETE FROM {self.table} where (ID) = (%s);',
+            [(doc.id,) for doc in docs],
+        )
         self.connection.commit()
-        return row_count
+        return
 
     def close(self):
         self.postgreSQL_pool.closeall()
 
     def query(self, docs: DocumentArray, **kwargs):
-        """Use the Postgre db as a key-value engine, returning the metadata of a document id"""
+        """Use the Postgres db as a key-value engine, returning the metadata of a document id"""
         cursor = self.connection.cursor()
         for doc in docs:
             # retrieve metadata

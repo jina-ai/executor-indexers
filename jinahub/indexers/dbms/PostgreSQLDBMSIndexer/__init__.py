@@ -57,8 +57,9 @@ class PostgreSQLDBMSIndexer(Executor):
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
             # always order the dump by id as integer
-            handler.cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
-            records = handler.cursor.fetchall()
+            cursor = handler.connection.cursor()
+            cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
+            records = cursor.fetchall()
             for rec in records:
                 yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
 
@@ -119,3 +120,9 @@ class PostgreSQLDBMSIndexer(Executor):
         export_dump_streaming(
             path, shards=shards, size=self.size, data=self._get_generator()
         )
+
+    def close(self) -> None:
+        """
+        Close the connections in the connection pool
+        """
+        self.handler.close()
