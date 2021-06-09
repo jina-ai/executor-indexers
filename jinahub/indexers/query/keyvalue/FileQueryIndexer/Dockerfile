@@ -1,11 +1,13 @@
-FROM jinaai/jina:2.0.0
+FROM jinaai/jina:1.0.2
 
 # install the third-party requirements
-RUN apt-get update && apt-get install --no-install-recommends -y gcc build-essential
+RUN apt-get update && apt-get install --no-install-recommends -y gcc build-essential git
 
 # setup the workspace
 COPY . /workspace
 WORKDIR /workspace
+
+RUN pip install -r requirements.txt
 
 # for testing the image
 RUN pip install pytest && pytest tests

@@ -2,11 +2,11 @@ import mmap
 import os
 from pathlib import Path
 from typing import Optional, Dict
-from jina import Executor, requests, DocumentArray, Document
-from jina.logging import JinaLogger
 
-from jina.hub.indexers.dump import import_metas
+from jina import Executor, requests, DocumentArray, Document
 from jina.helper import get_readable_size
+from jina.logging.logger import JinaLogger
+from jina_commons.indexers.dump import import_metas
 
 from .file_writer import FileWriterMixin
 
@@ -25,9 +25,10 @@ class FileQueryIndexer(Executor, FileWriterMixin):
 
     def __init__(
         self,
-        source_path: str,
+        dump_path: str,
         index_filename: Optional[str] = None,
         key_length: int = 36,
+        default_traversal_path='r',
         *args,
         **kwargs,
     ):
@@ -41,14 +42,9 @@ class FileQueryIndexer(Executor, FileWriterMixin):
         self._page_size = mmap.ALLOCATIONGRANULARITY
         self.logger = JinaLogger(self.__class__.__name__)
 
-        self._load_dump(source_path)
+        self._load_dump(dump_path)
         self.query_handler = self.get_query_handler()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.default_traversal_path = default_traversal_path
 
     @property
     def size(self) -> int:
@@ -91,7 +87,8 @@ class FileQueryIndexer(Executor, FileWriterMixin):
     ) -> None:
         """Get a document by its id
 
-        :param keys: the ids
+        :param docs: the documents
+        :param parameters: request parameters
         :param args: not used
         :param kwargs: not used
         :return: List of the bytes of the Documents (or None, if not found)
@@ -99,31 +96,21 @@ class FileQueryIndexer(Executor, FileWriterMixin):
         if parameters is None:
             parameters = {}
 
-        for docs_array in docs.traverse(parameters.get('traversal_paths', ['r'])):
+        traversal_path = parameters.get('traversal_paths', self.default_traversal_path)
+
+        for docs_array in docs.traverse(traversal_path):
             self._search(docs_array, parameters.get('is_update', True))
 
-    def _search(self, docs, is_update):
-        miss_idx = (
-            []
-        )  #: missed hit results, some search may not end with results. especially in shards
-
-        serialized_docs = self._query([d.id for d in docs])
-
-        for idx, (retrieved_doc, serialized_doc) in enumerate(
-            zip(docs, serialized_docs)
-        ):
-            if serialized_doc:
-                r = Document(serialized_doc)
-                if is_update:
-                    retrieved_doc.update(r)
-                else:
-                    retrieved_doc.CopyFrom(r)
+    def _search(self, docs: DocumentArray, is_update):
+        for doc in docs:
+            serialized_doc = self._query(doc.id)[0]
+            serialized_doc = Document(serialized_doc)
+            serialized_doc.pop('content_hash')
+            if is_update:
+                doc.update(serialized_doc)
             else:
-                miss_idx.append(idx)
-
-        # delete non-existed matches in reverse
-        for j in reversed(miss_idx):
-            del docs[j]
+                doc = Document(serialized_doc, copy=True)
+            doc.update_content_hash()
 
     @staticmethod
     def physical_size(directory: str) -> int:
