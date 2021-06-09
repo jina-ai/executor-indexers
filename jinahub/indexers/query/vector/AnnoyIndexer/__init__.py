@@ -77,7 +77,7 @@ class AnnoyIndexer(Executor):
                 match.score.value = 1 / (1 + dist)
                 doc.matches.append(match)
 
-    @requests(on='/query_by_id')
+    @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
             doc.embedding = np.array(self.indexer.get_item_vector(int(self._idx_to_ids[int(doc.id)])))
