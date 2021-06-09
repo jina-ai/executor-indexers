@@ -55,7 +55,7 @@ class AnnoyIndexer(Executor):
             self._load_index(self._ids, self._vecs)
         else:
             self.logger.warning(
-                'No data loaded in "AnnoyIndexer". Using .rolling_update() to re-initialize it...'
+                'No data loaded in "AnnoyIndexer". Use .rolling_update() to re-initialize it...'
             )
 
     def _load_index(self, ids, vecs):
