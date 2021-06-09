@@ -47,6 +47,7 @@ class AnnoyIndexer(Executor):
         self.indexer = AnnoyIndex(self.num_dim, self.metric)
         self.traverse_path = traverse_path
         self.logger = JinaLogger(self.metas.name)
+        dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         if dump_path is not None:
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
             self._ids = np.array(list(ids))
