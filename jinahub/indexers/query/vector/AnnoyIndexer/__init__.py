@@ -62,7 +62,7 @@ class AnnoyIndexer(Executor):
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
             self.indexer.add_item(idx, v.astype(np.float32))
-            self._ids_to_idx[idx] = ids
+            self._ids_to_idx[idx] = ids[idx]
         self.indexer.build(self.num_trees)
 
     @requests(on='/search')
