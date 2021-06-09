@@ -1,4 +1,4 @@
-FROM jinaai/jina:2.0.0
+FROM jinaai/jina:master
 
 # setup the workspace
 COPY . /workspace
