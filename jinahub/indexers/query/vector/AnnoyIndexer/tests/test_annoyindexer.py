@@ -55,3 +55,5 @@ def test_query_vector(tmpdir):
     assert docs[0].matches[0].id in ids
     assert len(docs[0].matches[0].embedding) == 7
     assert docs[0].matches[0].embedding in vecs
+
+    assert indexer.query_by_id(0) in vecs[0]

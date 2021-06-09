@@ -53,7 +53,7 @@ class AnnoyIndexer(Executor):
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
-            self._ids_to_idx = {}
+            self._idx_to_ids = {}
             self._load_index(self._ids, self._vecs)
         else:
             self.logger.warning(
@@ -63,7 +63,7 @@ class AnnoyIndexer(Executor):
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
             self.indexer.add_item(idx, v.astype(np.float32))
-            self._ids_to_idx[idx] = ids[idx]
+            self._idx_to_ids[idx] = ids[idx]
         self.indexer.build(self.num_trees)
 
     @requests(on='/search')
@@ -73,6 +73,10 @@ class AnnoyIndexer(Executor):
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
-                match = Document(id=self._ids_to_idx[idx], embedding=self._vecs[idx])
+                match = Document(id=self._idx_to_ids[idx], embedding=self._vecs[idx])
                 match.score.value = 1 / (1 + dist)
                 doc.matches.append(match)
+
+    @requests(on='/query_by_id')
+    def query_by_id(self, query_id: int, **kwargs):
+        return self._vecs[int(self._idx_to_ids[int(query_id)])]
