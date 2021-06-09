@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 from jina import Document
+from jina.logging.profile import TimeContext
 
 from .. import PostgreSQLDBMSIndexer
 from ..postgreshandler import doc_without_embedding
@@ -47,27 +48,36 @@ def get_documents(chunks, same_content, nr=10, index_start=0, same_tag_content=N
 
 def validate_db_side(postgres_indexer, expected_data):
     ids, vecs, metas = zip(*expected_data)
-    postgres_indexer.handler.connect()
-    postgres_indexer.handler.cursor.execute(
-        f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID'
-    )
-    record = postgres_indexer.handler.cursor.fetchall()
-    for i in range(len(expected_data)):
-        assert ids[i] == str(record[i][0])
-        np.testing.assert_equal(vecs[i], np.frombuffer(record[i][1]))
-        assert metas[i] == bytes(record[i][2])
+    with postgres_indexer.handler as handler:
+        cursor = handler.connection.cursor()
+        cursor.execute(
+            f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID'
+        )
+        record = cursor.fetchall()
+        for i in range(len(expected_data)):
+            assert ids[i] == str(record[i][0])
+            np.testing.assert_equal(vecs[i], np.frombuffer(record[i][1]))
+            assert metas[i] == bytes(record[i][2])
 
 
-def test_postgress(tmpdir):
+def test_postgres(tmpdir):
     postgres_indexer = PostgreSQLDBMSIndexer()
-    postgres_indexer.handler.connect()
+    NR_DOCS = 10000
+    original_docs = list(get_documents(nr=NR_DOCS, chunks=0, same_content=False))
 
-    original_docs = list(get_documents(chunks=0, same_content=False))
+    postgres_indexer.delete(original_docs)
 
-    postgres_indexer.handler.delete(original_docs)
+    with TimeContext(f'### indexing {len(original_docs)} docs'):
+        postgres_indexer.add(original_docs)
+    assert postgres_indexer.size == NR_DOCS
 
-    added = postgres_indexer.handler.add(original_docs)
-    assert added == 10
+    new_docs = list(
+        get_documents(nr=NR_DOCS, chunks=0, same_content=False, index_start=NR_DOCS)
+    )
+
+    with TimeContext(f'### indexing {len(new_docs)} docs'):
+        postgres_indexer.add(new_docs)
+    assert postgres_indexer.size == NR_DOCS * 2
 
     info_original_docs = [
         (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in original_docs
@@ -75,8 +85,7 @@ def test_postgress(tmpdir):
     validate_db_side(postgres_indexer, info_original_docs)
 
     new_docs = list(get_documents(chunks=False, nr=10, same_content=True))
-    updated = postgres_indexer.handler.update(new_docs)
-    assert updated == 10
+    postgres_indexer.update(new_docs)
 
     info_new_docs = [
         (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in new_docs
@@ -85,5 +94,5 @@ def test_postgress(tmpdir):
     expected_info = [(ids[0], vecs[0], metas[0])]
     validate_db_side(postgres_indexer, expected_info)
 
-    deleted = postgres_indexer.handler.delete(new_docs)
-    assert deleted == 10
+    postgres_indexer.delete(new_docs)
+    assert postgres_indexer.size == len(original_docs) - len(new_docs)

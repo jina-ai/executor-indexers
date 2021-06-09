@@ -32,6 +32,7 @@ class PostgreSQLDBMSIndexer(Executor):
         password: str = '123456',
         database: str = 'postgres',
         table: str = 'default_table',
+        max_connections=5,
         *args,
         **kwargs,
     ):
@@ -50,6 +51,7 @@ class PostgreSQLDBMSIndexer(Executor):
             password=self.password,
             database=self.database,
             table=self.table,
+            max_connections=max_connections,
         )
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
@@ -67,15 +69,11 @@ class PostgreSQLDBMSIndexer(Executor):
         .. # noqa: DAR201
         """
         with self.handler as postgres_handler:
-            postgres_handler.cursor.execute(
-                f'SELECT COUNT(*) from {self.handler.table}'
-            )
-            records = postgres_handler.cursor.fetchall()
-            return records[0][0]
+            return postgres_handler.get_size()
 
     @requests(on='/index')
     def add(self, docs: DocumentArray, **kwargs):
-        """Add a Document to PostgreSQLDBMS.
+        """Add Documents to Postgres
 
         :param docs: list of Documents
         """

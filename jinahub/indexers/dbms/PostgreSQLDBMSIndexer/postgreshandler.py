@@ -2,6 +2,8 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import psycopg2
+from psycopg2 import pool
+
 from jina import DocumentArray, Document
 from jina.logging.logger import JinaLogger
 from typing import Optional
@@ -35,45 +37,35 @@ class PostgreSQLDBMSHandler:
         password: str = 'default_pwd',
         database: str = 'postgres',
         table: Optional[str] = 'default_table',
+        max_connections: int = 5,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.logger = JinaLogger(self.__class__.__name__)
-        self.hostname = hostname
-        self.port = port
-        self.username = username
-        self.password = password
-        self.database = database
         self.table = table
 
-    def __enter__(self):
-        return self.connect()
-
-    def connect(self) -> 'PostgreSQLDBMSHandler':
-        """Connect to the database. """
-
-        import psycopg2
-        from psycopg2 import Error
-
         try:
-            # by default psycopg2 is not auto-committing
-            # this means we can have rollbacks
-            # and maintain ACID-ity
-            self.connection = psycopg2.connect(
-                user=self.username,
-                password=self.password,
-                database=self.database,
-                host=self.hostname,
-                port=self.port,
+            self.postgreSQL_pool = psycopg2.pool.SimpleConnectionPool(
+                1,
+                max_connections,
+                user=username,
+                password=password,
+                database=database,
+                host=hostname,
+                port=port,
             )
-            self.cursor = self.connection.cursor()
-            self.logger.info('Successfully connected to the database')
             self.use_table()
-            self.connection.commit()
-        except (Exception, Error) as error:
+        except (Exception, psycopg2.Error) as error:
             self.logger.error('Error while connecting to PostgreSQL', error)
+
+    def __enter__(self):
+        self.connection = self._get_connection()
         return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.connection:
+            self._close_connection(self.connection)
 
     def use_table(self):
         """
@@ -81,25 +73,26 @@ class PostgreSQLDBMSHandler:
 
         Create table if needed with id, vecs and metas.
         """
-        from psycopg2 import Error
-
-        self.cursor.execute(
+        connection = self._get_connection()
+        cursor = connection.cursor()
+        cursor.execute(
             'select exists(select * from information_schema.tables where table_name=%s)',
             (self.table,),
         )
-        if self.cursor.fetchone()[0]:
+        if cursor.fetchone()[0]:
             self.logger.info('Using existing table')
         else:
             try:
-                self.cursor.execute(
+                cursor.execute(
                     f'CREATE TABLE {self.table} ( \
                     ID VARCHAR PRIMARY KEY,  \
                     VECS BYTEA,  \
                     METAS BYTEA);'
                 )
                 self.logger.info('Successfully created table')
-            except (Exception, Error) as error:
+            except (Exception, psycopg2.Error) as error:
                 self.logger.error('Error while creating table!')
+        self._close_connection(connection)
 
     def add(self, docs: DocumentArray, *args, **kwargs):
         """Insert the documents into the database.
@@ -112,13 +105,14 @@ class PostgreSQLDBMSHandler:
         :return record: List of Document's id added
         """
         row_count = 0
+        cursor = self.connection.cursor()
         for doc in docs:
             try:
-                self.cursor.execute(
+                cursor.execute(
                     f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
                     (doc.id, doc.embedding.tobytes(), doc_without_embedding(doc)),
                 )
-                row_count += self.cursor.rowcount
+                row_count += cursor.rowcount
             except psycopg2.errors.UniqueViolation:
                 self.logger.warning(
                     f'Document with id {doc.id} already exists in PSQL database. Skipping...'
@@ -136,13 +130,13 @@ class PostgreSQLDBMSHandler:
         :return record: List of Document's id after update
         """
         row_count = 0
-
+        cursor = self.connection.cursor()
         for doc in docs:
-            self.cursor.execute(
+            cursor.execute(
                 f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
                 (doc.embedding.tobytes(), doc_without_embedding(doc), doc.id),
             )
-            row_count += self.cursor.rowcount
+            row_count += cursor.rowcount
         self.connection.commit()
         return row_count
 
@@ -155,36 +149,43 @@ class PostgreSQLDBMSHandler:
         :return record: List of Document's id after deletion
         """
         row_count = 0
+        cursor = self.connection.cursor()
         for doc in docs:
-            self.cursor.execute(
-                f'DELETE FROM {self.table} where (ID) = (%s);', (doc.id,)
-            )
-            row_count += self.cursor.rowcount
+            cursor.execute(f'DELETE FROM {self.table} where (ID) = (%s);', (doc.id,))
+            row_count += cursor.rowcount
         self.connection.commit()
         return row_count
 
-    def __exit__(self, *args):
-        """ Make sure the connection to the database is closed."""
-
-        from psycopg2 import Error
-
-        try:
-            self.connection.close()
-            self.cursor.close()
-            self.logger.info('PostgreSQL connection is closed')
-        except (Exception, Error) as error:
-            self.logger.error('Error while closing: ', error)
+    def close(self):
+        self.postgreSQL_pool.closeall()
 
     def query(self, docs: DocumentArray, **kwargs):
         """Use the Postgre db as a key-value engine, returning the metadata of a document id"""
+        cursor = self.connection.cursor()
         for doc in docs:
             # retrieve metadata
-            self.cursor.execute(
-                f'SELECT METAS FROM {self.table} WHERE ID = %s;', (doc.id,)
-            )
-            result = self.cursor.fetchone()
+            cursor.execute(f'SELECT METAS FROM {self.table} WHERE ID = %s;', (doc.id,))
+            result = cursor.fetchone()
             data = bytes(result[0])
             retrieved_doc = Document(data)
             # how to assign all fields but embedding?
             doc.content = retrieved_doc.content
             doc.mime_type = doc.mime_type
+
+    def _close_connection(self, connection):
+        # restore it to the pool
+        self.postgreSQL_pool.putconn(connection)
+
+    def _get_connection(self):
+        # by default psycopg2 is not auto-committing
+        # this means we can have rollbacks
+        # and maintain ACID-ity
+        connection = self.postgreSQL_pool.getconn()
+        connection.autocommit = False
+        return connection
+
+    def get_size(self):
+        cursor = self.connection.cursor()
+        cursor.execute(f'SELECT COUNT(*) from {self.table}')
+        records = cursor.fetchall()
+        return records[0][0]
