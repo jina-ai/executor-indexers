@@ -51,8 +51,8 @@ class AnnoyIndexer(Executor):
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
-            _num_dim = self._vecs.shape[1]
-            self._indexer = AnnoyIndex(_num_dim, self.metric)
+            num_dim = self._vecs.shape[1]
+            self._indexer = AnnoyIndex(num_dim, self.metric)
             self._doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs)
         else:
