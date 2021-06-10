@@ -53,8 +53,7 @@ class AnnoyIndexer(Executor):
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
             self.indexer = AnnoyIndex(num_dim, self.metric)
-            self._docID_to_mapID = {}
-            self._mapID_to_docID = {}
+            self.doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs)
         else:
             self.logger.warning(
@@ -64,8 +63,7 @@ class AnnoyIndexer(Executor):
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
             self.indexer.add_item(idx, v.astype(np.float32))
-            self._docID_to_mapID[ids[idx]] = idx
-            self._mapID_to_docID[idx] = ids[idx]
+            self.doc_id_to_offset[ids[idx]] = idx
         self.indexer.build(self.num_trees)
 
     @requests(on='/search')
@@ -75,11 +73,11 @@ class AnnoyIndexer(Executor):
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
-                match = Document(id=self._mapID_to_docID[idx], embedding=self._vecs[idx])
+                match = Document(id=self._ids[idx], embedding=self._vecs[idx])
                 match.score.value = 1 / (1 + dist)
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
-            doc.embedding = np.array(self.indexer.get_item_vector(int(self._docID_to_mapID[str(doc.id)])))
+            doc.embedding = np.array(self.indexer.get_item_vector(int(self.doc_id_to_offset[str(doc.id)])))
