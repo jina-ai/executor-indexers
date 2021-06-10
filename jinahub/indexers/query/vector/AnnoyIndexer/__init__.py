@@ -35,6 +35,7 @@ class AnnoyIndexer(Executor):
         :param top_k: get tok k vectors
         :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
+        :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
         :param args:
         :param kwargs:
