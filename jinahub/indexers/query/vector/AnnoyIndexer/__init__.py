@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
+from typing import Optional
+
 import numpy as np
 from annoy import AnnoyIndex
 from jina import Executor, requests, DocumentArray, Document
@@ -21,10 +23,9 @@ class AnnoyIndexer(Executor):
     def __init__(
             self,
             top_k: int = 10,
-            num_dim: int = 768,
             metric: str = 'euclidean',
             num_trees: int = 10,
-            dump_path: str = None,
+            dump_path: Optional[str] = None,
             traverse_path: list = ['r'],
             **kwargs,
     ):
@@ -32,7 +33,6 @@ class AnnoyIndexer(Executor):
         Initialize an AnnoyIndexer
 
         :param top_k: get tok k vectors
-        :param num_dim: dimension of the vector
         :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
@@ -42,9 +42,7 @@ class AnnoyIndexer(Executor):
         super().__init__(**kwargs)
         self.top_k = top_k
         self.metric = metric
-        self.num_dim = num_dim
         self.num_trees = num_trees
-        self.indexer = AnnoyIndex(self.num_dim, self.metric)
         self.traverse_path = traverse_path
         self.logger = JinaLogger(self.metas.name)
         dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
@@ -53,7 +51,10 @@ class AnnoyIndexer(Executor):
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
-            self._idx_to_ids = {}
+            num_dim = self._vecs.shape[1]
+            self.indexer = AnnoyIndex(num_dim, self.metric)
+            self._docID_to_mapID = {}
+            self._mapID_to_docID = {}
             self._load_index(self._ids, self._vecs)
         else:
             self.logger.warning(
@@ -63,7 +64,8 @@ class AnnoyIndexer(Executor):
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
             self.indexer.add_item(idx, v.astype(np.float32))
-            self._idx_to_ids[idx] = ids[idx]
+            self._docID_to_mapID[ids[idx]] = idx
+            self._mapID_to_docID[idx] = ids[idx]
         self.indexer.build(self.num_trees)
 
     @requests(on='/search')
@@ -73,11 +75,11 @@ class AnnoyIndexer(Executor):
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
-                match = Document(id=self._idx_to_ids[idx], embedding=self._vecs[idx])
+                match = Document(id=self._mapID_to_docID[idx], embedding=self._vecs[idx])
                 match.score.value = 1 / (1 + dist)
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
-            doc.embedding = np.array(self.indexer.get_item_vector(int(self._idx_to_ids[int(doc.id)])))
+            doc.embedding = np.array(self.indexer.get_item_vector(int(self._docID_to_mapID[str(doc.id)])))

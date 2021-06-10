@@ -42,7 +42,7 @@ def test_simple_annoy():
 def test_query_vector(tmpdir):
     metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
 
-    indexer = AnnoyIndexer(dump_path=DUMP_PATH, num_dim=7, top_k=TOP_K, metas=metas)
+    indexer = AnnoyIndexer(dump_path=DUMP_PATH, top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs)
 
@@ -56,7 +56,7 @@ def test_query_vector(tmpdir):
     assert len(docs[0].matches[0].embedding) == 7
     assert docs[0].matches[0].embedding in vecs
 
-    da = DocumentArray([Document(id=0),Document(id=1),Document(id=2)])
+    da = DocumentArray([Document(id=0), Document(id=1), Document(id=2)])
     indexer.fill_embedding(da)
     for i, doc in enumerate(da):
         assert list(doc.embedding)
