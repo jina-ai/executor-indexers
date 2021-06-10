@@ -51,9 +51,9 @@ class AnnoyIndexer(Executor):
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
-            num_dim = self._vecs.shape[1]
-            self.indexer = AnnoyIndex(num_dim, self.metric)
-            self.doc_id_to_offset = {}
+            _num_dim = self._vecs.shape[1]
+            self._indexer = AnnoyIndex(_num_dim, self.metric)
+            self._doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs)
         else:
             self.logger.warning(
@@ -62,14 +62,14 @@ class AnnoyIndexer(Executor):
 
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
-            self.indexer.add_item(idx, v.astype(np.float32))
-            self.doc_id_to_offset[ids[idx]] = idx
-        self.indexer.build(self.num_trees)
+            self._indexer.add_item(idx, v.astype(np.float32))
+            self._doc_id_to_offset[ids[idx]] = idx
+        self._indexer.build(self.num_trees)
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, **kwargs):
         for doc in docs.traverse_flat(self.traverse_path):
-            indices, dists = self.indexer.get_nns_by_vector(
+            indices, dists = self._indexer.get_nns_by_vector(
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
@@ -80,4 +80,4 @@ class AnnoyIndexer(Executor):
     @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
-            doc.embedding = np.array(self.indexer.get_item_vector(int(self.doc_id_to_offset[str(doc.id)])))
+            doc.embedding = np.array(self._indexer.get_item_vector(int(self._doc_id_to_offset[str(doc.id)])))
