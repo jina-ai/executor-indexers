@@ -1,0 +1,4 @@
+jtype: NumpyTaggingFileQueryIndexer
+metas:
+  name: indexer
+  workspace: $WORKSPACE

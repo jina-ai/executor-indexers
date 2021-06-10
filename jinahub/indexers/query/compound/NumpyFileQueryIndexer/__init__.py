@@ -5,22 +5,26 @@ import copy
 from typing import Dict
 
 from jina import requests, DocumentArray, Executor
-from jina.hub.indexers.keyvalue.FileQueryIndexer import FileQueryIndexer
-from jina.hub.indexers.vector.NumpyIndexer import NumpyIndexer
+
+from jinahub.indexers.query.keyvalue.FileQueryIndexer import FileQueryIndexer
+from jinahub.indexers.query.vector.NumpyIndexer import NumpyIndexer
 
 
 class NumpyFileQueryIndexer(Executor):
-    def __init__(self, dump_path, *args, **kwargs):
+    def __init__(self, dump_path=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._vec_indexer = NumpyIndexer(dump_path=dump_path, *args, **kwargs)
         self._kv_indexer = FileQueryIndexer(dump_path=dump_path, *args, **kwargs)
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
         self._vec_indexer.search(docs, parameters)
+        print(f'~~~~~ after vec {len(docs[0].matches)}')
         kv_parameters = copy.deepcopy(parameters)
 
         kv_parameters['traversal_paths'] = [
             path + 'm' for path in kv_parameters.get('traversal_paths', ['r'])
         ]
 
-        self._kv_indexer.search(docs, kv_parameters)
+        self._kv_indexer.search(docs, parameters=kv_parameters)
+        print(f'~~~~~ after kv {len(docs[0].matches)}')
