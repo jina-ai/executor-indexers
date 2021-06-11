@@ -19,7 +19,6 @@ class NumpyFileQueryIndexer(Executor):
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
         self._vec_indexer.search(docs, parameters)
-        print(f'~~~~~ after vec {len(docs[0].matches)}')
         kv_parameters = copy.deepcopy(parameters)
 
         kv_parameters['traversal_paths'] = [
@@ -27,4 +26,3 @@ class NumpyFileQueryIndexer(Executor):
         ]
 
         self._kv_indexer.search(docs, parameters=kv_parameters)
-        print(f'~~~~~ after kv {len(docs[0].matches)}')

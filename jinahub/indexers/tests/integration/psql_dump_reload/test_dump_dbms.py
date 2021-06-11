@@ -52,15 +52,11 @@ class MatchMerger(Executor):
             if top_k:
                 top_k = int(top_k)
 
-            all_origins = set()
             for doc in results.values():
-                origins = set([m.tags['origin'] for m in doc.matches])
-                all_origins = all_origins.union(origins)
                 doc.matches = sorted(
                     doc.matches, key=lambda m: m.score.value, reverse=True
                 )[:top_k]
 
-            print(f'======= {self.runtime_args.name} {all_origins}')
             docs = DocumentArray(results.values())
             return docs
 
@@ -103,7 +99,7 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     metas_dump = list(metas_dump)
     np.testing.assert_equal(
         metas_dump,
-        [doc_without_embedding(d).SerializeToString() for d in docs_expected],
+        [doc_without_embedding(d) for d in docs_expected],
     )
 
 

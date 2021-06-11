@@ -28,7 +28,6 @@ class TagMatchMerger(MatchMerger):
         MatchMerger.merge(
             self, docs_matrix=docs_matrix, parameters=parameters, **kwargs
         )
-        print(f'~~~~~ after merger {len(docs_matrix[0][0].matches)}')
 
 
 class TaggingFileQueryIndexer(FileQueryIndexer):
