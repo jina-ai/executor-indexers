@@ -60,7 +60,7 @@ class MatchMerger(Executor):
                     doc.matches, key=lambda m: m.score.value, reverse=True
                 )[:top_k]
 
-            print(f'======= {all_origins}')
+            print(f'======= {self.runtime_args.name} {all_origins}')
             docs = DocumentArray(results.values())
             return docs
 

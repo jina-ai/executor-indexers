@@ -19,13 +19,15 @@ np.random.seed(0)
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 ORIGIN_TAG = 'origin'
-TOP_K = 10
+TOP_K = 30
 
 
 class TagMatchMerger(MatchMerger):
     @requests(on='/tag_search')
     def merge(self, docs_matrix, parameters: Dict, **kwargs):
-        MatchMerger.merge(self, docs_matrix, parameters, **kwargs)
+        MatchMerger.merge(
+            self, docs_matrix=docs_matrix, parameters=parameters, **kwargs
+        )
         print(f'~~~~~ after merger {len(docs_matrix[0][0].matches)}')
 
 
@@ -92,6 +94,7 @@ def assert_folder(dump_path, num_shards):
 def test_shards_numpy_filequery(tmpdir, num_shards):
     pod_name = 'index'
     os.environ['WORKSPACE'] = str(tmpdir)
+    os.environ['SHARDS'] = str(num_shards)
 
     docs_indexed = list(random_docs(0, 201))
     dump_path = os.path.join(tmpdir, 'dump_path')
@@ -102,15 +105,7 @@ def test_shards_numpy_filequery(tmpdir, num_shards):
     inputs = list(random_docs(0, 1))
 
     # TODO workspace is wrongly saved to curdir
-    with Flow(return_results=True).add(
-        name=pod_name,
-        uses='indexer.yml',
-        shards=num_shards,
-        timeout_ready=-1,
-        polling='all',
-        replicas=2,
-        uses_after=TagMatchMerger,
-    ) as flow:
+    with Flow.load_config('flow.yml') as flow:
         flow.rolling_update(pod_name=pod_name, dump_path=dump_path)
         time.sleep(2)
         results = flow.post(
