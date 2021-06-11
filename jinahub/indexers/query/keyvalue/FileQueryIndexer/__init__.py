@@ -38,7 +38,7 @@ class FileQueryIndexer(Executor, FileWriterMixin):
 
         self._start = 0
         self._page_size = mmap.ALLOCATIONGRANULARITY
-        self.logger = JinaLogger(self.runtime_args.name)
+        self.logger = JinaLogger(self.runtime_args.name or 'FileQuery')
 
         self.default_traversal_path = default_traversal_path
 
