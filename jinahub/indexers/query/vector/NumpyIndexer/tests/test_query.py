@@ -1,15 +1,12 @@
 import numpy as np
-
 from jina import Document, DocumentArray
 
 from .. import NumpyIndexer
 
-runtime = {'pea_id': 0, 'replica_id': 0}
-
 
 def test_query_vector(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms'}
-    indexer = NumpyIndexer(dump_path='tests/dump1', metas=metas, runtime_args=runtime)
+    runtime = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    indexer = NumpyIndexer(dump_path='tests/dump1', runtime_args=runtime)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     TOP_K = 5
     indexer.search(docs, {'top_k': TOP_K})
@@ -19,10 +16,8 @@ def test_query_vector(tmpdir):
 
 
 def test_empty_shard(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms'}
-    indexer = NumpyIndexer(
-        dump_path='tests/dump_empty', metas=metas, runtime_args=runtime
-    )
+    runtime = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    indexer = NumpyIndexer(dump_path='tests/dump_empty', runtime_args=runtime)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     TOP_K = 5
     indexer.search(docs, {'top_k': TOP_K})
