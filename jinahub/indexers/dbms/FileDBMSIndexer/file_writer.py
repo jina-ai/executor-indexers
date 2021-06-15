@@ -97,7 +97,9 @@ class _ReadHandler:
 
     @property
     def total_bytes(self):
-        return max(p + m for p, _, m in self.header.values())
+        if self.header.values():
+            return max(p + m for p, _, m in self.header.values())
+        return 0
 
     def close(self):
         """Close the file."""

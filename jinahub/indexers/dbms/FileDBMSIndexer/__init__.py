@@ -11,7 +11,7 @@ import os
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
 
-from jina.helper import call_obj_fn, cached_property, get_readable_size
+from jina.helper import cached_property, get_readable_size
 
 from jina_commons.indexers.dump import export_dump_streaming
 from .file_writer import FileWriterMixin
@@ -141,8 +141,10 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         if self._dump_on_exit:
             shutil.rmtree(self._dump_path, ignore_errors=True)
             self.dump({'dump_path': self._dump_path})
-        call_obj_fn(self.write_handler, 'close')
-        call_obj_fn(self.query_handler, 'close')
+        if self.write_handler:
+            self.write_handler.close()
+        if self.query_handler:
+            self.query_handler.close()
         super().close()
 
     def _filter_nonexistent_keys_values(
@@ -229,6 +231,7 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         """
         ids, vecs, metas = self._unpack_docs(docs)
         vecs_metas = [pickle.dumps((vec, meta)) for vec, meta in zip(vecs, metas)]
+        self.handler_mutex = False
         keys, vecs_metas = self._filter_nonexistent_keys_values(
             ids, vecs_metas, self.query_handler.header.keys()
         )
