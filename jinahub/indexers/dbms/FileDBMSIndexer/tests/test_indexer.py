@@ -2,8 +2,9 @@ import numpy as np
 import os
 
 from jina import Document, DocumentArray
-from jina.hub.indexers.dump import import_vectors, import_metas
-from .. import BinaryPbDBMSIndexer
+
+from jina_commons.indexers.dump import import_vectors, import_metas
+from .. import FileDBMSIndexer
 
 np.random.seed(0)
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
@@ -51,16 +52,16 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     np.testing.assert_equal(
         metas_dump,
         [
-            BinaryPbDBMSIndexer._doc_without_embedding(d).SerializeToString()
+            FileDBMSIndexer._doc_without_embedding(d).SerializeToString()
             for d in docs_expected
         ],
     )
 
 
-def test_dbms_keyvalue(tmpdir):
+def test_dbms_file_writer(tmpdir):
     docs = get_documents(nr=10)
     metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
-    with BinaryPbDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
+    with FileDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
         indexer.add(docs)
         assert indexer.size == len(docs)
         indexer.dump({'dump_path': os.path.join(tmpdir, 'dump1'), 'shards': 2})
@@ -84,7 +85,7 @@ def test_dbms_keyvalue(tmpdir):
     new_docs = get_documents(nr=10)
 
     # assert contents update
-    with BinaryPbDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
+    with FileDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
         indexer.update(new_docs)
         assert indexer.size == 2 * len(docs)
         dump_path = indexer.default_dump_path
@@ -92,10 +93,10 @@ def test_dbms_keyvalue(tmpdir):
     assert_dump_data(dump_path, docs2 + new_docs, 1, 0)
 
     # assert contents update
-    with BinaryPbDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
-        indexer.delete([d.id for d in docs])
+    with FileDBMSIndexer(index_filename='dbms', metas=metas) as indexer:
+        indexer.delete(docs)
         assert indexer.size == len(docs)
         dump_path = indexer.default_dump_path
-        print("ALMOST FINISHED DELETEING")
+        print("ALMOST FINISHED DELETING")
 
     assert_dump_data(dump_path, docs2, 1, 0)

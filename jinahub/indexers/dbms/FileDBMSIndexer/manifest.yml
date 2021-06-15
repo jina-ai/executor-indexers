@@ -1,5 +1,5 @@
 manifest_version: 1
-name: BinaryPbDBMSIndexer
+name: FileDBMSIndexer
 kind: indexer
 description: A basic file based indexer
 author: Jina AI Dev-Team (dev-team@jina.ai)
@@ -8,5 +8,5 @@ vendor: Jina AI Limited
 documentation: https://github.com/jina-ai/jina-hub
 version: 0.0.1
 license: apache-2.0
-keywords: [database, BinaryPbDBMSIndexer, indexer]
-type: pod
+keywords: [database, FileDBMSIndexer, indexer]
+type: executor
