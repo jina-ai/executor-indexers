@@ -7,6 +7,7 @@ import numpy as np
 from jina import Executor, requests, DocumentArray
 from jina.logging.logger import JinaLogger
 
+from jina_commons import get_logger
 from jinahub.indexers.dbms.PostgreSQLDBMSIndexer import PostgreSQLDBMSHandler
 
 
@@ -43,7 +44,7 @@ class PostgreSQLQueryIndexer(Executor):
         self.password = password
         self.database = database
         self.table = table
-        self.logger = JinaLogger('PostgreSQLQueryIndexer')
+        self.logger = get_logger(self)
         self.handler = PostgreSQLDBMSHandler(
             hostname=self.hostname,
             port=self.port,

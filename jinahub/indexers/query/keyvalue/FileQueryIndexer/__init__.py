@@ -5,6 +5,7 @@ from typing import Optional, Dict
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
 
+from jina_commons import get_logger
 from jina_commons.indexers.dump import import_metas
 from .file_writer import FileWriterMixin
 
@@ -38,7 +39,7 @@ class FileQueryIndexer(Executor, FileWriterMixin):
 
         self._start = 0
         self._page_size = mmap.ALLOCATIONGRANULARITY
-        self.logger = JinaLogger(self.runtime_args.name or 'FileQuery')
+        self.logger = get_logger(self)
 
         self.default_traversal_path = default_traversal_path
 

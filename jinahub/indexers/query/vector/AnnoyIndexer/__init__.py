@@ -7,6 +7,8 @@ import numpy as np
 from annoy import AnnoyIndex
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
+
+from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
 
@@ -21,13 +23,13 @@ class AnnoyIndexer(Executor):
     """
 
     def __init__(
-            self,
-            top_k: int = 10,
-            metric: str = 'euclidean',
-            num_trees: int = 10,
-            dump_path: Optional[str] = None,
-            traverse_path: list = ['r'],
-            **kwargs,
+        self,
+        top_k: int = 10,
+        metric: str = 'euclidean',
+        num_trees: int = 10,
+        dump_path: Optional[str] = None,
+        traverse_path: list = ['r'],
+        **kwargs,
     ):
         """
         Initialize an AnnoyIndexer
@@ -45,7 +47,7 @@ class AnnoyIndexer(Executor):
         self.metric = metric
         self.num_trees = num_trees
         self.traverse_path = traverse_path
-        self.logger = JinaLogger(self.metas.name)
+        self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         if dump_path is not None:
             self.logger.info('Start building "AnnoyIndexer" from dump data')
@@ -81,4 +83,6 @@ class AnnoyIndexer(Executor):
     @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
-            doc.embedding = np.array(self._indexer.get_item_vector(int(self._doc_id_to_offset[str(doc.id)])))
+            doc.embedding = np.array(
+                self._indexer.get_item_vector(int(self._doc_id_to_offset[str(doc.id)]))
+            )
