@@ -6,6 +6,8 @@ from typing import Tuple, Dict
 import numpy as np
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
+
+from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
 """
@@ -21,7 +23,7 @@ class NumpyIndexer(Executor):
     def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
-        self.logger = JinaLogger(self.runtime_args.name)
+        self.logger = get_logger(self)
         self.default_top_k = default_top_k
         if self.dump_path is not None:
             self.logger.info(f'Importing data from {self.dump_path}')
