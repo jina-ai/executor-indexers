@@ -33,6 +33,7 @@ class PostgreSQLDBMSIndexer(Executor):
         password: str = '123456',
         database: str = 'postgres',
         table: str = 'default_table',
+        max_connections=5,
         *args,
         **kwargs,
     ):
@@ -51,13 +52,15 @@ class PostgreSQLDBMSIndexer(Executor):
             password=self.password,
             database=self.database,
             table=self.table,
+            max_connections=max_connections,
         )
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
             # always order the dump by id as integer
-            handler.cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
-            records = handler.cursor.fetchall()
+            cursor = handler.connection.cursor()
+            cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
+            records = cursor.fetchall()
             for rec in records:
                 yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
 
@@ -68,15 +71,11 @@ class PostgreSQLDBMSIndexer(Executor):
         .. # noqa: DAR201
         """
         with self.handler as postgres_handler:
-            postgres_handler.cursor.execute(
-                f'SELECT COUNT(*) from {self.handler.table}'
-            )
-            records = postgres_handler.cursor.fetchall()
-            return records[0][0]
+            return postgres_handler.get_size()
 
     @requests(on='/index')
     def add(self, docs: DocumentArray, **kwargs):
-        """Add a Document to PostgreSQLDBMS.
+        """Add Documents to Postgres
 
         :param docs: list of Documents
         """
@@ -122,3 +121,9 @@ class PostgreSQLDBMSIndexer(Executor):
         export_dump_streaming(
             path, shards=shards, size=self.size, data=self._get_generator()
         )
+
+    def close(self) -> None:
+        """
+        Close the connections in the connection pool
+        """
+        self.handler.close()
