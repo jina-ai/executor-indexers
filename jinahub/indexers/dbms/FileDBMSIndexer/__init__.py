@@ -335,7 +335,7 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         root_directory = Path(self.workspace)
         return sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
 
-    def get(self, docs: DocumentArray, **kwargs):
+    def _get(self, docs: DocumentArray, **kwargs):
         """Get a document by its id
 
         :param docs: the documents
