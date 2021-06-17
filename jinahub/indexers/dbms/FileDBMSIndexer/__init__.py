@@ -5,7 +5,7 @@ import mmap
 import pickle
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Generator, Optional, Iterable
+from typing import List, Tuple, Generator, Optional, Iterable, Dict
 import numpy as np
 import os
 from jina import Executor, requests, DocumentArray, Document
@@ -334,3 +334,24 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         """
         root_directory = Path(self.workspace)
         return sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
+
+    def get(self, docs: DocumentArray, **kwargs):
+        """Get a document by its id
+
+        :param docs: the documents
+        """
+        self._search(docs, is_update=False)
+
+    def _search(self, docs: DocumentArray, is_update):
+        for i, doc in enumerate(docs):
+            doc_and_vec = pickle.loads(self._query([doc.id])[0])
+            serialized_doc = doc_and_vec[1]
+            serialized_doc = Document(serialized_doc)
+            serialized_doc.pop('content_hash')
+            if is_update:
+                doc.update(serialized_doc)
+            else:
+                doc = Document(serialized_doc, copy=True)
+            doc.embedding = doc_and_vec[0]
+            doc.update_content_hash()
+            docs[i] = doc

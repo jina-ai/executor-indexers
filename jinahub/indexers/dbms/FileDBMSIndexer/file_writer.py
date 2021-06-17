@@ -217,6 +217,8 @@ class FileWriterMixin:
                 self._size -= 1
 
     def _query(self, keys: Iterable[str]) -> List[bytes]:
+        if self.query_handler is None:
+            self.handler_mutex = False
         query_results = []
         for key in keys:
             pos_info = self.query_handler.header.get(key, None)

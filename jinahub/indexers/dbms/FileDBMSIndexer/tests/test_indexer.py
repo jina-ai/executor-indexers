@@ -1,7 +1,9 @@
 import numpy as np
 import os
 
+import pytest
 from jina import Document, DocumentArray, Flow
+from jina.logging.profile import TimeContext
 
 from jina_commons.indexers.dump import import_vectors, import_metas
 from .. import FileDBMSIndexer
@@ -168,3 +170,63 @@ def test_update_not_growing_flow(tmpdir):
     ) as indexer:
         assert indexer.physical_size() == size
         assert indexer.size == items
+
+
+def _in_docker():
+    """ Returns: True if running in a Docker container, else False """
+    with open('/proc/1/cgroup', 'rt') as ifh:
+        if 'docker' in ifh.read():
+            print('in docker, skipping benchmark')
+            return True
+        return False
+
+
+def test_filedbms_crud(tmpdir, nr_docs=10):
+    docs = get_documents(nr=nr_docs)
+
+    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0}
+
+    # indexing
+    indexer = FileDBMSIndexer(metas=metas)
+    indexer.add(docs)
+    assert indexer.size == len(docs)
+
+    query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
+    indexer.get(query_docs)
+    for q, d in zip(query_docs, docs):
+        assert d.id == q.id
+        assert d.text == q.text
+        np.testing.assert_equal(d.embedding, q.embedding)
+
+    # getting size
+    items = indexer.size
+
+    # updating
+    update_docs = get_documents(nr=nr_docs, text='hello there')
+    indexer.update(update_docs)
+
+    query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
+    indexer.get(query_docs)
+    for q, d in zip(query_docs, update_docs):
+        assert d.id == q.id
+        assert d.text == q.text
+        np.testing.assert_equal(d.embedding, q.embedding)
+
+    # asserting...
+    assert indexer.size == items
+
+    indexer.delete(docs)
+    assert indexer.size == 0
+
+
+# benchmark only
+@pytest.mark.skipif(
+    _in_docker() or ('GITHUB_WORKFLOW' in os.environ),
+    reason='skip the benchmark test on github workflow or docker',
+)
+def test_filedbms_bm(tmpdir):
+    nr = 100000
+    # Cristian: running filedbms benchmark with 10000 docs takes 12 seconds (12.42s)
+    # running filedbms benchmark with 20000 docs takes 41 seconds (41.21s)
+    with TimeContext(f'running filedbms benchmark with {nr} docs'):
+        test_filedbms_crud(tmpdir, nr)
