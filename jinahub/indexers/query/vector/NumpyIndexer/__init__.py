@@ -6,6 +6,8 @@ from typing import Tuple, Dict
 import numpy as np
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
+
+from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
 """
@@ -20,18 +22,19 @@ potential TODO:
 class NumpyIndexer(Executor):
     def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
         super().__init__(**kwargs)
-        dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
-        self.logger = JinaLogger(self.metas.name)
+        self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
+        self.logger = get_logger(self)
         self.default_top_k = default_top_k
-        if dump_path is not None:
-            self.logger.info(f'Importing data from {dump_path}')
-            ids, vecs = import_vectors(dump_path, str(self.runtime_args.pea_id))
+        if self.dump_path is not None:
+            self.logger.info(f'Importing data from {self.dump_path}')
+            ids, vecs = import_vectors(self.dump_path, str(self.runtime_args.pea_id))
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
             self._ids_to_idx = {}
+            self.logger.info(f'Imported {len(self._ids)} documents.')
         else:
             self.logger.warning(
-                'No data loaded in "NumpyIndexer". Use .rolling_update() to re-initialize it...'
+                f'No dump_path provided for {self.__class__.__name__}. Use flow.rolling_update()...'
             )
 
     @requests(on='/search')

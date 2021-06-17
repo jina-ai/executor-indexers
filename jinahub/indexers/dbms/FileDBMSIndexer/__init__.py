@@ -9,18 +9,17 @@ from typing import List, Tuple, Generator, Optional, Iterable
 import numpy as np
 import os
 from jina import Executor, requests, DocumentArray, Document
-from jina.logging import JinaLogger
+from jina.logging.logger import JinaLogger
 
-from jina.hub.indexers.dump import export_dump_streaming
 from jina.helper import call_obj_fn, cached_property, get_readable_size
-from .binarypb import BinaryPbWriterMixin
 
-# from .query import BinaryPbQueryIndexer
+from jina_commons.indexers.dump import export_dump_streaming
+from .file_writer import FileWriterMixin
 
 HEADER_NONE_ENTRY = (-1, -1, -1)
 
 
-class BinaryPbDBMSIndexer(Executor, BinaryPbWriterMixin):
+class FileDBMSIndexer(Executor, FileWriterMixin):
     """
     A DBMS Indexer (no query method)
 
@@ -49,7 +48,7 @@ class BinaryPbDBMSIndexer(Executor, BinaryPbWriterMixin):
         self.is_handler_loaded = False
 
         self._page_size = mmap.ALLOCATIONGRANULARITY
-        self.logger = JinaLogger(self.__class__.__name__)
+        self.logger = JinaLogger(getattr(self.metas, 'name', self.__class__.__name__))
         self._dump_on_exit = dump_on_exit
 
         if self.is_exist:
@@ -81,12 +80,6 @@ class BinaryPbDBMSIndexer(Executor, BinaryPbWriterMixin):
                 self.logger.info(f'indexer size: {r.size()}')
                 self.is_handler_loaded = True
         return r
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
 
     @property
     def is_exist(self) -> bool:
@@ -143,7 +136,7 @@ class BinaryPbDBMSIndexer(Executor, BinaryPbWriterMixin):
     def close(self):
         """Close all file-handlers and release all resources. """
         self.logger.info(
-            f'indexer size: {self.size} physical size: {get_readable_size(BinaryPbDBMSIndexer.physical_size(self.workspace))}'
+            f'indexer size: {self.size} physical size: {get_readable_size(FileDBMSIndexer.physical_size(self.workspace))}'
         )
         if self._dump_on_exit:
             shutil.rmtree(self._dump_path, ignore_errors=True)
@@ -246,12 +239,20 @@ class BinaryPbDBMSIndexer(Executor, BinaryPbWriterMixin):
             with self.write_handler as write_handler:
                 self._add(keys, vecs_metas, write_handler)
 
+    @requests(on='/delete')
+    def delete(self, docs: DocumentArray, **kwargs):
+        """Delete document from the database.
+
+        :param docs: list of Documents
+        """
+        FileWriterMixin.delete(self, [doc.id for doc in docs])
+
     def _unpack_docs(self, docs: DocumentArray, *args, **kwargs) -> None:
         info = [
             (
                 doc.id,
                 doc.embedding,
-                BinaryPbDBMSIndexer._doc_without_embedding(doc).SerializeToString(),
+                self._doc_without_embedding(doc).SerializeToString(),
             )
             for doc in docs
         ]

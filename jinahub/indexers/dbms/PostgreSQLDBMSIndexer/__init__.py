@@ -2,12 +2,13 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 from typing import Tuple, Generator, Dict
-import numpy as np
-from jina.logging.logger import JinaLogger
-from jina_commons.indexers.dump import export_dump_streaming
 
-from .postgreshandler import PostgreSQLDBMSHandler
+import numpy as np
 from jina import Executor, requests, DocumentArray
+
+from jina_commons import get_logger
+from jina_commons.indexers.dump import export_dump_streaming
+from .postgreshandler import PostgreSQLDBMSHandler
 
 
 class PostgreSQLDBMSIndexer(Executor):
@@ -43,7 +44,7 @@ class PostgreSQLDBMSIndexer(Executor):
         self.password = password
         self.database = database
         self.table = table
-        self.logger = JinaLogger(self.metas.name)
+        self.logger = get_logger(self)
         self.handler = PostgreSQLDBMSHandler(
             hostname=self.hostname,
             port=self.port,

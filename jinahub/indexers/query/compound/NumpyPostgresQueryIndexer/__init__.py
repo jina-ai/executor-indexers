@@ -7,6 +7,7 @@ from typing import Dict
 from jina import requests, DocumentArray, Executor
 from jina.logging.logger import JinaLogger
 
+from jina_commons import get_logger
 from jinahub.indexers.query.keyvalue.PostgreSQLQueryIndexer import (
     PostgreSQLQueryIndexer,
 )
@@ -20,7 +21,7 @@ class NumpyPostgresQueryIndexer(Executor):
         super().__init__(**kwargs)
         # when constructed from rolling update the dump_path is passed via a runtime_arg
         dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
-        self.logger = JinaLogger(self.metas.name)
+        self.logger = get_logger(self)
         self._kv_indexer = None
         self._vec_indexer = None
         if dump_path:

@@ -43,7 +43,7 @@ class PostgreSQLDBMSHandler:
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.logger = JinaLogger(self.__class__.__name__)
+        self.logger = JinaLogger('psq_handler')
         self.table = table
 
         try:

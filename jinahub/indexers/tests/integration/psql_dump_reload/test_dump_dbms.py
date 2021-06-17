@@ -14,6 +14,9 @@ from typing import Dict
 
 # required pytest fixture
 # noinspection PyUnresolvedReferences
+from jinahub.indexers.dbms.PostgreSQLDBMSIndexer.postgreshandler import (
+    doc_without_embedding,
+)
 from jinahub.indexers.tests import docker_compose
 
 # required in order to be found by Flow creation
@@ -58,13 +61,6 @@ class MatchMerger(Executor):
             return docs
 
 
-def doc_without_embedding(d):
-    new_doc = Document()
-    new_doc.CopyFrom(d)
-    new_doc.ClearField('embedding')
-    return new_doc
-
-
 def get_documents(nr=10, index_start=0, emb_size=7):
     for i in range(index_start, nr + index_start):
         with Document() as d:
@@ -103,7 +99,7 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     metas_dump = list(metas_dump)
     np.testing.assert_equal(
         metas_dump,
-        [doc_without_embedding(d).SerializeToString() for d in docs_expected],
+        [doc_without_embedding(d) for d in docs_expected],
     )
 
 

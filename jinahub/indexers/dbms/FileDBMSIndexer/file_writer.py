@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (c) 2020 Jina AI Limited. All rights reserved."
+__copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import mmap
@@ -118,7 +118,7 @@ class _CloseHandler:
             self.handler.close()
 
 
-class BinaryPbWriterMixin:
+class FileWriterMixin:
     """Mixing for providing the binarypb writing and reading methods"""
 
     def __init__(self, *args, **kwargs):
@@ -180,7 +180,6 @@ class BinaryPbWriterMixin:
             write_handler.body.write(value)
             self._size += 1
 
-    @requests(on='delete')
     def delete(self, keys: Iterable[str], *args, **kwargs) -> None:
         """Delete the serialized documents from the index via document ids.
 

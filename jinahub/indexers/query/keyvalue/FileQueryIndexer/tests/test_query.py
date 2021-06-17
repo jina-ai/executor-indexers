@@ -3,9 +3,14 @@ from .. import FileQueryIndexer
 
 
 def test_query_keyvalue(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    metas = {
+        'workspace': str(tmpdir),
+        'name': 'query_indexer',
+        'pea_id': 0,
+        'replica_id': 0,
+    }
     indexer = FileQueryIndexer(
-        dump_path='tests/dump1', index_filename='dbms', metas=metas
+        dump_path='tests/dump1', index_filename='dbms', runtime_args=metas
     )
     docs = DocumentArray([Document(id=1), Document(id=42)])
     indexer.search(docs)
