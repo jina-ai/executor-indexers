@@ -344,14 +344,13 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
 
     def _search(self, docs: DocumentArray, is_update):
         for i, doc in enumerate(docs):
-            doc_and_vec = pickle.loads(self._query([doc.id])[0])
-            serialized_doc = doc_and_vec[1]
-            serialized_doc = Document(serialized_doc)
+            vec, doc_bytes = pickle.loads(self._query([doc.id])[0])
+            serialized_doc = Document(doc_bytes)
             serialized_doc.pop('content_hash')
             if is_update:
                 doc.update(serialized_doc)
             else:
                 doc = Document(serialized_doc, copy=True)
-            doc.embedding = doc_and_vec[0]
+            doc.embedding = vec
             doc.update_content_hash()
             docs[i] = doc
