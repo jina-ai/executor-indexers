@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from jina import Document
 from jina.logging.profile import TimeContext
 
@@ -7,6 +8,24 @@ from ..postgreshandler import doc_without_embedding
 
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
 c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
+
+
+@pytest.fixture(scope='function', autouse=True)
+def patched_random_port(mocker):
+    used_ports = set()
+    from jina.helper import random_port
+
+    def _random_port():
+
+        for i in range(10):
+            _port = random_port()
+
+            if _port is not None and _port not in used_ports:
+                used_ports.add(_port)
+                return _port
+        raise Exception('no port available')
+
+    mocker.patch('jina.helper.random_port', new_callable=lambda: _random_port)
 
 
 def get_documents(chunks, same_content, nr=10, index_start=0, same_tag_content=None):
