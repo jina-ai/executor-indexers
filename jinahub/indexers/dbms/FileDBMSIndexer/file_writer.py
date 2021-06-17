@@ -73,6 +73,10 @@ class _ReadHandler:
                         ('', np.int64),
                     ],
                 )
+                # WARNING: this is required
+                # when we update (or delete)
+                # we need to update both Writer and ReaderHandler
+                # with the new position information
                 for r in tmp:
                     signature = (r[1], r[2], r[3])
                     if np.array_equal(signature, HEADER_NONE_ENTRY):
@@ -97,7 +101,10 @@ class _ReadHandler:
 
     @property
     def total_bytes(self):
-        return max(p + m for p, _, m in self.header.values())
+        vals = self.header.values()
+        if vals:
+            return max(p + m for p, _, m in vals)
+        return 0
 
     def close(self):
         """Close the file."""

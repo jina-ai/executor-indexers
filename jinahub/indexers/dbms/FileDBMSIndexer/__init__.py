@@ -11,10 +11,10 @@ import os
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
 
-from jina.helper import call_obj_fn, cached_property, get_readable_size
+from jina.helper import cached_property, get_readable_size
 
 from jina_commons.indexers.dump import export_dump_streaming
-from .file_writer import FileWriterMixin
+from .file_writer import FileWriterMixin, _CloseHandler, _ReadHandler, _WriteHandler
 
 HEADER_NONE_ENTRY = (-1, -1, -1)
 
@@ -34,7 +34,7 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         index_filename: Optional[str] = None,
         dump_path: Optional[str] = None,
         key_length: int = 36,
-        dump_on_exit: str = True,
+        dump_on_exit: bool = False,
         *args,
         **kwargs,
     ):
@@ -133,16 +133,62 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         """
         return os.path.join(self.workspace, 'default_dump')
 
+    def _delete_invalid_indices(self):
+        # make sure the file is closed before querying.
+        with _CloseHandler(handler=self.write_handler):
+            pass
+
+        keys = []
+        vals = []
+        # we read the valid values and write them to the intermediary file
+        with _CloseHandler(
+            handler=_ReadHandler(self.index_abspath, self.key_length)
+        ) as close_handler:
+            for key in close_handler.handler.header.keys():
+                pos_info = close_handler.handler.header.get(key, None)
+                if pos_info:
+                    p, r, l = pos_info
+                    with mmap.mmap(close_handler.handler.body, offset=p, length=l) as m:
+                        keys.append(key)
+                        vals.append(m[r:])
+        if len(keys) == 0:
+            return
+
+        # intermediary file
+        tmp_file = self.index_abspath + '-tmp'
+        self._start = 0
+        with _CloseHandler(handler=_WriteHandler(tmp_file, 'ab')) as close_handler:
+            # reset size
+            self._size = 0
+            self._add(keys, vals, write_handler=close_handler.handler)
+
+        # replace orig. file
+        # and .head file
+        head_path = self.index_abspath + '.head'
+        os.remove(self.index_abspath)
+        os.remove(head_path)
+        os.rename(tmp_file, self.index_abspath)
+        os.rename(tmp_file + '.head', head_path)
+
     def close(self):
         """Close all file-handlers and release all resources. """
+        bytes_before = self.physical_size()
         self.logger.info(
-            f'indexer size: {self.size} physical size: {get_readable_size(FileDBMSIndexer.physical_size(self.workspace))}'
+            f'indexer size: {self.size} physical size: {get_readable_size(self.physical_size())}'
         )
+        self._delete_invalid_indices()
+        if bytes_before != bytes_before:
+            self.logger.info(
+                f'Clean up of deleting entries happend in .close(). New physical size: {bytes_before}'
+            )
         if self._dump_on_exit:
             shutil.rmtree(self._dump_path, ignore_errors=True)
             self.dump({'dump_path': self._dump_path})
-        call_obj_fn(self.write_handler, 'close')
-        call_obj_fn(self.query_handler, 'close')
+        if self.write_handler:
+            self.write_handler.flush()
+            self.write_handler.close()
+        if self.query_handler:
+            self.query_handler.close()
         super().close()
 
     def _filter_nonexistent_keys_values(
@@ -186,7 +232,8 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
         :param args: not used
         :param kwargs: not used
         """
-        self.write_handler.close()
+        if self.write_handler:
+            self.write_handler.close()
         # noinspection PyPropertyAccess
         del self.write_handler
         self.handler_mutex = False
@@ -280,11 +327,10 @@ class FileDBMSIndexer(Executor, FileWriterMixin):
                 f'but yours is {m_val}.'
             )
 
-    @staticmethod
-    def physical_size(directory: str) -> int:
-        """Return the size of the given directory in bytes
-        :param directory: directory as :str:
+    def physical_size(self) -> int:
+        """Return the size of the workspace in bytes
+
         :return: byte size of the given directory
         """
-        root_directory = Path(directory)
+        root_directory = Path(self.workspace)
         return sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
