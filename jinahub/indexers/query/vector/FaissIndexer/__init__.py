@@ -193,6 +193,10 @@ class FaissIndexer(Executor):
         :param docs: the DocumentArray containing the documents to search with
         :param parameters: the parameters for the request
         """
+        if not hasattr(self, 'index'):
+            self.logger.warning('Querying against an empty Index')
+            return
+
         if parameters is None:
             parameters = {}
 
