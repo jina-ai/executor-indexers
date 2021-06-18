@@ -32,11 +32,11 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
 
     # indexing
     indexer = LMDBIndexer(map_size=10485760 * 1000, metas=metas)
-    indexer.index(docs)
+    indexer.index(docs, {})
     assert indexer.size == len(docs)
 
     query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
-    indexer._get(query_docs)
+    indexer._get(query_docs, {})
     for q, d in zip(query_docs, docs):
         assert d.id == q.id
         assert d.text == q.text
@@ -47,10 +47,10 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
 
     # updating
     update_docs = get_documents(nr=nr_docs, text='hello there')
-    indexer.update(update_docs)
+    indexer.update(update_docs, {})
 
     query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
-    indexer._get(query_docs)
+    indexer._get(query_docs, {})
     for q, d in zip(query_docs, update_docs):
         assert d.id == q.id
         assert d.text == q.text
@@ -59,7 +59,7 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
     # asserting...
     assert indexer.size == items
 
-    indexer.delete(docs)
+    indexer.delete(docs, {})
     assert indexer.size == 0
 
 

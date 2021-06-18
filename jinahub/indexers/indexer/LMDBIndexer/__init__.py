@@ -27,8 +27,6 @@ class LMDBIndexer(Executor):
         self.file = os.path.join(self.workspace, 'db.lmdb')
         if not os.path.exists(self.workspace):
             os.makedirs(self.workspace)
-        # db for internal usage
-        self.db = 'db'
         self.logger = get_logger(self)
         # see https://lmdb.readthedocs.io/en/release/#environment-class for usage
         self.env = lmdb.Environment(
@@ -51,53 +49,42 @@ class LMDBIndexer(Executor):
         )
 
     @requests(on='/index')
-    def index(self, docs: DocumentArray, parameters: Dict = None, **kwargs):
+    def index(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Add entries to the index
 
         :param docs: the documents to add
         :param parameters: parameters to the request
         """
-        if parameters is None:
-            parameters = {}
-
         trav_path = parameters.get('traversal_path', self.default_traversal_path)
         with self.env.begin(write=True) as t:
             for d in docs.traverse_flat(trav_path):
                 t.put(d.id.encode(), d.SerializeToString())
 
     @requests(on='/update')
-    def update(self, docs: DocumentArray, parameters: Dict = None, **kwargs):
+    def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Update entries from the index by id
 
         :param docs: the documents to update
         :param parameters: parameters to the request
         """
-        if parameters is None:
-            parameters = {}
         trav_path = parameters.get('traversal_path', self.default_traversal_path)
         with self.env.begin(write=True) as t:
             for d in docs.traverse_flat(trav_path):
                 t.replace(d.id.encode(), d.SerializeToString())
 
     @requests(on='/delete')
-    def delete(self, docs: DocumentArray, parameters: Dict = None, **kwargs):
+    def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Delete entries from the index by id
 
         :param docs: the documents to delete
         :param parameters: parameters to the request
         """
-        if parameters is None:
-            parameters = {}
-
         trav_path = parameters.get('traversal_path', self.default_traversal_path)
         with self.env.begin(write=True) as t:
             for d in docs.traverse_flat(trav_path):
                 t.delete(d.id.encode())
 
-    def _get(self, docs: DocumentArray, parameters: Dict = None, **kwargs):
-        if parameters is None:
-            parameters = {}
-
+    def _get(self, docs: DocumentArray, parameters: Dict, **kwargs):
         trav_path = parameters.get('traversal_path', self.default_traversal_path)
         docs_to_get = docs.traverse_flat(trav_path)
         with self.env.begin(write=True) as t:
@@ -107,7 +94,7 @@ class LMDBIndexer(Executor):
                 docs[i].id = id
 
     @requests(on='/dump')
-    def dump(self, parameters: Dict = None, **kwargs):
+    def dump(self, parameters: Dict, **kwargs):
         """Dump data from the index
 
         Requires
@@ -116,18 +103,14 @@ class LMDBIndexer(Executor):
         to be part of `parameters`
 
         :param parameters: parameters to the request"""
-        if parameters is None:
-            self.logger.error('parameters was None. Expects dump_path and shards')
-            return
-
         path = parameters.get('dump_path', None)
         if path is None:
-            self.logger.error('parameters.dump_path was None')
+            self.logger.error('parameters["dump_path"] was None')
             return
 
         shards = parameters.get('shards', None)
         if shards is None:
-            self.logger.error('parameters.shards was None')
+            self.logger.error('parameters["shards"] was None')
             return
         shards = int(shards)
 
