@@ -1,1 +1,1 @@
-jina==2.0.0rc6
+git+https://github.com/jina-ai/jina

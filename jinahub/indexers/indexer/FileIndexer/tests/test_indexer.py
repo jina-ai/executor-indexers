@@ -221,7 +221,7 @@ def test_filedbms_crud(tmpdir, nr_docs=10):
     reason='skip the benchmark test on github workflow or docker',
 )
 def test_filedbms_bm(tmpdir):
-    nr = 100000
+    nr = 20000
     # Cristian: running filedbms benchmark with 10000 docs takes 12 seconds (12.42s)
     # running filedbms benchmark with 20000 docs takes 41 seconds (41.21s)
     with TimeContext(f'running filedbms benchmark with {nr} docs'):
