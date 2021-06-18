@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 
 import numpy as np
@@ -14,15 +15,15 @@ from typing import Dict
 
 # required pytest fixture
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.dbms.PostgreSQLDBMSIndexer.postgreshandler import (
+from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
     doc_without_embedding,
 )
 from jinahub.indexers.tests import docker_compose
 
 # required in order to be found by Flow creation
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.query.compound import NumpyPostgresQueryIndexer
-from jinahub.indexers.dbms.PostgreSQLDBMSIndexer import PostgreSQLDBMSIndexer
+from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
+from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLIndexer
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
@@ -53,11 +54,16 @@ class MatchMerger(Executor):
                 top_k = int(top_k)
 
             for doc in results.values():
-                doc.matches = sorted(
-                    doc.matches, key=lambda m: m.score.value, reverse=True
-                )[:top_k]
+                try:
+                    doc.matches = sorted(
+                        doc.matches,
+                        key=lambda m: m.scores['similarity'].value,
+                        reverse=True,
+                    )[:top_k]
+                except TypeError as e:
+                    print(f'##### {e}')
 
-            docs = DocumentArray(results.values())
+            docs = DocumentArray(list(results.values()))
             return docs
 
 
@@ -117,10 +123,12 @@ def path_size(dump_path):
 @pytest.mark.parametrize('emb_size', [10])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
+    # for psql to start
+    time.sleep(2)
     top_k = 5
     docs = list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
     # make sure to delete any overlapping docs
-    PostgreSQLDBMSIndexer().delete(docs)
+    PostgreSQLIndexer().delete(docs)
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
@@ -159,9 +167,9 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
                 on='/search', inputs=docs, parameters={'top_k': top_k}
             )
             assert len(results[0].docs[0].matches) == top_k
-            assert results[0].docs[0].matches[0].score.value == 1.0
+            assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = PostgreSQLDBMSIndexer()
+    idx = PostgreSQLIndexer()
     assert idx.size == nr_docs
 
     # assert data dumped is correct

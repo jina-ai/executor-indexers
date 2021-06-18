@@ -1,4 +1,4 @@
-jtype: LMDBDBMSIndexer
+jtype: LMDBIndexer
 with:
   map_size: 1048576000
 metas:

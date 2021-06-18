@@ -3,7 +3,7 @@ services:
   psql:
     image: psql
     build:
-      context: jinahub/indexers/dbms/PostgreSQLDBMSIndexer/
+      context: jinahub/indexers/indexer/PostgreSQLIndexer/
       dockerfile: Dockerfile
     ports:
       - "5432:5432"

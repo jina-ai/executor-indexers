@@ -15,14 +15,14 @@ from typing import Dict
 
 # required pytest fixture
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.dbms.LMDBDBMSIndexer import LMDBDBMSIndexer
-from jinahub.indexers.dbms.PostgreSQLDBMSIndexer.postgreshandler import (
+from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
+from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
     doc_without_embedding,
 )
 
-from jinahub.indexers.query.compound import NumpyPostgresQueryIndexer
+from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
 
-from jinahub.indexers.query.compound.NumpyFileQueryIndexer import NumpyFileQueryIndexer
+from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
@@ -166,7 +166,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = LMDBDBMSIndexer(
+    idx = LMDBIndexer(
         metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'lmdb'},
         map_size=1048576000,
         runtime_args={'pea_id': 0},
