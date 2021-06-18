@@ -1,4 +1,0 @@
-jina==2.0.0rc5.dev54
-psycopg2-binary==2.8.6
-git+https://github.com/jina-ai/jina-commons
-pytest-mock
