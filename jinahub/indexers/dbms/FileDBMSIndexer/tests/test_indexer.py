@@ -187,7 +187,7 @@ def test_filedbms_crud(tmpdir, nr_docs=10):
     metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0}
 
     # indexing
-    indexer = FileDBMSIndexer(metas=metas)
+    indexer = FileDBMSIndexer(dump_on_exit=False, metas=metas)
     indexer.add(docs)
     assert indexer.size == len(docs)
 

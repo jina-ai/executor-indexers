@@ -5,6 +5,7 @@ import pytest
 from jina import Document, DocumentArray, Flow
 from jina.logging.profile import TimeContext
 
+from jina_commons.indexers.dump import import_metas, import_vectors
 from .. import LMDBDBMSIndexer
 
 np.random.seed(0)
@@ -116,3 +117,66 @@ def test_lmdb_bm(tmpdir):
     # running lmdb benchmark with 100000 docs ...	running lmdb benchmark with 100000 docs takes 1 minute and 3 seconds (63.11s)
     with TimeContext(f'running lmdb benchmark with {nr} docs'):
         test_lmdb_crud(tmpdir, nr)
+
+
+def _doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    return new_doc.SerializeToString()
+
+
+def _assert_dump_data(dump_path, docs, shards, pea_id):
+    size_shard = len(docs) // shards
+    size_shard_modulus = len(docs) % shards
+    ids_dump, vectors_dump = import_vectors(
+        dump_path,
+        str(pea_id),
+    )
+    if pea_id == shards - 1:
+        docs_expected = docs[
+            (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
+        ]
+    else:
+        docs_expected = docs[(pea_id) * size_shard : (pea_id + 1) * size_shard]
+    print(f'### pea {pea_id} has {len(docs_expected)} docs')
+
+    # TODO these might fail if we implement any ordering of elements on dumping / reloading
+    ids_dump = list(ids_dump)
+    vectors_dump = list(vectors_dump)
+    np.testing.assert_equal(ids_dump, [d.id for d in docs_expected])
+    np.testing.assert_allclose(vectors_dump, [d.embedding for d in docs_expected])
+
+    _, metas_dump = import_metas(
+        dump_path,
+        str(pea_id),
+    )
+    metas_dump = list(metas_dump)
+    np.testing.assert_equal(
+        metas_dump,
+        [_doc_without_embedding(d) for d in docs_expected],
+    )
+
+
+@pytest.mark.parametrize('shards', [2, 3, 7])
+def test_dump(tmpdir, shards):
+    metas = {'workspace': str(tmpdir), 'name': 'dbms'}
+    dump_path = os.path.join(tmpdir, 'dump_dir')
+
+    def _get_flow() -> Flow:
+        return Flow().add(
+            uses={
+                'jtype': 'LMDBDBMSIndexer',
+                'with': {},
+                'metas': metas,
+            }
+        )
+
+    docs = get_documents(nr=10)
+
+    # indexing
+    with _get_flow() as f:
+        f.index(inputs=docs)
+        f.post(on='/dump', parameters={'dump_path': dump_path, 'shards': shards})
+
+    for pea_id in range(shards):
+        _assert_dump_data(dump_path, docs, shards, pea_id)

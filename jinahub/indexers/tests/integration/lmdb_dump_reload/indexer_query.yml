@@ -1,0 +1,4 @@
+jtype: NumpyFileQueryIndexer
+metas:
+  name: compound_query_indexer
+  workspace: $QUERY_WORKSPACE

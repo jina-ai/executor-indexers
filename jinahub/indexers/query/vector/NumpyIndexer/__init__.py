@@ -39,7 +39,8 @@ class NumpyIndexer(Executor):
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
-        if not self._vecs.size:
+        if not hasattr(self, '_vecs') or not self._vecs.size:
+            self.logger.warning('Searching an empty index')
             return
 
         top_k = int(parameters.get('top_k', self.default_top_k))
@@ -52,7 +53,7 @@ class NumpyIndexer(Executor):
         for _q, _positions, _dists in zip(docs, positions, dist):
             for position, _dist in zip(_positions, _dists):
                 d = Document(id=self._ids[position], embedding=self._vecs[position])
-                d.score.value = 1 - _dist
+                d.scores['similarity'] = 1 - _dist
                 _q.matches.append(d)
 
     @staticmethod

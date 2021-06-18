@@ -97,6 +97,10 @@ class FileQueryIndexer(Executor, FileWriterMixin):
         :param kwargs: not used
         :return: List of the bytes of the Documents (or None, if not found)
         """
+        if self.size == 0:
+            self.logger.error('Searching an empty index')
+            return
+
         if parameters is None:
             parameters = {}
 
@@ -107,6 +111,7 @@ class FileQueryIndexer(Executor, FileWriterMixin):
 
     def _search(self, docs: DocumentArray, is_update):
         for doc in docs:
+            doc_id = doc.id
             serialized_doc = self._query([doc.id])[0]
             serialized_doc = Document(serialized_doc)
             serialized_doc.pop('content_hash')
@@ -114,4 +119,5 @@ class FileQueryIndexer(Executor, FileWriterMixin):
                 doc.update(serialized_doc)
             else:
                 doc = Document(serialized_doc, copy=True)
+            doc.id = doc_id
             doc.update_content_hash()
