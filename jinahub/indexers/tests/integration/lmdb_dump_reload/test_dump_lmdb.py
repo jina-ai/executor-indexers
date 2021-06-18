@@ -15,13 +15,20 @@ from typing import Dict
 
 # required pytest fixture
 # noinspection PyUnresolvedReferences
+from jinahub.indexers.tests import docker_compose
+
+
 from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
 from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
     doc_without_embedding,
 )
 
+# REQUIRED INDEXERS
+# noinspection PyUnresolvedReferences
 from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
 
+# REQUIRED INDEXERS
+# noinspection PyUnresolvedReferences
 from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))

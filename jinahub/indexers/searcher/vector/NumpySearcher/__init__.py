@@ -10,14 +10,6 @@ from jina.logging.logger import JinaLogger
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
-"""
-potential TODO:
-- _validate_key_vector_shapes on query
-- sample
-- query_by_id
-- support euclidena/cosine etc.
-"""
-
 
 class NumpySearcher(Executor):
     def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
