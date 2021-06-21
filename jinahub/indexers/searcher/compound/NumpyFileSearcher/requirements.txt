@@ -1,1 +1,1 @@
-jina==2.0.0rc7.dev69
+jina==2.0.0rc8
