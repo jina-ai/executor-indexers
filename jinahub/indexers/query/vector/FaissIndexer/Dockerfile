@@ -1,9 +1,0 @@
-FROM jinaai/jina:1.2.0
-
-COPY . /workspace
-WORKDIR /workspace
-
-RUN pip install -r requirements.txt
-RUN pip install pytest && pytest tests/ -v -s
-
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]

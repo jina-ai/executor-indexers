@@ -8,8 +8,8 @@ import pytest
 from jina import Document, Flow, DocumentArray, requests
 
 from jina_commons.indexers.dump import dump_docs
-from jinahub.indexers.query.compound.NumpyFileQueryIndexer import NumpyFileQueryIndexer
-from jinahub.indexers.query.keyvalue.FileQueryIndexer import FileQueryIndexer
+from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
+from jinahub.indexers.searcher.keyvalue.FileSearcher import FileSearcher
 from jinahub.indexers.tests.integration.psql_dump_reload.test_dump_dbms import (
     MatchMerger,
 )
@@ -30,7 +30,7 @@ class TagMatchMerger(MatchMerger):
         )
 
 
-class TaggingFileQueryIndexer(FileQueryIndexer):
+class TaggingFileSearcher(FileSearcher):
     def __init__(
         self,
         **kwargs,
@@ -40,20 +40,20 @@ class TaggingFileQueryIndexer(FileQueryIndexer):
     def search(self, docs: DocumentArray, parameters: Dict = None, **kwargs) -> None:
         # TODO shouldn't be necessary
         parameters = {'traversal_paths': 'm'}
-        FileQueryIndexer.search(self, docs, parameters=parameters, **kwargs)
+        FileSearcher.search(self, docs, parameters=parameters, **kwargs)
         for doc in docs:
             for match in doc.matches:
                 match.tags[ORIGIN_TAG] = self.runtime_args.pea_id
 
 
-class NumpyTaggingFileQueryIndexer(NumpyFileQueryIndexer):
+class NumpyTaggingFileSearcher(NumpyFileSearcher):
     def __init__(
         self,
         dump_path=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self._kv_indexer = TaggingFileQueryIndexer(dump_path=dump_path, **kwargs)
+        self._kv_indexer = TaggingFileSearcher(dump_path=dump_path, **kwargs)
 
     @requests(on='/tag_search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):

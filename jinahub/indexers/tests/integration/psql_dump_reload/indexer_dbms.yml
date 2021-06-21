@@ -1,4 +1,4 @@
-jtype: PostgreSQLDBMSIndexer
+jtype: PostgreSQLIndexer
 metas:
   workspace: $DBMS_WORKSPACE
   name: psql
