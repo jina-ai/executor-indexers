@@ -74,10 +74,14 @@ class DocCache(Executor):
             doc_hash = DocCache.hash_doc(d, self.fields)
             exists = doc_hash in self.cache_handler.hash_to_id.keys()
 
+            self.cache_handler.id_to_hash[d.id] = doc_hash
+
             if not exists:
-                self.cache_handler.id_to_hash[d.id] = doc_hash
+                # we keep all the mappings from ids to hash
+                # but only the FIRST from hash to id
                 self.cache_handler.hash_to_id[doc_hash] = d.id
-            else:
+
+            if exists:
                 indices_to_remove.append(i)
 
         indices_to_remove = sorted(indices_to_remove, reverse=True)
@@ -116,14 +120,20 @@ class DocCache(Executor):
     def update(self, docs: DocumentArray, **kwargs):
         """Update the documents in the cache with the new content, by id"""
         for i, d in enumerate(docs):
-            exists = d.id in self.cache_handler.id_to_hash.keys()
+            id_exists = d.id in self.cache_handler.id_to_hash.keys()
 
-            if exists:
+            if id_exists:
                 new_doc_hash = DocCache.hash_doc(d, self.fields)
                 old_cache_value = self.cache_handler.id_to_hash[d.id]
-                del self.cache_handler.hash_to_id[old_cache_value]
 
                 self.cache_handler.id_to_hash[d.id] = new_doc_hash
+
+                try:
+                    del self.cache_handler.hash_to_id[old_cache_value]
+                except KeyError:
+                    # could have been deleted by a previous Document having the same hash
+                    pass
+
                 self.cache_handler.hash_to_id[new_doc_hash] = d.id
 
     @requests(on='/delete')

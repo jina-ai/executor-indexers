@@ -120,7 +120,8 @@ def test_cache_crud(tmpdir):
         runtime_args={'pea_id': 0},
     )
     cache.index(docs)
-    assert cache.size == 2
+    # we cache all the docs by id, we just remove the ones that have already been "hit"
+    assert cache.size == 4
 
     docs = [
         Document(id=1, content='content3'),
@@ -133,10 +134,7 @@ def test_cache_crud(tmpdir):
         d.update_content_hash()
 
     cache.update(docs)
-    assert cache.size == 2
-    # NOTE: since at 1st index time we don't cache ALL the entries,
-    # but just the first unique items by the respective constraint,
-    # we will not be able to update to the new values, since the ids won't be there
+    assert cache.size == 4
 
     docs = [
         Document(id=1),
