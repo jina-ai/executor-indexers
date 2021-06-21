@@ -48,7 +48,7 @@ class AnnoySearcher(Executor):
         self.num_trees = num_trees
         self.traverse_path = traverse_path
         self.logger = get_logger(self)
-        dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
+        dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
             self.logger.info('Start building "AnnoyIndexer" from dump data')
             ids, vecs = import_vectors(dump_path, str(self.metas.pea_id))
@@ -71,6 +71,10 @@ class AnnoySearcher(Executor):
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, **kwargs):
+        if not hasattr(self, 'indexer'):
+            self.logger.warning('Querying against an empty index')
+            return
+
         for doc in docs.traverse_flat(self.traverse_path):
             indices, dists = self._indexer.get_nns_by_vector(
                 doc.embedding, self.top_k, include_distances=True

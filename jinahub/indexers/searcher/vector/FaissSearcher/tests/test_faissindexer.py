@@ -56,6 +56,22 @@ def tmpdir_dump(tmpdir):
     return os.path.join(tmpdir, 'dump')
 
 
+def test_faiss_indexer_empty(metas, tmpdir_dump):
+    train_filepath = os.path.join(os.environ['TEST_WORKSPACE'], 'train.tgz')
+    train_data = np.array(np.random.random([1024, 10]), dtype=np.float32)
+    with gzip.open(train_filepath, 'wb', compresslevel=1) as f:
+        f.write(train_data.tobytes())
+
+    indexer = FaissIndexer(
+        index_key='IVF10,PQ2',
+        train_filepath=train_filepath,
+        metas=metas,
+        runtime_args={'pea_id': 0},
+    )
+    indexer.query(query_docs, parameters={'top_k': 4})
+    assert len(query_docs[0].matches) == 0
+
+
 def test_faiss_indexer(metas, tmpdir_dump):
     print(f'dump path = {tmpdir_dump}')
 
