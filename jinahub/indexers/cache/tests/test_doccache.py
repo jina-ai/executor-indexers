@@ -119,7 +119,7 @@ def test_cache_crud(tmpdir):
         metas={'workspace': os.path.join(tmpdir, 'cache'), 'name': 'cache'},
         runtime_args={'pea_id': 0},
     )
-    cache.index(docs)
+    cache.index_or_remove_from_request(docs)
     # we cache all the docs by id, we just remove the ones that have already been "hit"
     assert cache.ids == 4
     assert cache.hashes == 2

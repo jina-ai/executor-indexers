@@ -61,7 +61,7 @@ class DocCache(Executor):
         )
 
     @requests(on='/index')
-    def index(self, docs: DocumentArray, **kwargs):
+    def index_or_remove_from_request(self, docs: DocumentArray, **kwargs):
         """Index Documents in the cache, by hashing self.fields
 
         If the document was already previously cached,
