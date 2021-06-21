@@ -1,2 +1,2 @@
-jina==2.0.0rc7.dev69
+jina:1.2.02.0.0rc7.dev69
 git+git://github.com/jina-ai/jina-commons

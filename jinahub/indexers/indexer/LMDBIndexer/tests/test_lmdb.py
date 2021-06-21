@@ -81,15 +81,30 @@ def test_lmdb_crud_flow(tmpdir):
 
     # indexing
     with _get_flow() as f:
-        f.index(inputs=docs)
+        f.index(
+            inputs=docs,
+            parameters={
+                'traversal_paths': 'dasljkf',
+                'dbms': {'traversal_paths': 'r'},
+            },
+        )
 
     # getting size
     with LMDBIndexer(metas=metas, runtime_args=runtime_args) as indexer:
         items = indexer.size
 
+    assert items == len(docs)
+
     # updating
     with _get_flow() as f:
-        f.post(on='/update', inputs=update_docs)
+        f.post(
+            on='/update',
+            inputs=update_docs,
+            parameters={
+                'traversal_paths': 'dasljkf',
+                'dbms': {'traversal_paths': 'r'},
+            },
+        )
 
     # asserting...
     with LMDBIndexer(metas=metas, runtime_args=runtime_args) as indexer:
