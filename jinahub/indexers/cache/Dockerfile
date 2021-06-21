@@ -9,6 +9,8 @@ WORKDIR /workspace
 
 RUN pip install -r requirements.txt
 
+FROM base
+
 # for testing the image
 RUN pip install pytest && pytest -s -v tests
 
