@@ -1,12 +1,10 @@
 manifest_version: 1
-name: FileQueryIndexer
-kind: indexer
-description: A basic file based query indexer
+name: DocCache
+description: A caching executor
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
 vendor: Jina AI Limited
-documentation: https://github.com/jina-ai/jina-hub
+documentation: https://github.com/jina-ai/executor-indexers/blob/master/jinahub/indexers/cache/README.md
 version: 0.0.1
 license: apache-2.0
-keywords: [database, FileQueryIndexer, indexer]
-type: pod
+keywords: [caching, indexer]
