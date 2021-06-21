@@ -87,6 +87,9 @@ class DocCache(Executor):
         indices_to_remove = sorted(indices_to_remove, reverse=True)
         for i in indices_to_remove:
             del docs[i]
+        self.logger.info(
+            f'Finished index op. Cached doc ids: {len(self.cache_handler.id_to_hash)}; cached hashes: {len(self.cache_handler.hash_to_id)}'
+        )
 
     def close(self) -> None:
         self.cache_handler.close()
@@ -109,12 +112,17 @@ class DocCache(Executor):
         return digest
 
     @property
-    def size(self):
+    def ids(self):
         """Return the size
 
         NOTE: we only count nr of entries from id angle
         """
         return len(self.cache_handler.id_to_hash)
+
+    @property
+    def hashes(self):
+        """Return the nr of distinct hashes"""
+        return len(self.cache_handler.hash_to_id)
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, **kwargs):
@@ -135,6 +143,9 @@ class DocCache(Executor):
                     pass
 
                 self.cache_handler.hash_to_id[new_doc_hash] = d.id
+        self.logger.info(
+            f'Finished update op. Cached doc ids: {len(self.cache_handler.id_to_hash)}; cached hashes: {len(self.cache_handler.hash_to_id)}'
+        )
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, **kwargs):
@@ -149,3 +160,6 @@ class DocCache(Executor):
                     # no guarantee
                     pass
                 del self.cache_handler.id_to_hash[d.id]
+        self.logger.info(
+            f'Finished delete op. Cached doc ids: {len(self.cache_handler.id_to_hash)}; cached hashes: {len(self.cache_handler.hash_to_id)}'
+        )

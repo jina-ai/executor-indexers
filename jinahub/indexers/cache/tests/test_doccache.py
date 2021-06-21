@@ -121,7 +121,8 @@ def test_cache_crud(tmpdir):
     )
     cache.index(docs)
     # we cache all the docs by id, we just remove the ones that have already been "hit"
-    assert cache.size == 4
+    assert cache.ids == 4
+    assert cache.hashes == 2
 
     docs = [
         Document(id=1, content='content3'),
@@ -134,7 +135,8 @@ def test_cache_crud(tmpdir):
         d.update_content_hash()
 
     cache.update(docs)
-    assert cache.size == 4
+    assert cache.ids == 4
+    assert cache.hashes == 4
 
     docs = [
         Document(id=1),
@@ -148,4 +150,5 @@ def test_cache_crud(tmpdir):
     ]
 
     cache.delete(docs)
-    assert cache.size == 0
+    assert cache.ids == 0
+    assert cache.hashes == 0
