@@ -1,6 +1,6 @@
 import mmap
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Union
 
 from jina import Executor, requests, DocumentArray, Document
 from jina.logging.logger import JinaLogger
@@ -27,10 +27,11 @@ class FileSearcher(Executor, FileWriterMixin):
         dump_path: Optional[str] = None,
         index_filename: Optional[str] = None,
         key_length: int = 36,
-        default_traversal_path='r',
+        default_traversal_paths: Union[str, List[str]] = 'r',
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self.default_traversal_paths = default_traversal_paths
         self.dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path')
         self.index_filename = index_filename or self.metas.name
 
@@ -40,8 +41,6 @@ class FileSearcher(Executor, FileWriterMixin):
         self._start = 0
         self._page_size = mmap.ALLOCATIONGRANULARITY
         self.logger = get_logger(self)
-
-        self.default_traversal_path = default_traversal_path
 
         if self.dump_path:
             self.logger.info(f'Loading dump_path {self.dump_path}')
@@ -104,10 +103,11 @@ class FileSearcher(Executor, FileWriterMixin):
         if parameters is None:
             parameters = {}
 
-        traversal_path = parameters.get('traversal_paths', self.default_traversal_path)
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
 
-        for docs_array in docs.traverse(traversal_path):
-            self._search(docs_array, parameters.get('is_update', True))
+        for trav_path in trav_paths:
+            for docs_array in docs.traverse(trav_path):
+                self._search(docs_array, parameters.get('is_update', True))
 
     def _search(self, docs: DocumentArray, is_update):
         for doc in docs:

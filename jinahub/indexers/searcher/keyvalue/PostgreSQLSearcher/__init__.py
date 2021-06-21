@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator, Dict
+from typing import Tuple, Generator, Dict, List, Union
 
 import numpy as np
 from jina import Executor, requests, DocumentArray
@@ -33,11 +33,13 @@ class PostgreSQLSearcher(Executor):
         password: str = '123456',
         database: str = 'postgres',
         table: str = 'default_table',
+        default_traversal_paths: Union[str, List[str]] = 'r',
         *args,
         **kwargs,
     ):
 
         super().__init__(*args, **kwargs)
+        self.default_traversal_paths = default_traversal_paths
         self.hostname = hostname
         self.port = port
         self.username = username
@@ -99,8 +101,8 @@ class PostgreSQLSearcher(Executor):
 
     @requests(on='/query')
     def query(self, docs: DocumentArray, parameters: Dict, **kwargs):
-        docs_to_lookup = parameters.get('traversal_path') or docs.traverse_flat(
-            self.default_traversal
-        )
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+
         with self.handler as postgres_handler:
-            postgres_handler.query(docs_to_lookup)
+            for trav_path in trav_paths:
+                postgres_handler.query(docs.traverse_flat(trav_path))

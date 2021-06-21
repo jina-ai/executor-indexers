@@ -84,7 +84,6 @@ def test_lmdb_crud_flow(tmpdir):
         f.index(
             inputs=docs,
             parameters={
-                'traversal_paths': 'dasljkf',
                 'dbms': {'traversal_paths': 'r'},
             },
         )
@@ -101,7 +100,6 @@ def test_lmdb_crud_flow(tmpdir):
             on='/update',
             inputs=update_docs,
             parameters={
-                'traversal_paths': 'dasljkf',
                 'dbms': {'traversal_paths': 'r'},
             },
         )

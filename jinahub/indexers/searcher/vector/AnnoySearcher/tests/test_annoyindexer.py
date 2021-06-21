@@ -47,7 +47,7 @@ def test_query_vector(tmpdir):
 
     indexer = AnnoySearcher(dump_path=DUMP_PATH, top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
-    indexer.search(docs)
+    indexer.search(docs, {})
 
     ids, vecs = import_vectors(DUMP_PATH, str(0))
     ids = np.array(list(ids))
@@ -68,7 +68,7 @@ def test_query_vector(tmpdir):
 def test_query_vector_empty(tmpdir):
     metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
 
-    indexer = AnnoyIndexer(top_k=TOP_K, metas=metas)
+    indexer = AnnoySearcher(top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
-    indexer.search(docs)
+    indexer.search(docs, {})
     assert len(docs[0].matches) == 0

@@ -1,19 +1,25 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List, Union
 
 import numpy as np
 from jina import Executor, requests, DocumentArray, Document
-from jina.logging.logger import JinaLogger
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
 
 class NumpySearcher(Executor):
-    def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
+    def __init__(
+        self,
+        dump_path: str = None,
+        default_top_k: int = 5,
+        default_traversal_paths: Union[str, List[str]] = 'r',
+        **kwargs,
+    ):
         super().__init__(**kwargs)
+        self.default_traversal_paths = default_traversal_paths
         self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         self.logger = get_logger(self)
         self.default_top_k = default_top_k
@@ -36,17 +42,23 @@ class NumpySearcher(Executor):
             return
 
         top_k = int(parameters.get('top_k', self.default_top_k))
-        doc_embeddings = np.stack(docs.get_attributes('embedding'))
 
-        q_emb = _ext_A(_norm(doc_embeddings))
-        d_emb = _ext_B(_norm(self._vecs))
-        dists = _cosine(q_emb, d_emb)
-        positions, dist = self._get_sorted_top_k(dists, top_k)
-        for _q, _positions, _dists in zip(docs, positions, dist):
-            for position, _dist in zip(_positions, _dists):
-                d = Document(id=self._ids[position], embedding=self._vecs[position])
-                d.scores['similarity'] = 1 - _dist
-                _q.matches.append(d)
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+
+        for trav_path in trav_paths:
+            doc_embeddings = np.stack(
+                docs.traverse_flat(trav_path).get_attributes('embedding')
+            )
+
+            q_emb = _ext_A(_norm(doc_embeddings))
+            d_emb = _ext_B(_norm(self._vecs))
+            dists = _cosine(q_emb, d_emb)
+            positions, dist = self._get_sorted_top_k(dists, top_k)
+            for _q, _positions, _dists in zip(docs, positions, dist):
+                for position, _dist in zip(_positions, _dists):
+                    d = Document(id=self._ids[position], embedding=self._vecs[position])
+                    d.scores['similarity'] = 1 - _dist
+                    _q.matches.append(d)
 
     @staticmethod
     def _get_sorted_top_k(

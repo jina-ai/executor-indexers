@@ -11,25 +11,13 @@ from jinahub.indexers.searcher.vector.NumpySearcher import NumpySearcher
 
 
 class NumpyFileSearcher(Executor):
-    def __init__(
-        self,
-        dump_path=None,
-        default_traversal_paths: Union[str, List[str]] = 'r',
-        *args,
-        **kwargs
-    ):
+    def __init__(self, dump_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.default_traversal_paths = default_traversal_paths
         self._vec_indexer = NumpySearcher(dump_path=dump_path, *args, **kwargs)
         self._kv_indexer = FileSearcher(dump_path=dump_path, *args, **kwargs)
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
-        trav_paths = (
-            get_request_executor_parameter(parameters, self, 'traversal_path')
-            or self.default_traversal_paths
-        )
-
         self._vec_indexer.search(docs, parameters)
         kv_parameters = copy.deepcopy(parameters)
 

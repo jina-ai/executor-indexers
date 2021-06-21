@@ -2,10 +2,9 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import copy
-from typing import Dict, List, Union
+from typing import Dict
 
 from jina import requests, DocumentArray, Executor
-from jina.helper import get_request_executor_parameter
 
 from jina_commons import get_logger
 from jinahub.indexers.searcher.keyvalue.PostgreSQLSearcher import (
@@ -20,11 +19,9 @@ class NumpyPostgresSearcher(Executor):
     def __init__(
         self,
         dump_path=None,
-        default_traversal_paths: Union[str, List[str]] = 'r',
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.default_traversal_paths = default_traversal_paths
         # when constructed from rolling update the dump_path is passed via a runtime_arg
         dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         self.logger = get_logger(self)

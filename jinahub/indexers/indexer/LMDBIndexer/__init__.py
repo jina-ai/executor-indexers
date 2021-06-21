@@ -1,10 +1,8 @@
 import os
-import pickle
 from typing import Dict, List, Union
 
 import lmdb
 from jina import Executor, Document, DocumentArray, requests
-from jina.helper import get_request_executor_parameter
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import export_dump_streaming
@@ -56,10 +54,7 @@ class LMDBIndexer(Executor):
         :param docs: the documents to add
         :param parameters: parameters to the request
         """
-        trav_paths = (
-            get_request_executor_parameter(parameters, self, 'traversal_paths')
-            or self.default_traversal_paths
-        )
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
         with self.env.begin(write=True) as t:
             for trav_path in trav_paths:
                 for d in docs.traverse_flat(trav_path):
@@ -72,10 +67,7 @@ class LMDBIndexer(Executor):
         :param docs: the documents to update
         :param parameters: parameters to the request
         """
-        trav_paths = (
-            get_request_executor_parameter(parameters, self, 'traversal_paths')
-            or self.default_traversal_paths
-        )
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
         with self.env.begin(write=True) as t:
             for trav_path in trav_paths:
                 for d in docs.traverse_flat(trav_path):
@@ -88,20 +80,14 @@ class LMDBIndexer(Executor):
         :param docs: the documents to delete
         :param parameters: parameters to the request
         """
-        trav_paths = (
-            get_request_executor_parameter(parameters, self, 'traversal_paths')
-            or self.default_traversal_paths
-        )
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
         with self.env.begin(write=True) as t:
             for trav_path in trav_paths:
                 for d in docs.traverse_flat(trav_path):
                     t.delete(d.id.encode())
 
     def _get(self, docs: DocumentArray, parameters: Dict, **kwargs):
-        trav_paths = (
-            get_request_executor_parameter(parameters, self, 'traversal_paths')
-            or self.default_traversal_paths
-        )
+        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
         for trav_path in trav_paths:
             docs_to_get = docs.traverse_flat(trav_path)
             with self.env.begin(write=True) as t:
