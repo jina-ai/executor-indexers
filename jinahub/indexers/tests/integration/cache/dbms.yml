@@ -1,0 +1,6 @@
+jtype: FileDBMSIndexer
+with:
+  dump_on_exit: false
+metas:
+  name: dbms
+  workspace: $DBMS_WORKSPACE

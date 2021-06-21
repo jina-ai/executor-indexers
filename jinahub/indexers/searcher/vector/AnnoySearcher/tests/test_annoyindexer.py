@@ -63,3 +63,12 @@ def test_query_vector(tmpdir):
     indexer.fill_embedding(da)
     for i, doc in enumerate(da):
         assert list(doc.embedding)
+
+
+def test_query_vector_empty(tmpdir):
+    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+
+    indexer = AnnoyIndexer(top_k=TOP_K, metas=metas)
+    docs = DocumentArray([Document(embedding=np.random.random(7))])
+    indexer.search(docs)
+    assert len(docs[0].matches) == 0
