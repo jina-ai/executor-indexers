@@ -112,7 +112,7 @@ class DocCache(Executor):
         return digest
 
     @property
-    def ids(self):
+    def ids_count(self):
         """Return the size
 
         NOTE: we only count nr of entries from id angle
@@ -120,7 +120,7 @@ class DocCache(Executor):
         return len(self.cache_handler.id_to_hash)
 
     @property
-    def hashes(self):
+    def hashes_count(self):
         """Return the nr of distinct hashes"""
         return len(self.cache_handler.hash_to_id)
 
