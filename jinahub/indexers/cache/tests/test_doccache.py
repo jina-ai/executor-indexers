@@ -122,27 +122,21 @@ def test_cache_crud(tmpdir):
     cache.index(docs)
     assert cache.size == 2
 
-    # new ids
-    # but content2 has already been cached
     docs = [
-        Document(id=4, content='content2'),
-        Document(id=5, content='content2'),
-        Document(id=6, content='content2'),
-        Document(id=7, content='content3'),
+        Document(id=1, content='content3'),
+        Document(id=2, content='content4'),
+        Document(id=3, content='contentX'),
+        Document(id=4, content='contentBLA'),
     ]
-    cache.index(docs)
-    assert cache.size == 3
+    # to remove once https://github.com/jina-ai/jina/pull/2673 is merged
+    for d in docs:
+        d.update_content_hash()
 
-    # new ids
-    # but content2 has already been cached
-    docs = [
-        Document(id=4, content='content4'),
-        Document(id=5, content='content4'),
-        Document(id=6, content='content5'),
-        Document(id=7, content='content6'),
-    ]
     cache.update(docs)
-    assert cache.size == 3
+    assert cache.size == 2
+    # NOTE: since at 1st index time we don't cache ALL the entries,
+    # but just the first unique items by the respective constraint,
+    # we will not be able to update to the new values, since the ids won't be there
 
     docs = [
         Document(id=1),

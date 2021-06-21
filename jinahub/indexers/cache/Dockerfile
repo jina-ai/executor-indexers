@@ -1,4 +1,4 @@
-FROM jinaai/jina:1.0.2
+FROM jinaai/jina:1.0.2 as base
 
 # install the third-party requirements
 RUN apt-get update && apt-get install --no-install-recommends -y gcc build-essential git
@@ -12,4 +12,4 @@ RUN pip install -r requirements.txt
 # for testing the image
 RUN pip install pytest && pytest -s -v tests
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "pea", "--uses", "config.yml"]

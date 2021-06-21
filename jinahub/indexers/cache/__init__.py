@@ -106,17 +106,15 @@ class DocCache(Executor):
 
     @property
     def size(self):
-        assert len(self.cache_handler.id_to_hash) == len(
-            self.cache_handler.hash_to_id
-        ), 'Cache state invalid. Length of mappings does not align. Try rebuilding the index'
+        """Return the size
+
+        NOTE: we only count nr of entries from id angle
+        """
         return len(self.cache_handler.id_to_hash)
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, **kwargs):
-        """Update the documents in the cache with the new content
-
-        WARNING: If the Document doesn't exist in the cache
-        """
+        """Update the documents in the cache with the new content, by id"""
         for i, d in enumerate(docs):
             exists = d.id in self.cache_handler.id_to_hash.keys()
 
@@ -135,5 +133,9 @@ class DocCache(Executor):
 
             if exists:
                 old_cache_value = self.cache_handler.id_to_hash[d.id]
-                del self.cache_handler.hash_to_id[old_cache_value]
+                try:
+                    del self.cache_handler.hash_to_id[old_cache_value]
+                except KeyError as e:
+                    # no guarantee
+                    pass
                 del self.cache_handler.id_to_hash[d.id]
