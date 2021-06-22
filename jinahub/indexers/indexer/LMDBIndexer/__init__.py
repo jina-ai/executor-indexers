@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import lmdb
 from jina import Executor, Document, DocumentArray, requests
@@ -57,9 +57,9 @@ class LMDBIndexer(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as t:
+        with self.env.begin(write=True) as transaction:
             for d in docs.traverse_flat(traversal_paths):
-                t.put(d.id.encode(), d.SerializeToString())
+                transaction.put(d.id.encode(), d.SerializeToString())
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -71,9 +71,9 @@ class LMDBIndexer(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as t:
+        with self.env.begin(write=True) as transaction:
             for d in docs.traverse_flat(traversal_paths):
-                t.replace(d.id.encode(), d.SerializeToString())
+                transaction.replace(d.id.encode(), d.SerializeToString())
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -85,19 +85,19 @@ class LMDBIndexer(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as t:
+        with self.env.begin(write=True) as transaction:
             for d in docs.traverse_flat(traversal_paths):
-                t.delete(d.id.encode())
+                transaction.delete(d.id.encode())
 
     def _get(self, docs: DocumentArray, parameters: Dict, **kwargs):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
         docs_to_get = docs.traverse_flat(traversal_paths)
-        with self.env.begin(write=True) as t:
+        with self.env.begin(write=True) as transaction:
             for i, d in enumerate(docs_to_get):
                 id = d.id
-                docs[i] = Document(t.get(d.id.encode()))
+                docs[i] = Document(transaction.get(d.id.encode()))
                 docs[i].id = id
 
     @requests(on='/dump')
@@ -126,8 +126,8 @@ class LMDBIndexer(Executor):
     @property
     def size(self):
         """Compute size (nr of elements in lmdb)"""
-        with self.env.begin(write=False) as t:
-            stats = t.stat()
+        with self.env.begin(write=False) as transaction:
+            stats = transaction.stat()
             return stats['entries']
 
     def close(self) -> None:
@@ -135,8 +135,8 @@ class LMDBIndexer(Executor):
         self.env.close()
 
     def _dump_generator(self):
-        with self.env.begin(write=False) as t:
-            cursor = t.cursor()
+        with self.env.begin(write=False) as transaction:
+            cursor = transaction.cursor()
             cursor.iternext()
             iterator = cursor.iternext(keys=True, values=True)
             for it in iterator:
