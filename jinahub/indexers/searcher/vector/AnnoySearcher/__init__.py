@@ -27,7 +27,7 @@ class AnnoySearcher(Executor):
         metric: str = 'euclidean',
         num_trees: int = 10,
         dump_path: Optional[str] = None,
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         **kwargs,
     ):
         """
@@ -74,16 +74,18 @@ class AnnoySearcher(Executor):
             self.logger.warning('Querying against an empty index')
             return
 
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
-        for trav_path in trav_paths:
-            for doc in docs.traverse_flat(trav_path):
-                indices, dists = self._indexer.get_nns_by_vector(
-                    doc.embedding, self.top_k, include_distances=True
-                )
-                for idx, dist in zip(indices, dists):
-                    match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                    match.scores['distance'] = 1 / (1 + dist)
-                    doc.matches.append(match)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+
+        for doc in docs.traverse_flat(traversal_paths):
+            indices, dists = self._indexer.get_nns_by_vector(
+                doc.embedding, self.top_k, include_distances=True
+            )
+            for idx, dist in zip(indices, dists):
+                match = Document(id=self._ids[idx], embedding=self._vecs[idx])
+                match.scores['distance'] = 1 / (1 + dist)
+                doc.matches.append(match)
 
     @requests(on='/fill_embedding')
     def fill_embedding(self, query_da: DocumentArray, **kwargs):

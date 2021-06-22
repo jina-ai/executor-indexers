@@ -1,11 +1,10 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator, Dict, List, Union
+from typing import Tuple, Generator, Dict, List
 
 import numpy as np
 from jina import Executor, requests, DocumentArray
-from jina.logging.logger import JinaLogger
 
 from jina_commons import get_logger
 from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLDBMSHandler
@@ -33,12 +32,13 @@ class PostgreSQLSearcher(Executor):
         password: str = '123456',
         database: str = 'postgres',
         table: str = 'default_table',
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['m'],
         *args,
         **kwargs,
     ):
 
         super().__init__(*args, **kwargs)
+        # we traverse the matches and retrieve their data
         self.default_traversal_paths = default_traversal_paths
         self.hostname = hostname
         self.port = port
@@ -55,8 +55,6 @@ class PostgreSQLSearcher(Executor):
             database=self.database,
             table=self.table,
         )
-        # we traverse the matches and retrieve their data
-        self.default_traversal = 'm'
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         with self.handler as handler:
@@ -101,8 +99,9 @@ class PostgreSQLSearcher(Executor):
 
     @requests(on='/query')
     def query(self, docs: DocumentArray, parameters: Dict, **kwargs):
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
 
         with self.handler as postgres_handler:
-            for trav_path in trav_paths:
-                postgres_handler.query(docs.traverse_flat(trav_path))
+            postgres_handler.query(docs.traverse_flat(traversal_paths))

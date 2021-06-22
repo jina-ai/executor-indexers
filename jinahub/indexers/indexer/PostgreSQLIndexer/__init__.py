@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator, Dict, List, Union
+from typing import Tuple, Generator, Dict, List
 
 import numpy as np
 from jina import Executor, requests, DocumentArray
@@ -34,7 +34,7 @@ class PostgreSQLIndexer(Executor):
         database: str = 'postgres',
         table: str = 'default_table',
         max_connections=5,
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         *args,
         **kwargs,
     ):
@@ -82,10 +82,11 @@ class PostgreSQLIndexer(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            for trav_path in trav_paths:
-                postgres_handler.add(docs.traverse_flat(trav_path))
+            postgres_handler.add(docs.traverse_flat(traversal_paths))
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -94,10 +95,11 @@ class PostgreSQLIndexer(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            for trav_path in trav_paths:
-                postgres_handler.update(docs.traverse_flat(trav_path))
+            postgres_handler.update(docs.traverse_flat(traversal_paths))
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -106,10 +108,11 @@ class PostgreSQLIndexer(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            for trav_path in trav_paths:
-                postgres_handler.delete(docs.traverse_flat(trav_path))
+            postgres_handler.delete(docs.traverse_flat(traversal_paths))
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):

@@ -2,7 +2,7 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import gzip
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List
 
 import numpy as np
 from jina import Executor, DocumentArray, requests, Document
@@ -61,7 +61,7 @@ class FaissSearcher(Executor):
         normalize: bool = False,
         nprobe: int = 1,
         dump_path: Optional[str] = None,
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         default_top_k: int = 5,
         on_gpu: bool = False,
         *args,
@@ -201,26 +201,27 @@ class FaissSearcher(Executor):
             parameters = {}
 
         top_k = parameters.get('top_k', self.default_top_k)
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
 
-        for trav_path in trav_paths:
-            query_docs = docs.traverse_flat(trav_path)
+        query_docs = docs.traverse_flat(traversal_paths)
 
-            vecs = np.array(query_docs.get_attributes('embedding'))
+        vecs = np.array(query_docs.get_attributes('embedding'))
 
-            if self.normalize:
-                from faiss import normalize_L2
+        if self.normalize:
+            from faiss import normalize_L2
 
-                normalize_L2(vecs)
-            dists, ids = self.index.search(vecs, top_k)
-            if self.distance == 'inner_product':
-                dists = 1 - dists
-            for doc_idx, matches in enumerate(zip(ids, dists)):
-                for m_info in zip(*matches):
-                    idx, dist = m_info
-                    match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                    match.scores['distance'] = dist
-                    query_docs[doc_idx].matches.append(match)
+            normalize_L2(vecs)
+        dists, ids = self.index.search(vecs, top_k)
+        if self.distance == 'inner_product':
+            dists = 1 - dists
+        for doc_idx, matches in enumerate(zip(ids, dists)):
+            for m_info in zip(*matches):
+                idx, dist = m_info
+                match = Document(id=self._ids[idx], embedding=self._vecs[idx])
+                match.scores['distance'] = dist
+                query_docs[doc_idx].matches.append(match)
 
     def _train(self, index, data: 'np.ndarray', *args, **kwargs) -> None:
         _num_samples, _num_dim = data.shape

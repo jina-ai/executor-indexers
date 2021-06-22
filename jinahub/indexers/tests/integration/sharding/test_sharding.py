@@ -39,7 +39,7 @@ class TaggingFileSearcher(FileSearcher):
 
     def search(self, docs: DocumentArray, parameters: Dict = None, **kwargs) -> None:
         # TODO shouldn't be necessary
-        parameters = {'traversal_paths': 'm'}
+        parameters = {'traversal_paths': ['m']}
         FileSearcher.search(self, docs, parameters=parameters, **kwargs)
         for doc in docs:
             for match in doc.matches:

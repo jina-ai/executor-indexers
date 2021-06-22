@@ -17,7 +17,7 @@ class LMDBIndexer(Executor):
     def __init__(
         self,
         map_size: int = 10485760,  # in bytes, 10 MB
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         *args,
         **kwargs,
     ):
@@ -54,11 +54,12 @@ class LMDBIndexer(Executor):
         :param docs: the documents to add
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.env.begin(write=True) as t:
-            for trav_path in trav_paths:
-                for d in docs.traverse_flat(trav_path):
-                    t.put(d.id.encode(), d.SerializeToString())
+            for d in docs.traverse_flat(traversal_paths):
+                t.put(d.id.encode(), d.SerializeToString())
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -67,11 +68,12 @@ class LMDBIndexer(Executor):
         :param docs: the documents to update
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.env.begin(write=True) as t:
-            for trav_path in trav_paths:
-                for d in docs.traverse_flat(trav_path):
-                    t.replace(d.id.encode(), d.SerializeToString())
+            for d in docs.traverse_flat(traversal_paths):
+                t.replace(d.id.encode(), d.SerializeToString())
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -80,21 +82,23 @@ class LMDBIndexer(Executor):
         :param docs: the documents to delete
         :param parameters: parameters to the request
         """
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.env.begin(write=True) as t:
-            for trav_path in trav_paths:
-                for d in docs.traverse_flat(trav_path):
-                    t.delete(d.id.encode())
+            for d in docs.traverse_flat(traversal_paths):
+                t.delete(d.id.encode())
 
     def _get(self, docs: DocumentArray, parameters: Dict, **kwargs):
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
-        for trav_path in trav_paths:
-            docs_to_get = docs.traverse_flat(trav_path)
-            with self.env.begin(write=True) as t:
-                for i, d in enumerate(docs_to_get):
-                    id = d.id
-                    docs[i] = Document(t.get(d.id.encode()))
-                    docs[i].id = id
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+        docs_to_get = docs.traverse_flat(traversal_paths)
+        with self.env.begin(write=True) as t:
+            for i, d in enumerate(docs_to_get):
+                id = d.id
+                docs[i] = Document(t.get(d.id.encode()))
+                docs[i].id = id
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):

@@ -27,7 +27,7 @@ class FileSearcher(Executor, FileWriterMixin):
         dump_path: Optional[str] = None,
         index_filename: Optional[str] = None,
         key_length: int = 36,
-        default_traversal_paths: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -103,11 +103,12 @@ class FileSearcher(Executor, FileWriterMixin):
         if parameters is None:
             parameters = {}
 
-        trav_paths = parameters.get('traversal_paths', self.default_traversal_paths)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
 
-        for trav_path in trav_paths:
-            for docs_array in docs.traverse(trav_path):
-                self._search(docs_array, parameters.get('is_update', True))
+        for docs_array in docs.traverse(traversal_paths):
+            self._search(docs_array, parameters.get('is_update', True))
 
     def _search(self, docs: DocumentArray, is_update):
         for doc in docs:
