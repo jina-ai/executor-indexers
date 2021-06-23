@@ -1,19 +1,25 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 import numpy as np
 from jina import Executor, requests, DocumentArray, Document
-from jina.logging.logger import JinaLogger
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
 
 class NumpySearcher(Executor):
-    def __init__(self, dump_path: str = None, default_top_k: int = 5, **kwargs):
+    def __init__(
+        self,
+        dump_path: str = None,
+        default_top_k: int = 5,
+        default_traversal_paths: List[str] = ['r'],
+        **kwargs,
+    ):
         super().__init__(**kwargs)
+        self.default_traversal_paths = default_traversal_paths
         self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         self.logger = get_logger(self)
         self.default_top_k = default_top_k
@@ -36,7 +42,14 @@ class NumpySearcher(Executor):
             return
 
         top_k = int(parameters.get('top_k', self.default_top_k))
-        doc_embeddings = np.stack(docs.get_attributes('embedding'))
+
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+
+        doc_embeddings = np.stack(
+            docs.traverse_flat(traversal_paths).get_attributes('embedding')
+        )
 
         q_emb = _ext_A(_norm(doc_embeddings))
         d_emb = _ext_B(_norm(self._vecs))

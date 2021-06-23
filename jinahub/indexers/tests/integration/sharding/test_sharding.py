@@ -10,7 +10,7 @@ from jina import Document, Flow, DocumentArray, requests
 from jina_commons.indexers.dump import dump_docs
 from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
 from jinahub.indexers.searcher.keyvalue.FileSearcher import FileSearcher
-from jinahub.indexers.tests.integration.psql_dump_reload.test_dump_dbms import (
+from jinahub.indexers.tests.integration.psql_dump_reload.test_dump_psql import (
     MatchMerger,
 )
 
@@ -39,7 +39,7 @@ class TaggingFileSearcher(FileSearcher):
 
     def search(self, docs: DocumentArray, parameters: Dict = None, **kwargs) -> None:
         # TODO shouldn't be necessary
-        parameters = {'traversal_paths': 'm'}
+        parameters = {'traversal_paths': ['m']}
         FileSearcher.search(self, docs, parameters=parameters, **kwargs)
         for doc in docs:
             for match in doc.matches:

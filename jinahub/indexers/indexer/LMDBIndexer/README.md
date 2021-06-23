@@ -10,7 +10,7 @@ This is a DBMS-type Jina indexer, using [lmdb](https://lmdb.readthedocs.io/en/re
 ```python
 indexer = LMDBIndexer(
     map_size = 10485760,  
-    default_traversal_path = 'r',
+    default_traversal_path = ['r'],
 )
 ```
 

@@ -2,7 +2,7 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import copy
-from typing import Dict
+from typing import Dict, List, Union
 
 from jina import requests, DocumentArray, Executor
 

@@ -5,7 +5,6 @@ import copy
 from typing import Dict
 
 from jina import requests, DocumentArray, Executor
-from jina.logging.logger import JinaLogger
 
 from jina_commons import get_logger
 from jinahub.indexers.searcher.keyvalue.PostgreSQLSearcher import (
@@ -17,7 +16,11 @@ from jinahub.indexers.searcher.vector.NumpySearcher import NumpySearcher
 class NumpyPostgresSearcher(Executor):
     """A Compound Indexer made up of a NumpyIndexer (for vectors) and a Postgres Indexer"""
 
-    def __init__(self, dump_path=None, **kwargs):
+    def __init__(
+        self,
+        dump_path=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         # when constructed from rolling update the dump_path is passed via a runtime_arg
         dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')

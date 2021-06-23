@@ -126,9 +126,11 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
     # for psql to start
     time.sleep(2)
     top_k = 5
-    docs = list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
+    docs = DocumentArray(
+        list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
+    )
     # make sure to delete any overlapping docs
-    PostgreSQLIndexer().delete(docs)
+    PostgreSQLIndexer().delete(docs, {})
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
@@ -193,7 +195,7 @@ def _in_docker():
 )
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_benchmark(tmpdir, docker_compose):
-    nr_docs = 100
+    nr_docs = 100000
     return test_dump_reload(
         tmpdir, nr_docs=nr_docs, emb_size=128, shards=3, docker_compose=compose_yml
     )

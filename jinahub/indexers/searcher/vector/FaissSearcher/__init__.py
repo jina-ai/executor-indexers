@@ -2,7 +2,7 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import gzip
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List
 
 import numpy as np
 from jina import Executor, DocumentArray, requests, Document
@@ -61,7 +61,7 @@ class FaissSearcher(Executor):
         normalize: bool = False,
         nprobe: int = 1,
         dump_path: Optional[str] = None,
-        default_traversal_path: Union[str, List[str]] = 'r',
+        default_traversal_paths: List[str] = ['r'],
         default_top_k: int = 5,
         on_gpu: bool = False,
         *args,
@@ -78,7 +78,7 @@ class FaissSearcher(Executor):
         self.on_gpu = on_gpu
 
         self.default_top_k = default_top_k
-        self.default_traversal_path = default_traversal_path
+        self.default_traversal_paths = default_traversal_paths
 
         self.logger = get_logger(self)
 
@@ -114,7 +114,7 @@ class FaissSearcher(Executor):
         """Load the model to device."""
         import faiss
 
-        device = self.device
+        device = self.device()
         return (
             faiss.index_cpu_to_gpu(device, 0, index, None)
             if device is not None
@@ -201,9 +201,11 @@ class FaissSearcher(Executor):
             parameters = {}
 
         top_k = parameters.get('top_k', self.default_top_k)
-        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
 
-        query_docs = docs.traverse_flat(traversal_path)
+        query_docs = docs.traverse_flat(traversal_paths)
 
         vecs = np.array(query_docs.get_attributes('embedding'))
 
@@ -218,7 +220,7 @@ class FaissSearcher(Executor):
             for m_info in zip(*matches):
                 idx, dist = m_info
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.score.value = dist
+                match.scores['distance'] = dist
                 query_docs[doc_idx].matches.append(match)
 
     def _train(self, index, data: 'np.ndarray', *args, **kwargs) -> None:

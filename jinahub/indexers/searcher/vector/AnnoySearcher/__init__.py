@@ -1,12 +1,11 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Optional
+from typing import Optional, List, Union, Dict
 
 import numpy as np
 from annoy import AnnoyIndex
 from jina import Executor, requests, DocumentArray, Document
-from jina.logging.logger import JinaLogger
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
@@ -28,7 +27,7 @@ class AnnoySearcher(Executor):
         metric: str = 'euclidean',
         num_trees: int = 10,
         dump_path: Optional[str] = None,
-        traverse_path: list = ['r'],
+        default_traversal_paths: List[str] = ['r'],
         **kwargs,
     ):
         """
@@ -46,7 +45,7 @@ class AnnoySearcher(Executor):
         self.top_k = top_k
         self.metric = metric
         self.num_trees = num_trees
-        self.traverse_path = traverse_path
+        self.default_traversal_paths = default_traversal_paths
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
@@ -70,18 +69,22 @@ class AnnoySearcher(Executor):
         self._indexer.build(self.num_trees)
 
     @requests(on='/search')
-    def search(self, docs: DocumentArray, **kwargs):
-        if not hasattr(self, 'indexer'):
+    def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
+        if not hasattr(self, '_indexer'):
             self.logger.warning('Querying against an empty index')
             return
 
-        for doc in docs.traverse_flat(self.traverse_path):
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+
+        for doc in docs.traverse_flat(traversal_paths):
             indices, dists = self._indexer.get_nns_by_vector(
                 doc.embedding, self.top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.score.value = 1 / (1 + dist)
+                match.scores['distance'] = 1 / (1 + dist)
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')

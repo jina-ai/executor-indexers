@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator, Dict
+from typing import Tuple, Generator, Dict, List
 
 import numpy as np
 from jina import Executor, requests, DocumentArray
@@ -34,10 +34,12 @@ class PostgreSQLIndexer(Executor):
         database: str = 'postgres',
         table: str = 'default_table',
         max_connections=5,
+        default_traversal_paths: List[str] = ['r'],
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.default_traversal_paths = default_traversal_paths
         self.hostname = hostname
         self.port = port
         self.username = username
@@ -74,34 +76,43 @@ class PostgreSQLIndexer(Executor):
             return postgres_handler.get_size()
 
     @requests(on='/index')
-    def add(self, docs: DocumentArray, **kwargs):
+    def add(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Add Documents to Postgres
 
         :param docs: list of Documents
+        :param parameters: parameters to the request
         """
-
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            postgres_handler.add(docs)
+            postgres_handler.add(docs.traverse_flat(traversal_paths))
 
     @requests(on='/update')
-    def update(self, docs: DocumentArray, **kwargs):
+    def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Updated document from the database.
 
         :param docs: list of Documents
+        :param parameters: parameters to the request
         """
-
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            postgres_handler.update(docs)
+            postgres_handler.update(docs.traverse_flat(traversal_paths))
 
     @requests(on='/delete')
-    def delete(self, docs: DocumentArray, **kwargs):
+    def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Delete document from the database.
 
         :param docs: list of Documents
+        :param parameters: parameters to the request
         """
-
+        traversal_paths = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
         with self.handler as postgres_handler:
-            postgres_handler.delete(docs)
+            postgres_handler.delete(docs.traverse_flat(traversal_paths))
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):
