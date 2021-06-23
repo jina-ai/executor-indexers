@@ -62,7 +62,7 @@ def test_faiss_indexer_empty(metas, tmpdir_dump):
     with gzip.open(train_filepath, 'wb', compresslevel=1) as f:
         f.write(train_data.tobytes())
 
-    indexer = FaissIndexer(
+    indexer = FaissSearcher(
         index_key='IVF10,PQ2',
         train_filepath=train_filepath,
         metas=metas,
@@ -90,7 +90,10 @@ def test_faiss_indexer(metas, tmpdir_dump):
     indexer.query(query_docs, parameters={'top_k': 4})
     assert len(query_docs[0].matches) == 4
     for d in query_docs:
-        assert d.matches[0].score.value <= d.matches[1].score.value
+        assert (
+            d.matches[0].scores['distance'].value
+            <= d.matches[1].scores['distance'].value
+        )
 
 
 @pytest.mark.parametrize('train_data', ['new', 'none', 'index'])
@@ -131,8 +134,8 @@ def test_faiss_indexer_known(metas, train_data, tmpdir):
     TOP_K = 2
     docs = _get_docs_from_vecs(queries)
     indexer.query(docs, parameters={'top_k': TOP_K})
-    idx = docs.traverse_flat('m').get_attributes('id')
-    dist = docs.traverse_flat('m').get_attributes('score')
+    idx = docs.traverse_flat(['m']).get_attributes('id')
+    dist = docs.traverse_flat(['m']).get_attributes('scores')
     np.testing.assert_equal(
         idx, np.concatenate(np.array([[4, 5], [5, 4], [6, 5], [7, 6]])).astype(str)
     )
@@ -141,7 +144,7 @@ def test_faiss_indexer_known(metas, train_data, tmpdir):
 
     docs = DocumentArray([Document(id=id) for id in ['7', '4']])
     indexer.fill_embedding(docs)
-    embs = docs.traverse_flat('r').get_attributes('embedding')
+    embs = docs.traverse_flat(['r']).get_attributes('embedding')
 
     np.testing.assert_equal(embs, vectors[[3, 0]])
 
@@ -188,7 +191,7 @@ def test_faiss_indexer_known_big(metas, tmpdir):
     docs = _get_docs_from_vecs(queries)
     top_k = 1
     indexer.query(docs, parameters={'top_k': top_k})
-    idx = docs.traverse_flat('m').get_attributes('id')
+    idx = docs.traverse_flat(['m']).get_attributes('id')
     np.testing.assert_equal(
         idx,
         np.concatenate(
@@ -208,13 +211,13 @@ def test_faiss_indexer_known_big(metas, tmpdir):
             )
         ).astype(str),
     )
-    dist = docs.traverse_flat('m').get_attributes('score')
+    dist = docs.traverse_flat(['m']).get_attributes('scores')
     assert len(idx) == len(dist)
     assert len(idx) == (10 * top_k)
 
     docs = DocumentArray([Document(id=id) for id in ['10000', '15000']])
     indexer.fill_embedding(docs)
-    embs = docs.traverse_flat('r').get_attributes('embedding')
+    embs = docs.traverse_flat(['r']).get_attributes('embedding')
 
     np.testing.assert_equal(
         embs,
@@ -263,8 +266,8 @@ def test_indexer_train(metas, train_data, max_num_points, tmpdir):
     top_k = 4
     indexer.query(query_docs, parameters={'top_k': top_k})
     # idx, dist =
-    idx = query_docs.traverse_flat('m').get_attributes('id')
-    dist = query_docs.traverse_flat('m').get_attributes('score')
+    idx = query_docs.traverse_flat(['m']).get_attributes('id')
+    dist = query_docs.traverse_flat(['m']).get_attributes('scores')
 
     assert len(idx) == len(dist)
     assert len(idx) == num_query * top_k
@@ -301,5 +304,5 @@ def test_faiss_normalization(metas, distance, tmpdir):
     query[0, 0] = 5
     docs = _get_docs_from_vecs(query.astype('float32'))
     indexer.query(docs, parameters={'top_k': 2})
-    dist = docs.traverse_flat('m').get_attributes('score')
-    assert dist[0].value == 0
+    dist = docs.traverse_flat(['m']).get_attributes('scores')
+    assert dist[0]['distance'].value == 0

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from jina import Document
+from jina import Document, DocumentArray
 from jina.logging.profile import TimeContext
 
 from .. import PostgreSQLIndexer
@@ -78,12 +78,14 @@ def validate_db_side(postgres_indexer, expected_data):
 def test_postgres(tmpdir):
     postgres_indexer = PostgreSQLIndexer()
     NR_DOCS = 10000
-    original_docs = list(get_documents(nr=NR_DOCS, chunks=0, same_content=False))
+    original_docs = DocumentArray(
+        list(get_documents(nr=NR_DOCS, chunks=0, same_content=False))
+    )
 
-    postgres_indexer.delete(original_docs)
+    postgres_indexer.delete(original_docs, {})
 
     with TimeContext(f'### indexing {len(original_docs)} docs'):
-        postgres_indexer.add(original_docs)
+        postgres_indexer.add(original_docs, {})
     np.testing.assert_equal(postgres_indexer.size, NR_DOCS)
 
     info_original_docs = [
@@ -91,8 +93,10 @@ def test_postgres(tmpdir):
     ]
     validate_db_side(postgres_indexer, info_original_docs)
 
-    new_docs = list(get_documents(chunks=False, nr=10, same_content=True))
-    postgres_indexer.update(new_docs)
+    new_docs = DocumentArray(
+        list(get_documents(chunks=False, nr=10, same_content=True))
+    )
+    postgres_indexer.update(new_docs, {})
 
     info_new_docs = [
         (doc.id, doc.embedding, doc_without_embedding(doc)) for doc in new_docs
@@ -101,5 +105,5 @@ def test_postgres(tmpdir):
     expected_info = [(ids[0], vecs[0], metas[0])]
     validate_db_side(postgres_indexer, expected_info)
 
-    postgres_indexer.delete(new_docs)
+    postgres_indexer.delete(new_docs, {})
     np.testing.assert_equal(postgres_indexer.size, len(original_docs) - len(new_docs))

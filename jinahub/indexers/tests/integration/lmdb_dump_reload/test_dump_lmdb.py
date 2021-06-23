@@ -179,22 +179,3 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
         runtime_args={'pea_id': 0},
     )
     assert idx.size == nr_docs
-
-
-def _in_docker():
-    """ Returns: True if running in a Docker container, else False """
-    with open('/proc/1/cgroup', 'rt') as ifh:
-        if 'docker' in ifh.read():
-            print('in docker, skipping benchmark')
-            return True
-        return False
-
-
-# benchmark only
-@pytest.mark.skipif(
-    _in_docker() or ('GITHUB_WORKFLOW' in os.environ),
-    reason='skip the benchmark test on github workflow or docker',
-)
-def test_benchmark(tmpdir, docker_compose):
-    nr_docs = 100
-    return test_dump_reload(tmpdir, nr_docs=nr_docs, emb_size=128, shards=3)
