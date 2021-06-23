@@ -73,7 +73,11 @@ class LMDBIndexer(Executor):
         )
         with self.env.begin(write=True) as transaction:
             for d in docs.traverse_flat(traversal_paths):
-                transaction.replace(d.id.encode(), d.SerializeToString())
+                # TODO figure out if there is a better way to do update in LMDB
+                # issue: the defacto update method is an upsert (if a value didn't exist, it is created)
+                # see https://lmdb.readthedocs.io/en/release/#lmdb.Cursor.replace
+                if transaction.delete(d.id.encode()):
+                    transaction.replace(d.id.encode(), d.SerializeToString())
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
