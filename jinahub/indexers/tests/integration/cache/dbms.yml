@@ -1,6 +1,4 @@
-jtype: FileDBMSIndexer
-with:
-  dump_on_exit: false
+jtype: LMDBIndexer
 metas:
-  name: dbms
+  name: indexer
   workspace: $DBMS_WORKSPACE
