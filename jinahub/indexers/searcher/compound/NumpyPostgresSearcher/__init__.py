@@ -37,10 +37,9 @@ class NumpyPostgresSearcher(Executor):
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):
-        inner_parameters = parameters.get(self.metas.name, parameters)
         if self._kv_indexer and self._vec_indexer:
-            self._vec_indexer.search(docs, inner_parameters)
-            kv_parameters = copy.deepcopy(inner_parameters)
+            self._vec_indexer.search(docs, parameters)
+            kv_parameters = copy.deepcopy(parameters)
             kv_parameters['traversal_paths'] = [
                 path + 'm' for path in kv_parameters.get('traversal_paths', ['r'])
             ]
