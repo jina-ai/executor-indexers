@@ -4,12 +4,12 @@ from jina import Flow, DocumentArray, Document
 
 # noinspection PyUnresolvedReferences
 from jinahub.indexers.cache import DocCache
-from jinahub.indexers.dbms.FileDBMSIndexer import FileDBMSIndexer
+from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
 
 
 def test_cache(tmpdir):
     os.environ['CACHE_WORKSPACE'] = os.path.join(tmpdir, 'cache')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(tmpdir, 'dbms')
+    os.environ['DBMS_WORKSPACE'] = os.path.join(tmpdir, 'indexer')
 
     docs = [
         Document(id=1, content='a'),
@@ -27,8 +27,8 @@ def test_cache(tmpdir):
         )
         assert len(response[0].docs) == 1
 
-        dbms = FileDBMSIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'dbms'},
+        dbms = LMDBIndexer(
+            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 1
@@ -42,8 +42,8 @@ def test_cache(tmpdir):
             on='/update',
             inputs=DocumentArray(docs),
         )
-        dbms = FileDBMSIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'dbms'},
+        dbms = LMDBIndexer(
+            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 1
@@ -52,8 +52,8 @@ def test_cache(tmpdir):
             on='/delete',
             inputs=DocumentArray(docs),
         )
-        dbms = FileDBMSIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'dbms'},
+        dbms = LMDBIndexer(
+            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 0
