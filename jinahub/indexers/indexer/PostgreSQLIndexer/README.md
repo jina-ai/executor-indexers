@@ -16,7 +16,12 @@
 
 ## 🌱 Prerequisites
 
-Some conditions to fulfill before running the executor
+- This Executor works on Python 3.7 and 3.8. 
+- Make sure to install the [requirements](./requirements.txt)
+
+Additionally, you will need a running PostgreSQL database. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters. 
+
+The Docker image we provide includes a running PostgreSQL database. Check the [Dockerfile](./Dockerfile).
 
 ## 🚀 Usages
 

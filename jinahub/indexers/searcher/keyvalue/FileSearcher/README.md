@@ -1,6 +1,6 @@
 # ✨ FileSearcher
 
-**FileSearcher** is an Indexer-type Executor for Jina, that uses a disk-based storage system to store key-value data, and then search through it to retrieve metadata-type information for a given set of Document ids.
+**FileSearcher** is a Searcher-type Executor for Jina, that uses a disk-based storage system to store key-value data, and then search through it to retrieve metadata-type information for a given set of Document ids.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
