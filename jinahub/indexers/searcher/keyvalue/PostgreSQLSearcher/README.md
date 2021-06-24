@@ -38,7 +38,7 @@ or in the `.yml` config.
 ```yaml
 jtype: Flow
 pods:
-  - name: encoder
+  - name: indexer
     uses: 'jinahub+docker://PostgreSQLSearcher'
 ```
 
@@ -56,7 +56,7 @@ or in the `.yml` config.
 ```yaml
 jtype: Flow
 pods:
-  - name: encoder
+  - name: indexer
     uses: 'jinahub://PostgreSQLSearcher'
 ```
 

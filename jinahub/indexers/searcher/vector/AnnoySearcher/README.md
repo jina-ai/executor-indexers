@@ -40,7 +40,7 @@ or in the `.yml` config.
 ```yaml
 jtype: Flow
 pods:
-  - name: encoder
+  - name: indexer
     uses: 'jinahub+docker://AnnoySearcher'
 ```
 
@@ -58,7 +58,7 @@ or in the `.yml` config.
 ```yaml
 jtype: Flow
 pods:
-  - name: encoder
+  - name: indexer
     uses: 'jinahub://AnnoySearcher'
 ```
 
