@@ -73,7 +73,7 @@ pods:
 	pip install git+https://github.com/jina-ai/executor-indexers/
 	```
 
-1. Use `jinahub-MY-DUMMY-EXECUTOR` in your code
+1. Use `executor-indexers` in your code
 
 	```python
 	from jina import Flow
