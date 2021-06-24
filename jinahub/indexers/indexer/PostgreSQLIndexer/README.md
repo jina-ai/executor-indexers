@@ -112,7 +112,7 @@ from jina import Flow, Document
 f = Flow().add(uses='jinahub+docker://PostgreSQLIndexer')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_resutls=True)
+    resp = f.post(on='foo', inputs=Document(), return_results=True)
 	print(f'{resp}')
 ```
 
