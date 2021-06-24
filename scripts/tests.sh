@@ -24,8 +24,10 @@ for test_dir in ${changed_folders[@]}; do
   cd $test_dir
   if [[ -d "tests/" ]]; then
     if test -f "Dockerfile"; then
-      docker build -f Dockerfile .
+      docker build -f Dockerfile . -t test_image && docker run test_image:latest
       local_exit_code=$?
+      docker stop test_image:latest
+      docker image rm test_image:latest --force
     else
       python -m venv .venv
       pip install pytest pytest-mock
