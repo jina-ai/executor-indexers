@@ -2,7 +2,7 @@ from setuptools import find_packages
 import setuptools
 
 setuptools.setup(
-    name="jinahub",
+    name="jinahub-indexer",
     version="0.0.1",
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
