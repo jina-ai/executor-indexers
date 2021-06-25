@@ -24,9 +24,16 @@ for test_dir in ${changed_folders[@]}; do
   cd $test_dir
   if [[ -d "tests/" ]]; then
     if test -f "Dockerfile"; then
-      docker build -f Dockerfile . -t test_image && docker run test_image:latest
+      docker build -f Dockerfile . -t test_image
+      container_name=`docker run -d test_image:latest`
+      if [ $(docker inspect -f '{{.State.Running}}' $container_name) = "true" ]; then
+        echo container for $test_dir started successfully
+      else
+        echo docker container did not start in $test_dir
+        local_exit_code=1
+      fi
       local_exit_code=$?
-      docker stop test_image:latest
+      docker stop $container_name
       docker image rm test_image:latest --force
     else
       python -m venv .venv

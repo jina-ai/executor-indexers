@@ -1,4 +1,4 @@
-jtype: AnnoyIndexer
+jtype: AnnoySearcher
 with:
   {}
 metas:
