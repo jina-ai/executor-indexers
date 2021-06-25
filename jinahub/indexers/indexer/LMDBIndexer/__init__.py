@@ -16,7 +16,7 @@ class LMDBIndexer(Executor):
 
     def __init__(
         self,
-        map_size: int = 10485760,  # in bytes, 10 MB
+        map_size: int = 1048576000,  # in bytes, 1000 MB
         default_traversal_paths: List[str] = ['r'],
         *args,
         **kwargs,

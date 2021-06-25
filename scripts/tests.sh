@@ -26,6 +26,7 @@ for test_dir in ${changed_folders[@]}; do
     if test -f "Dockerfile"; then
       docker build -f Dockerfile . -t test_image
       container_name=`docker run -d test_image:latest`
+      sleep 2
       if [ $(docker inspect -f '{{.State.Running}}' $container_name) = "true" ]; then
         echo container for $test_dir started successfully
       else

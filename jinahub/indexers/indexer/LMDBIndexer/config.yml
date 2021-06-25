@@ -1,0 +1,6 @@
+jtype: LMDBIndexer
+metas:
+  py_modules:
+    - __init__.py
+  workspace: workspace/
+  name: lmdb

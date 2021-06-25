@@ -1,4 +1,9 @@
 jtype: FileSearcher
+with:
+  {}
 metas:
   py_modules:
     - __init__.py
+    - file_writer.py
+  workspace: workspace/
+  name: file_searcher

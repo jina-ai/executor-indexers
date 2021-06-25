@@ -2,3 +2,4 @@ jtype: PostgreSQLSearcher
 metas:
   py_modules:
     - __init__.py
+  name: psql_searcher

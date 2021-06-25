@@ -1,5 +1,8 @@
 jtype: NumpyFileSearcher
-# with:
+with:
+  {}
 metas:
-  py_modules:
+  py_modules:  # THIS WILL NOT WORK SINCE IT RELIES ON CODE FILES FROM OTHER FOLDERS
     - __init__.py
+  workspace: workspace/
+  name: numpy_file_searcher
