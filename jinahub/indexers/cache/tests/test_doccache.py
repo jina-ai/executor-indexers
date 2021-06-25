@@ -4,6 +4,8 @@ from jina import Flow, DocumentArray, Document
 
 from .. import DocCache
 
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def test_cache_content_hash(tmpdir):
     os.environ['CACHE_FIELDS'] = '[content_hash]'
@@ -18,7 +20,7 @@ def test_cache_content_hash(tmpdir):
     for d in docs2:
         d.update_content_hash()
 
-    with Flow(return_results=True).add(uses='cache.yml') as f:
+    with Flow(return_results=True).add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs),
@@ -42,7 +44,7 @@ def test_cache_id(tmpdir):
 
     docs2 = [Document(id='b'), Document(id='a')]
 
-    with Flow(return_results=True).add(uses='cache.yml') as f:
+    with Flow(return_results=True).add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs),
@@ -72,7 +74,7 @@ def test_cache_id_content_hash(tmpdir):
     for d in docs:
         d.update_content_hash()
 
-    with Flow(return_results=True).add(uses='cache.yml') as f:
+    with Flow(return_results=True).add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs),
@@ -95,7 +97,7 @@ def test_cache_id_content_hash2(tmpdir):
     for d in docs2:
         d.update_content_hash()
 
-    with Flow(return_results=True).add(uses='cache.yml') as f:
+    with Flow(return_results=True).add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs2),

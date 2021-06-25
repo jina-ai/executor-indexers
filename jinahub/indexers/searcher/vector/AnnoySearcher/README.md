@@ -1,66 +1,127 @@
-# AnnoyIndexer
+# ✨ AnnoySearcher
 
-Annoy (Approximate Nearest Neighbors Oh Yeah) is a C++ library with Python bindings to search for points in space that are close to a given query point. It also creates large read-only file-based data structures that are mmapped into memory so that many processes may share the same data.
-AnnoyIndexer hence is an Annoy powered vector indexer.
+**AnnoySearcher** is an Annoy-powered vector-based similarity searcher. Annoy stands for "Approximate Nearest Neighbors Oh Yeah", and is a C++ library with Python bindings to search for points in space that are close to a given query point. It also creates large read-only file-based data structures that are mmapped into memory so that many processes may share the same data.
+
 For more information, refer to the GitHub repo for [Spotify's Annoy](https://github.com/spotify/annoy).
 
-## Snippets:
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
 
-Initialise AnnoyIndexer:
+- [🌱 Prerequisites](#-prerequisites)
+- [🚀 Usages](#-usages)
+- [🎉️ Example](#%EF%B8%8F-example)
+- [🔍️ Reference](#%EF%B8%8F-reference)
 
-`AnnoyIndexer(metric='euclidean', n_trees=trees_int, search_k=search_int)`
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Users can use Pod images in several ways:
+## 🌱 Prerequisites
 
-**NOTE**: 
+- This Executor works on Python 3.7 and 3.8. 
+- Make sure to install the [requirements](./requirements.txt)
 
-- `MODULE_VERSION` is the version of the AnnoyIndexer, in semver format. E.g. `0.0.16`.
-- `JINA_VERSION` is the version of the Jina core version with which the Docker image was built. E.g. `1.0.2` 
+## 🚀 Usages
 
-- Flow API
-  
-  ```python
-    from jina.flow import Flow
-    f = (Flow()
-        .add(name='my-indexer', uses='docker://jinahub/pod.indexer.annoyindexer:MODULE_VERSION-JINA_VERSION')
-    ```
+Check [tests](./tests) for an example on how to use it.
 
-- Flow YAML file
+### 🚚 Via JinaHub
 
-  This is the only way to provide arguments to its parameters:
-  
-  ```yaml
-  pods:
-    - name: annoy
-      uses: indexers/vector/AnnoyIndexer/config.yml
-  ```
-  
-  and then in `leveldb.yml`:
+#### using docker images
+Use the prebuilt images from JinaHub in your python codes, 
 
-  ```yaml
-  !AnnoyIndexer
-  with:
-    hostname: yourdomain.com
-    port: 6379
-    db: 0
-  ```
+```python
+from jina import Flow
+	
+f = Flow().add(uses='jinahub+docker://AnnoySearcher')
+```
 
-- Jina CLI
-  
-  ```bash
-  jina pod --uses docker://jinahub/pod.indexer.annoyindexer:MODULE_VERSION-JINA_VERSION
-  ```
+or in the `.yml` config.
+	
+```yaml
+jtype: Flow
+pods:
+  - name: indexer
+    uses: 'jinahub+docker://AnnoySearcher'
+```
 
-- Conventional local usage with `uses` argument
-  
-  ```bash
-  jina pod --uses hub/example/config.yml --port-in 55555 --port-out 55556
-  ```
+#### using source codes
+Use the source codes from JinaHub in your code
 
-- Run with Docker (`docker run`)
- 
-  Specify the image name along with the version tag. The snippet below uses Jina version as `JINA_VERSION`.
+```python
+from jina import Flow
+	
+f = Flow().add(uses='jinahub://AnnoySearcher')
+```
 
-  ```bash
-    docker run --network host docker://jinahub/pod.indexer.annoyindexer:MODULE_VERSION-JINA_VERSION --port-in 55555 --port-out 55556
-    ```
+or in the `.yml` config.
+
+```yaml
+jtype: Flow
+pods:
+  - name: indexer
+    uses: 'jinahub://AnnoySearcher'
+```
+
+
+### 📦️ Via Pypi
+
+1. Install the `executor-indexers` package.
+
+	```bash
+	pip install git+https://github.com/jina-ai/executor-indexers/
+	```
+
+1. Use `executor-indexers` in your code
+
+	```python
+	from jina import Flow
+	from jinahub.indexers.searcher.vector.AnnoySearcher import AnnoySearcher
+	
+	f = Flow().add(uses=AnnoySearcher)
+	```
+
+
+### 🐳 Via Docker
+
+1. Clone the repo and build the docker image
+
+	```shell
+	git clone https://github.com/jina-ai/executor-indexers/
+	cd jinahub/indexers/searcher/vector/AnnoySearcher
+	docker build -t annoy-image .
+	```
+
+1. Use `annoy-image` in your codes
+
+	```python
+	from jina import Flow
+	
+	f = Flow().add(uses='docker://annoy-image:latest')
+	```
+	
+
+## 🎉️ Example 
+
+
+```python
+from jina import Flow, Document
+
+f = Flow().add(uses='jinahub+docker://AnnoySearcher')
+
+with f:
+    resp = f.post(on='foo', inputs=Document(), return_results=True)
+	print(f'{resp}')
+```
+
+### Inputs 
+
+`Document` with `.embedding` the same shape as the `Documents` it has stored.
+
+### Returns
+
+Attaches matches to the Documents sent as inputs, with the id of the match, and its embedding. For retrieving the full metadata (original text or image blob), use a [key-value searcher](./../../keyvalue).
+
+
+## 🔍️ Reference
+
+- https://github.com/spotify/annoy

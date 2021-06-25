@@ -1,12 +1,7 @@
 manifest_version: 1
 name: PostgreSQLSearcher
-kind: indexer
 description: An indexer wrapper around the PostgreSQL database system
 author: Jina AI Dev-Team (dev-team@jina.ai)
-url: https://jina.ai
-vendor: Jina AI Limited
-documentation: https://github.com/jina-ai/jina-hub
-version: 0.0.1
-license: apache-2.0
+url: https://github.com/jina-ai/executor-indexers/tree/main/jinahub/indexers/searcher/keyvalue/PostgreSQLSearcher
+avatar: https://avatars.githubusercontent.com/u/60539444?s=200&v=4
 keywords: [SQL, database, PostgreSQLSearcher, indexer]
-type: pod
