@@ -7,10 +7,6 @@ from jina import Executor, DocumentArray, requests, Document
 
 from jina_commons import get_logger
 
-DATA_FIELD = 'data'
-ID_KEY = 'id'
-CONTENT_HASH_KEY = 'content_hash'
-
 
 class _CacheHandler:
     """A handler for loading and serializing the in-memory cache of the DocCache.
@@ -21,9 +17,11 @@ class _CacheHandler:
 
     def __init__(self, path, logger):
         self.path = path
+        self.id_to_hash_fn = path + '.ids'
+        self.hash_to_id_fn = path + '.cache'
         try:
-            self.id_to_hash = pickle.load(open(path + '.ids', 'rb'))
-            self.hash_to_id = pickle.load(open(path + '.cache', 'rb'))
+            self.id_to_hash = pickle.load(open(self.id_to_hash_fn, 'rb'))
+            self.hash_to_id = pickle.load(open(self.hash_to_id_fn, 'rb'))
         except FileNotFoundError as e:
             logger.warning(
                 f'File path did not exist : {path}.ids or {path}.cache: {e!r}. Creating new CacheHandler...'
@@ -33,11 +31,8 @@ class _CacheHandler:
 
     def close(self):
         """Flushes the in-memory cache to pickle files."""
-        pickle.dump(self.id_to_hash, open(self.path + '.ids', 'wb'))
-        pickle.dump(self.hash_to_id, open(self.path + '.cache', 'wb'))
-
-
-default_fields = (CONTENT_HASH_KEY,)
+        pickle.dump(self.id_to_hash, open(self.id_to_hash_fn, 'wb'))
+        pickle.dump(self.hash_to_id, open(self.hash_to_id_fn, 'wb'))
 
 
 class DocCache(Executor):
@@ -52,7 +47,7 @@ class DocCache(Executor):
     ):
         super().__init__(*args, **kwargs)
         if fields is None:
-            fields = default_fields
+            fields = ('content_hash', ),
         self.fields = fields
         self.logger = get_logger(self)
         os.makedirs(self.workspace)
@@ -76,13 +71,12 @@ class DocCache(Executor):
 
             self.cache_handler.id_to_hash[d.id] = doc_hash
 
-            if not exists:
+            if exists:
+                indices_to_remove.append(i)
+            else:
                 # we keep all the mappings from ids to hash
                 # but only the FIRST from hash to id
                 self.cache_handler.hash_to_id[doc_hash] = d.id
-
-            if exists:
-                indices_to_remove.append(i)
 
         indices_to_remove = sorted(indices_to_remove, reverse=True)
         for i in indices_to_remove:
@@ -128,9 +122,9 @@ class DocCache(Executor):
     def update(self, docs: DocumentArray, **kwargs):
         """Update the documents in the cache with the new content, by id"""
         for i, d in enumerate(docs):
-            id_exists = d.id in self.cache_handler.id_to_hash.keys()
+            exists = d.id in self.cache_handler.id_to_hash.keys()
 
-            if id_exists:
+            if exists:
                 new_doc_hash = DocCache.hash_doc(d, self.fields)
                 old_cache_value = self.cache_handler.id_to_hash[d.id]
 

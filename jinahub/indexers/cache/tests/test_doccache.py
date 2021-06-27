@@ -106,12 +106,12 @@ def test_cache_id_content_hash2(tmpdir):
 
 
 def test_cache_crud(tmpdir):
-    docs = [
+    docs = DocumentArray([
         Document(id=1, content='content'),
         Document(id=2, content='content'),
         Document(id=3, content='content'),
         Document(id=4, content='content2'),
-    ]
+    ])
     # to remove once https://github.com/jina-ai/jina/pull/2673 is merged
     for d in docs:
         d.update_content_hash()
@@ -119,19 +119,19 @@ def test_cache_crud(tmpdir):
     cache = DocCache(
         fields=('content_hash',),
         metas={'workspace': os.path.join(tmpdir, 'cache'), 'name': 'cache'},
-        runtime_args={'pea_id': 0},
+        # runtime_args={'pea_id': 0},
     )
     cache.index_or_remove_from_request(docs)
     # we cache all the docs by id, we just remove the ones that have already been "hit"
     assert cache.ids_count == 4
     assert cache.hashes_count == 2
 
-    docs = [
+    docs = DocumentArray([
         Document(id=1, content='content3'),
         Document(id=2, content='content4'),
         Document(id=3, content='contentX'),
         Document(id=4, content='contentBLA'),
-    ]
+    ])
     # to remove once https://github.com/jina-ai/jina/pull/2673 is merged
     for d in docs:
         d.update_content_hash()
@@ -140,7 +140,7 @@ def test_cache_crud(tmpdir):
     assert cache.ids_count == 4
     assert cache.hashes_count == 4
 
-    docs = [
+    docs = DocumentArray([
         Document(id=1),
         Document(id=2),
         Document(id=3),
@@ -149,7 +149,7 @@ def test_cache_crud(tmpdir):
         Document(id=5),
         Document(id=6),
         Document(id=7),
-    ]
+    ])
 
     cache.delete(docs)
     assert cache.ids_count == 0

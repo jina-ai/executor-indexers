@@ -104,7 +104,7 @@ pods:
 
 ## 🎉️ Example 
 
-See [tests](./tests)
+See [tests](./tests/test_doccache.py)
 
 In a Flow:
 
@@ -122,11 +122,14 @@ with your `cache.yaml` being:
 ```yaml
 jtype: DocCache
 with:
-  fields: $CACHE_FIELDS
+  fields: CACHE_FIELDS
 metas:
   name: cache
-  workspace: $CACHE_WORKSPACE
+  workspace: CACHE_STORED_PATH
 ```
 
-You can replace `$CACHE_FIELDS` with either one string (e.g. `text`), or with a list (e.g. `[text, tags__author]`).
+`CACHE_FIELDS` is the one or more properties of Document. 
+The value can be either one string (e.g. `text`), or a list (e.g. `[text, tags__author]`). `$CACHE_WORKSPACE` 
+
+`CACHE_STORED_PATH` needs to be replaced by a folder path.
 
