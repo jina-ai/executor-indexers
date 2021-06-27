@@ -104,32 +104,82 @@ pods:
 
 ## 🎉️ Example 
 
-See [tests](./tests/test_doccache.py)
-
 In a Flow:
 
 ```python
-with Flow(return_results=True).add(uses='cache.yml') as f:
-    response = f.post(
-        on='/index',
-        inputs=DocumentArray(docs),
-    )
+from jina import Flow, Document, DocumentArray
+
+docs = DocumentArray([
+	Document(id=1, content='🐯'),
+	Document(id=2, content='🐯'),
+	Document(id=3, content='🐻'),
+])
+
+f = Flow(return_results=True).add(uses='jinahub+docker://DocCache')
+
+with f:
+    response = f.post(on='/index', inputs=docs)
+
+assert len(response.data.docs) == 2  # the duplicated Document is removed from the request
+assert set([doc.id for doc in response.data.docs]) == set([1, 3])
+
+docs_to_update = DocumentArray([
+	Document(id=2, content='🐼')
+])
+
+with f:
+	response = f.post(on='/update', inputs=docs_to_update)
+
+assert len(response.data.docs) == 1  # the Document with `id=2` is no longer duplicated.
+
+with f:
+	response = f.post(on='/index', inputs=docs[-1])
+	assert len(response.data.docs) == 0  # the Document has been cached
+	f.post(on='/delete', inputs=docs[-1])
+	response = f.post(on='/index', inputs=docs[-1])
+	assert len(response.data.docs) == 1 # the Document is cached again after the deletion
 ```
 
+## Initialization
+`fields` is the one or more [attributes of Document](https://github.com/jina-ai/jina/blob/master/.github/2.0/cookbooks/Document.md#document-attributes).
+The value must be a tuple of strings (e.g. `[text, tags__author]`). The default value is `('content_hash', )`
 
-with your `cache.yaml` being:
 
-```yaml
-jtype: DocCache
-with:
-  fields: CACHE_FIELDS
-metas:
-  name: cache
-  workspace: CACHE_STORED_PATH
-```
+## APIs
 
-`CACHE_FIELDS` is the one or more properties of Document. 
-The value can be either one string (e.g. `text`), or a list (e.g. `[text, tags__author]`). `$CACHE_WORKSPACE` 
+### `on='/index'`
 
-`CACHE_STORED_PATH` needs to be replaced by a folder path.
+This API calculates and caches the hash codes of the `Document`. If the Document has already previously cached,
+it is removed from the `DocumentArray` and therefore no further Executor will receive it.
 
+#### Inputs
+
+`DocumentArray`. 
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.
+
+### `on='/update'`
+
+This API is used to update the hash codes of the cached `Document`. If the Document with the same `id` has already previously been cached, the hash code will be updated based on the new values of the `fields`
+
+#### Inputs
+
+`DocumentArray`.
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.
+
+### `on='/delete'`
+
+This API is used to delete the hash codes of the cached `Document`. If the Document with the same `id` has already previously been cached, the hash code will be deleted. 
+
+#### Inputs
+
+`DocumentArray`.
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.
