@@ -39,7 +39,8 @@ class DocCache(Executor):
     """An indexer that caches combinations of fields
     and filters out documents that have been previously cached
 
-    :param fields: Fields of the Document used for generating unique hashing code, which is further used to detect the duplicates
+    :param fields: Fields of the Document used for generating unique hashing code, which is further used to detect the
+        duplicates.
     """
 
     def __init__(
