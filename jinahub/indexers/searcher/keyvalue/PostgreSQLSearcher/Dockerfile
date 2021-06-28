@@ -11,4 +11,4 @@ RUN pip install -r requirements.txt
 
 # no tests here. Check integration tests
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

@@ -13,4 +13,4 @@ RUN pip install -r requirements.txt
 # for testing the image
 RUN pip install pytest && pytest -s -v tests
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

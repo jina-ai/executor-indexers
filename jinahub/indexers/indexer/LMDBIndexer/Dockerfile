@@ -12,4 +12,4 @@ RUN python3.7 -m pip install -r requirements.txt
 # for testing the image
 RUN python3.7 -m pip install pytest && python3.7 -m pytest -s -v tests/
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

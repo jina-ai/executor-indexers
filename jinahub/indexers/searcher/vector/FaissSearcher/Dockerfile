@@ -16,4 +16,4 @@ RUN python3.7 -m pip install pytest
 
 RUN pytest -s -v tests/
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

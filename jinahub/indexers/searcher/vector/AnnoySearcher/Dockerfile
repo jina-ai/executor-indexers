@@ -12,4 +12,4 @@ WORKDIR /workspace
 RUN python3.7 -m pip install -r requirements.txt
 RUN python3.7 -m pip install pytest
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
