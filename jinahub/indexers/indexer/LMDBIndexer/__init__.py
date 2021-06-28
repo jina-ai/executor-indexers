@@ -12,6 +12,11 @@ class LMDBIndexer(Executor):
     """An lmdb-based DBMS Indexer for Jina
 
     For more information on lmdb check their documentation: https://lmdb.readthedocs.io/en/release/
+
+    :parameter map_size: Maximum size (in bytes) database may grow to. Check more information at
+        https://lmdb.readthedocs.io/en/release/#environment-class
+
+    :parameter default_traversal_paths: fallback traversal path in case there is not traversal path sent in the request
     """
 
     def __init__(
