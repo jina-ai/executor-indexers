@@ -22,35 +22,39 @@ root_dir=$(pwd)
 
 for test_dir in ${changed_folders[@]}; do
   cd $test_dir
-  if [[ -d "tests/" ]]; then
-    if test -f "Dockerfile"; then
-      docker build -f Dockerfile . -t test_image
-      container_name=`docker run -d test_image:latest`
-      sleep 2
-      if [ $(docker inspect -f '{{.State.Running}}' $container_name) = "true" ]; then
-        echo container for $test_dir started successfully
-      else
-        echo docker container did not start in $test_dir
-        local_exit_code=1
-      fi
-      local_exit_code=$?
-      docker stop $container_name
-      docker image rm test_image:latest --force
+
+  if test -f "Dockerfile"; then
+    echo building Dockerfile in $test_dir
+    docker build -f Dockerfile . -t test_image
+    container_name=`docker run -d test_image:latest`
+    sleep 2
+    if [ $(docker inspect -f '{{.State.Running}}' $container_name) = "true" ]; then
+      echo container for $test_dir started successfully
+      local_exit_code=0
     else
-      python -m venv .venv
-      pip install pytest pytest-mock
-      pip install -r requirements.txt
-      pytest -s -v tests/
-      local_exit_code=$?
-      deactivate
+      echo docker container did not start in $test_dir
+      local_exit_code=1
     fi
-    if [[ ! $local_exit_code == 0 ]]; then
-      EXIT_CODE=$local_exit_code
-      echo $test_dir failed. local_exit_code = $local_exit_code, exit = $EXIT_CODE
-    fi
+    docker stop $container_name
+    docker image rm test_image:latest --force
+  elif [[ -d "tests/" ]]; then
+    echo running tests in $test_dir
+    python -m venv .venv
+    pip install pytest pytest-mock
+    pip install -r requirements.txt
+    pytest -s -v tests/
+    local_exit_code=$?
+    deactivate
   else
-    echo 'no tests/ folder here. skipping...'
+    echo no tests or Dockerfile in $test_dir
+    local_exit_code=0
   fi
+
+  if [[ ! $local_exit_code == 0 ]]; then
+    EXIT_CODE=$local_exit_code
+    echo $test_dir failed. local_exit_code = $local_exit_code, exit = $EXIT_CODE
+  fi
+
   cd $root_dir
   done
 
