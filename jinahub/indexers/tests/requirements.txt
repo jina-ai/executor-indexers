@@ -1,5 +1,5 @@
-git+https://github.com/jina-ai/jina.git@010789331ce896ffcaea897402d698944f1a9d40
+git+https://github.com/jina-ai/jina.git@2.0.0rc9
+git+https://github.com/jina-ai/jina-commons
 psycopg2-binary==2.8.6
-git+git://github.com/jina-ai/jina-commons
 pytest
 lmdb==1.2.1
