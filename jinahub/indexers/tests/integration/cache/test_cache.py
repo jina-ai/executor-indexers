@@ -16,9 +16,6 @@ def test_cache(tmpdir):
         Document(id=2, content='a'),
         Document(id=3, content='a'),
     ]
-    # to remove once https://github.com/jina-ai/jina/pull/2673 is merged
-    for d in docs:
-        d.update_content_hash()
 
     with Flow(return_results=True).add(uses='cache.yml').add(uses='dbms.yml') as f:
         response = f.post(
