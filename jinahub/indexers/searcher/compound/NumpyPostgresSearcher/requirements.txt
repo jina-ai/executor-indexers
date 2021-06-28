@@ -1,4 +1,4 @@
 git+https://github.com/jina-ai/jina-commons
 git+https://github.com/jina-ai/jina.git@010789331ce896ffcaea897402d698944f1a9d40
 psycopg2-binary==2.8.6
-https://github.com/jina-ai/executor-indexers.git
+git+https://github.com/jina-ai/executor-indexers.git
