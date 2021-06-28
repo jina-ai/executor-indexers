@@ -5,7 +5,6 @@ DocCache is an Executor that can cache documents that it has seen before, by dif
 This is useful for continuously indexing Documents, and not having to worry about indexing the same Document twice.
 
 ## Notes
-
 The Executor only removes Documents in the `/index` endpoint. In the other endpoints, operations are done by the Document `id`.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
