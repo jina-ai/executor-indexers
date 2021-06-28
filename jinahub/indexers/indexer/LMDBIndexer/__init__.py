@@ -12,7 +12,6 @@ class LMDBIndexer(Executor):
     """An lmdb-based DBMS Indexer for Jina
 
     For more information on lmdb check their documentation: https://lmdb.readthedocs.io/en/release/
-
     :parameter map_size: Maximum size (in bytes) database may grow to. Check more information at
         https://lmdb.readthedocs.io/en/release/#environment-class
 
@@ -57,7 +56,9 @@ class LMDBIndexer(Executor):
         """Add entries to the index
 
         :param docs: the documents to add
-        :param parameters: parameters to the request
+        :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
+            `parameters={'traversal_paths': 'r', 'batch_size': 10}` will override the `self.default_traversal_paths` and
+            `self.default_batch_size`.
         """
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
@@ -71,7 +72,9 @@ class LMDBIndexer(Executor):
         """Update entries from the index by id
 
         :param docs: the documents to update
-        :param parameters: parameters to the request
+        :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
+            `parameters={'traversal_paths': 'r', 'batch_size': 10}` will override the `self.default_traversal_paths` and
+            `self.default_batch_size`.
         """
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
@@ -89,7 +92,9 @@ class LMDBIndexer(Executor):
         """Delete entries from the index by id
 
         :param docs: the documents to delete
-        :param parameters: parameters to the request
+        :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
+            `parameters={'traversal_paths': 'r', 'batch_size': 10}` will override the `self.default_traversal_paths` and
+            `self.default_batch_size`.
         """
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths

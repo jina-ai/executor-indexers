@@ -111,10 +111,13 @@ def test_lmdb_crud_flow(tmpdir):
 
 def _in_docker():
     """ Returns: True if running in a Docker container, else False """
-    with open('/proc/1/cgroup', 'rt') as ifh:
-        if 'docker' in ifh.read():
-            print('in docker, skipping benchmark')
-            return True
+    try:
+        with open('/proc/1/cgroup', 'rt') as ifh:
+            if 'docker' in ifh.read():
+                print('in docker, skipping benchmark')
+                return True
+            return False
+    except FileNotFoundError:
         return False
 
 
