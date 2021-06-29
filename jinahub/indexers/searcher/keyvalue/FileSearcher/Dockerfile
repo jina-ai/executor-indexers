@@ -9,6 +9,8 @@ WORKDIR /workspace
 RUN pip install -r requirements.txt
 
 # for testing the image
-RUN pip install pytest && pytest tests
-FROM base
+FROM base as test
+RUN pip install pytest && pytest -s -v tests
+
+FROM base as entrypoint
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

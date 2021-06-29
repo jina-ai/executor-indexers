@@ -9,7 +9,11 @@ cd $test_dir
 
 if test -f "Dockerfile"; then
   echo building Dockerfile in $test_dir
-  docker build -f Dockerfile . -t test_image
+  export DOCKER_BUILDKIT=1
+  # just test
+  docker build -f Dockerfile . -t test_image --target test
+  # build and run entrypoint
+  docker build -f Dockerfile . -t test_image --target entrypoint
   container_name=`docker run -d test_image:latest`
   sleep 2
   if [ $(docker inspect -f '{{.State.Running}}' $container_name) = "true" ]; then
@@ -20,6 +24,7 @@ if test -f "Dockerfile"; then
     local_exit_code=1
   fi
   docker stop $container_name
+  # TODO deploy to Hubble here?
   docker image rm test_image:latest --force
 elif [[ -d "tests/" ]]; then
   echo running tests in $test_dir

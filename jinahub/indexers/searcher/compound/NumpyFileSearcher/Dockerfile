@@ -8,6 +8,9 @@ WORKDIR /workspace
 
 RUN pip install -r requirements.txt
 
+FROM base as test
 # no tests here. Check integration tests
-FROM base
+RUN echo no tests here. Check integration tests
+
+FROM base as entrypoint
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

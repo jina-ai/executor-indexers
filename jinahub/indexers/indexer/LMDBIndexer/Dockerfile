@@ -9,6 +9,8 @@ WORKDIR /workspace
 RUN python3.7 -m pip install -r requirements.txt
 
 # for testing the image
+FROM base as test
 RUN python3.7 -m pip install pytest && python3.7 -m pytest -s -v tests/
-FROM base
+
+FROM base as entrypoint
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
