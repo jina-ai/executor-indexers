@@ -5,7 +5,6 @@ DocCache is an Executor that can cache documents that it has seen before, by dif
 This is useful for continuously indexing Documents, and not having to worry about indexing the same Document twice.
 
 ## Notes
-
 The Executor only removes Documents in the `/index` endpoint. In the other endpoints, operations are done by the Document `id`.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -104,29 +103,82 @@ pods:
 
 ## 🎉️ Example 
 
-See [tests](./tests)
-
 In a Flow:
 
 ```python
-with Flow(return_results=True).add(uses='cache.yml') as f:
-    response = f.post(
-        on='/index',
-        inputs=DocumentArray(docs),
-    )
+from jina import Flow, Document, DocumentArray
+
+docs = DocumentArray([
+	Document(id=1, content='🐯'),
+	Document(id=2, content='🐯'),
+	Document(id=3, content='🐻'),
+])
+
+f = Flow(return_results=True).add(uses='jinahub+docker://DocCache')
+
+with f:
+    response = f.post(on='/index', inputs=docs)
+
+assert len(response.data.docs) == 2  # the duplicated Document is removed from the request
+assert set([doc.id for doc in response.data.docs]) == set([1, 3])
+
+docs_to_update = DocumentArray([
+	Document(id=2, content='🐼')
+])
+
+with f:
+	response = f.post(on='/update', inputs=docs_to_update)
+
+assert len(response.data.docs) == 1  # the Document with `id=2` is no longer duplicated.
+
+with f:
+	response = f.post(on='/index', inputs=docs[-1])
+	assert len(response.data.docs) == 0  # the Document has been cached
+	f.post(on='/delete', inputs=docs[-1])
+	response = f.post(on='/index', inputs=docs[-1])
+	assert len(response.data.docs) == 1 # the Document is cached again after the deletion
 ```
 
+## Initialization
+`fields` is the one or more [attributes of Document](https://github.com/jina-ai/jina/blob/master/.github/2.0/cookbooks/Document.md#document-attributes).
+The value must be a tuple of strings (e.g. `[text, tags__author]`). The default value is `('content_hash', )`
 
-with your `cache.yaml` being:
 
-```yaml
-jtype: DocCache
-with:
-  fields: $CACHE_FIELDS
-metas:
-  name: cache
-  workspace: $CACHE_WORKSPACE
-```
+## APIs
 
-You can replace `$CACHE_FIELDS` with either one string (e.g. `text`), or with a list (e.g. `[text, tags__author]`).
+### `on='/index'`
 
+This API calculates and caches the hash codes of the `Document`. If the Document has already previously cached,
+it is removed from the `DocumentArray` and therefore no further Executor will receive it.
+
+#### Inputs
+
+`DocumentArray`. 
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.
+
+### `on='/update'`
+
+This API is used to update the hash codes of the cached `Document`. If the Document with the same `id` has already previously been cached, the hash code will be updated based on the new values of the `fields`
+
+#### Inputs
+
+`DocumentArray`.
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.
+
+### `on='/delete'`
+
+This API is used to delete the hash codes of the cached `Document`. If the Document with the same `id` has already previously been cached, the hash code will be deleted. 
+
+#### Inputs
+
+`DocumentArray`.
+
+#### Outputs
+
+`DocumentArray` without the duplicated `Document`.

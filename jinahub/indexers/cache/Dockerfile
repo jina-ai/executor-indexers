@@ -12,4 +12,5 @@ RUN pip install -r requirements.txt
 # for testing the image
 RUN pip install pytest && pytest -s -v tests
 
+FROM base
 ENTRYPOINT ["jina", "pea", "--uses", "config.yml"]

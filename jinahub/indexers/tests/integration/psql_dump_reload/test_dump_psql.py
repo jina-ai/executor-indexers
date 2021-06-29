@@ -146,7 +146,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
             with TimeContext(f'### indexing {len(docs)} docs'):
                 flow_dbms.post(on='/index', inputs=docs)
 
-            results = flow_query.post(on='/search', inputs=docs)
+            results = flow_query.post(on='/search', inputs=docs, return_results=True)
             assert len(results[0].docs[0].matches) == 0
 
             with TimeContext(f'### dumping {len(docs)} docs'):
@@ -166,7 +166,10 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
 
             flow_query.rolling_update(pod_name='indexer_query', dump_path=dump_path)
             results = flow_query.post(
-                on='/search', inputs=docs, parameters={'top_k': top_k}
+                on='/search',
+                inputs=docs,
+                parameters={'top_k': top_k},
+                return_results=True
             )
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
