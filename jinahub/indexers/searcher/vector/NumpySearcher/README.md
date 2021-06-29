@@ -102,13 +102,14 @@ pods:
 
 
 ```python
+import numpy as np
 from jina import Flow, Document
 
 f = Flow().add(uses='jinahub+docker://NumpySearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
