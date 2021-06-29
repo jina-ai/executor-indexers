@@ -10,8 +10,5 @@ WORKDIR /workspace
 # install Jina and third-party requirements
 RUN python3.7 -m pip install -r requirements.txt
 
-FROM base as test
-RUN python3.7 -m pip install pytest && pytest -s -v tests/
-
 FROM base as entrypoint
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
