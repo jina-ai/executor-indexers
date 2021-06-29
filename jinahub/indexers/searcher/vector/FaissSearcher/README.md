@@ -1,6 +1,6 @@
 # ✨ FaissSearcher
 
-**FaissSearcher** is a Faiss-powered vector indexer
+**FaissSearcher** is a Faiss-powered vector Searcher.
 
 Faiss is a library for efficient similarity search and clustering of dense vectors. It contains algorithms that search in sets of vectors of any size, up to ones that possibly do not fit in RAM. It also contains supporting code for evaluation and parameter tuning. Faiss is written in C++ with complete wrappers for Python/numpy. Some of the most useful algorithms are implemented on the GPU. It is developed by Facebook AI Research.
 
@@ -105,13 +105,14 @@ pods:
 
 
 ```python
+import numpy as np
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://FaissSearcher')
+f = Flow().add(uses='jinahub+docker://FAISSSearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
