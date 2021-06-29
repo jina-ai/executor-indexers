@@ -19,5 +19,5 @@ ENV POSTGRES_PASSWORD=123456
 RUN nohup bash -c "docker-entrypoint.sh postgres &" && sleep 3 && python3.7 -m pytest -s -v tests/
 
 EXPOSE 5432
-
+FROM base
 ENTRYPOINT ["bash", "start.sh"]

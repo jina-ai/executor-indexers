@@ -21,5 +21,5 @@ RUN nohup bash -c "docker-entrypoint.sh postgres &" && sleep 3
 # no tests here. Check integration tests
 
 EXPOSE 5432
-
+FROM base
 ENTRYPOINT ["bash", "start.sh"]
