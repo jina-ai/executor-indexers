@@ -12,10 +12,17 @@ cur_dir = os.path.dirname(os.path.abspath(__file__))
 def test_cache(tmpdir, cache_fields):
     os.environ['CACHE_FIELDS'] = cache_fields
     os.environ['CACHE_WORKSPACE'] = os.path.join(tmpdir, 'cache')
-    docs = [Document(content='a'), Document(content='a')]
-    docs2 = [Document(content='b'), Document(content='a')]
+    docs = []
+    docs2 = []
 
-    with Flow(return_results=True).add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
+    if cache_fields == '[content_hash]':
+        docs = [Document(content='a'), Document(content='a')]
+        docs2 = [Document(content='b'), Document(content='a')]
+    elif cache_fields == '[id]':
+        docs = [Document(id='a'), Document(id='a')]
+        docs2 = [Document(id='b'), Document(id='a')]
+
+    with Flow().add(uses=os.path.join(cur_dir, 'cache.yml')) as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs),
