@@ -11,8 +11,12 @@ from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLDBMSHandler
 
 
 class PostgreSQLSearcher(Executor):
-    """:class:`PostgreSQLIndexer` PostgreSQL based BDMS Indexer.
-    Initialize the PostgreSQLDBIndexer.
+    """:class:`PostgreSQLIndexer` PostgreSQL-based key-value Searcher.
+
+    It retrieves a Document by its id. The Document is stored in bytes
+    and is reconstructed and assigned to the Document in the DocumentArray.
+
+    Initialize the PostgreSQLSearcher.
 
     :param hostname: hostname of the machine
     :param port: the port
@@ -99,6 +103,11 @@ class PostgreSQLSearcher(Executor):
 
     @requests(on='/query')
     def query(self, docs: DocumentArray, parameters: Dict, **kwargs):
+        """Get the Documents by the ids of the docs in the DocArray
+
+        :param docs: the DocumentArray to search with
+        :param parameters: the parameters to this request
+        """
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
