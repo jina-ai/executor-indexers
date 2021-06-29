@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 
 # always run integration tests
 pip install -r jinahub/indexers/tests/requirements.txt
