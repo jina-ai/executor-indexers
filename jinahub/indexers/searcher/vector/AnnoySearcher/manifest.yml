@@ -1,12 +1,9 @@
 manifest_version: 1
-name: AnnoyIndexer
-kind: indexer
-description: Annoy powered vector indexer
+name: AnnoySearcher
+alias: AnnoySearcher
+description: Annoy powered vector Searcher
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
-vendor: Jina AI Limited
 documentation: https://github.com/jina-ai/jina-hub
-version: 0.0.1
 license: apache-2.0
 keywords: [indexer, annoy, ann]
-type: executor
