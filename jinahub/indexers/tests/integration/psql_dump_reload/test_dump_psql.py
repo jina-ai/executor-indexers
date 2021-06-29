@@ -146,7 +146,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
             with TimeContext(f'### indexing {len(docs)} docs'):
                 flow_dbms.post(on='/index', inputs=docs)
 
-            results = flow_query.post(on='/search', inputs=docs)
+            results = flow_query.post(on='/search', inputs=docs, return_results=True)
             assert len(results[0].docs[0].matches) == 0
 
             with TimeContext(f'### dumping {len(docs)} docs'):
