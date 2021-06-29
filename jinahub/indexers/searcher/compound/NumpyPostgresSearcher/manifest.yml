@@ -1,12 +1,10 @@
 manifest_version: 1
-name: NumpyFileSearcher
-kind: indexer
-description: A compounded file and numpy based query indexer
+name: NumpyPostgresSearcher
+alias: NumpyPostgresSearcher
+description: A compound numpy- and PostgreSQL-based query indexer
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
-vendor: Jina AI Limited
 documentation: https://github.com/jina-ai/jina-hub
-version: 0.0.1
 license: apache-2.0
 keywords: [database, compound, indexer, NumpyIndexer, FileSearcher]
-type: pod
+

@@ -20,6 +20,12 @@
 
 Additionally, you will need a running PostgreSQL database. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters.
 
+You can start one in a Docker container, like so: 
+
+```bash
+docker run -e POSTGRES_PASSWORD=123456  -p 127.0.0.1:5432:5432/tcp postgres:13.2 
+```
+
 ## 🚀 Usages
 
 Check [integration tests](../../../../../tests/integration/psql_dump_reload) for an example on how to use it.
@@ -109,8 +115,8 @@ from jina import Flow, Document
 f = Flow().add(uses='jinahub+docker://NumpyPostgresSearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
