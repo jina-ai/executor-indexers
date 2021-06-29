@@ -17,10 +17,11 @@ def test_cache(tmpdir):
         Document(id=3, content='a'),
     ]
 
-    with Flow(return_results=True).add(uses='cache.yml').add(uses='dbms.yml') as f:
+    with Flow().add(uses='cache.yml').add(uses='dbms.yml') as f:
         response = f.post(
             on='/index',
             inputs=DocumentArray(docs),
+            return_results=True
         )
         assert len(response[0].docs) == 1
 

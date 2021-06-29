@@ -168,7 +168,10 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
             flow_query.rolling_update(pod_name='indexer_query', dump_path=dump_path)
 
             results = flow_query.post(
-                on='/search', inputs=docs, parameters={'top_k': top_k}
+                on='/search',
+                inputs=docs,
+                parameters={'top_k': top_k},
+                return_results=True
             )
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0

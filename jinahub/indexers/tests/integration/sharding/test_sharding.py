@@ -108,6 +108,9 @@ def test_shards_numpy_filequery(tmpdir, num_shards):
         flow.rolling_update(pod_name=pod_name, dump_path=dump_path)
         time.sleep(2)
         results = flow.post(
-            on='/tag_search', inputs=inputs, parameters={'top_k': TOP_K}
+            on='/tag_search',
+            inputs=inputs,
+            parameters={'top_k': TOP_K},
+            return_results=True
         )
         validate_diff_sources(results, num_shards, docs_indexed)
