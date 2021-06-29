@@ -13,9 +13,18 @@ from jina_commons.indexers.dump import (
 from pathlib import Path
 from typing import Dict
 
-# required pytest fixture
-# noinspection PyUnresolvedReferences
-from tests import docker_compose
+
+@pytest.fixture()
+def docker_compose(request):
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . up  --build -d --remove-orphans"
+    )
+    time.sleep(5)
+    yield
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . down --remove-orphans"
+    )
+
 
 # noinspection PyUnresolvedReferences
 from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (

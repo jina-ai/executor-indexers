@@ -1,13 +1,33 @@
+import os
+import time
+
 import numpy as np
 import pytest
-from jina import Document, DocumentArray
+from jina import Document, DocumentArray, Flow
 from jina.logging.profile import TimeContext
 
 from .. import PostgreSQLIndexer
 from ..postgreshandler import doc_without_embedding
 
+
+@pytest.fixture()
+def docker_compose(request):
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . up  --build -d --remove-orphans"
+    )
+    time.sleep(5)
+    yield
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . down --remove-orphans"
+    )
+
+
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
 c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
+
+
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+compose_yml = os.path.abspath(os.path.join(cur_dir, '../docker-compose.yml'))
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -75,7 +95,8 @@ def validate_db_side(postgres_indexer, expected_data):
             np.testing.assert_equal(metas[i], bytes(record[i][2]))
 
 
-def test_postgres(tmpdir):
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_postgres(tmpdir, docker_compose):
     postgres_indexer = PostgreSQLIndexer()
     NR_DOCS = 10000
     original_docs = DocumentArray(
@@ -107,3 +128,11 @@ def test_postgres(tmpdir):
 
     postgres_indexer.delete(new_docs, {})
     np.testing.assert_equal(postgres_indexer.size, len(original_docs) - len(new_docs))
+
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_mwu(tmpdir, docker_compose):
+    f = Flow().add(uses=PostgreSQLIndexer)
+
+    with f:
+        resp = f.post(on='/index', inputs=DocumentArray([Document()]), return_results=True)
+        print(f'{resp}')

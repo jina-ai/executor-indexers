@@ -1,8 +1,10 @@
+import os
+import time
 from collections import OrderedDict
-
+from pathlib import Path
+from typing import Dict
 
 import numpy as np
-import os
 import pytest
 from jina import Flow, Document, Executor, DocumentArray, requests
 from jina.logging.profile import TimeContext
@@ -10,23 +12,14 @@ from jina_commons.indexers.dump import (
     import_vectors,
     import_metas,
 )
-from pathlib import Path
-from typing import Dict
-
-# required pytest fixture
-# noinspection PyUnresolvedReferences
-from tests import docker_compose
-
 
 from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
 from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
     doc_without_embedding,
 )
-
 # REQUIRED INDEXERS
 # noinspection PyUnresolvedReferences
 from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
-
 # REQUIRED INDEXERS
 # noinspection PyUnresolvedReferences
 from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
@@ -34,6 +27,18 @@ from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearch
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
 query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
+
+
+@pytest.fixture()
+def docker_compose(request):
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . up  --build -d --remove-orphans"
+    )
+    time.sleep(5)
+    yield
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . down --remove-orphans"
+    )
 
 
 class Pass(Executor):
@@ -87,10 +92,10 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     )
     if pea_id == shards - 1:
         docs_expected = docs[
-            (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
-        ]
+                        (pea_id) * size_shard: (pea_id + 1) * size_shard + size_shard_modulus
+                        ]
     else:
-        docs_expected = docs[(pea_id) * size_shard : (pea_id + 1) * size_shard]
+        docs_expected = docs[(pea_id) * size_shard: (pea_id + 1) * size_shard]
     print(f'### pea {pea_id} has {len(docs_expected)} docs')
 
     # TODO these might fail if we implement any ordering of elements on dumping / reloading
@@ -112,7 +117,7 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
 
 def path_size(dump_path):
     dir_size = (
-        sum(f.stat().st_size for f in Path(dump_path).glob('**/*') if f.is_file()) / 1e6
+            sum(f.stat().st_size for f in Path(dump_path).glob('**/*') if f.is_file()) / 1e6
     )
     return dir_size
 

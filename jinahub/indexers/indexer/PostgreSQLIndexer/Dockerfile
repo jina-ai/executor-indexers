@@ -1,4 +1,4 @@
-FROM postgres:13.2 as base
+FROM jinaai/jina:2.0.0rc9 as base
 
 # install and upgrade pip
 RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git
@@ -9,16 +9,10 @@ COPY requirements.txt /requirements.txt
 
 # install Jina and third-party requirements
 RUN python3.7 -m pip install -r requirements.txt
-RUN python3.7 -m pip install pytest
 
 COPY . /workspace
 WORKDIR /workspace
 
-ENV POSTGRES_PASSWORD=123456
-
-FROM base as test
-RUN nohup bash -c "docker-entrypoint.sh postgres &" && sleep 3 && python3.7 -m pytest -s -v tests/
-
 FROM base as entrypoint
 EXPOSE 5432
-ENTRYPOINT ["bash", "start.sh"]
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

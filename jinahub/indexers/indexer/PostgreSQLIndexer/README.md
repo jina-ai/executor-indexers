@@ -21,7 +21,11 @@
 
 Additionally, you will need a running PostgreSQL database. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters. 
 
-The Docker image we provide includes a running PostgreSQL database. Check the [Dockerfile](./Dockerfile).
+You can start one in a Docker container, like so: 
+
+```bash
+docker run -e POSTGRES_PASSWORD=123456  -p 127.0.0.1:5432:5432/tcp postgres:13.2 
+```
 
 ## 🚀 Usages
 
@@ -78,7 +82,7 @@ pods:
 
 	```python
 	from jina import Flow
-	from jinahub.SUB_PACKAGE_NAME.MODULE_NAME import PostgreSQLIndexer
+	from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLIndexer
 	
 	f = Flow().add(uses=PostgreSQLIndexer)
 	```
@@ -89,17 +93,17 @@ pods:
 1. Clone the repo and build the docker image
 
 	```shell
-	git clone https://github.com/jina-ai/EXECUTOR_REPO_NAME.git
-	cd EXECUTOR_REPO_NAME
-	docker build -t my-dummy-executor-image .
+	git clone https://github.com/jina-ai/executor-indexers
+	cd executor-indexers/jinahub/indexers/indexer/PostgreSQLIndexer
+	docker build -t psql-indexer-image .
 	```
 
-1. Use `my-dummy-executor-image` in your codes
+1. Use `psql-indexer-image` in your code
 
 	```python
 	from jina import Flow
 	
-	f = Flow().add(uses='docker://my-dummy-executor-image:latest')
+	f = Flow().add(uses='docker://psql-indexer-image:latest')
 	```
 	
 
@@ -109,21 +113,20 @@ pods:
 ```python
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://PostgreSQLIndexer')
+f = Flow().add(uses='jinahub://PostgreSQLIndexer')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/index', inputs=Document(), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
 
-`Document` with `blob` of the shape `256`.
+Any type of `Document`.
 
 ### Returns
 
-`Document` with `embedding` fields filled with an `ndarray` of the shape `embedding_dim` (=128, by default) with `dtype=nfloat32`.
-
+Nothing. The `Documents`s are stored.
 
 ## 🔍️ Reference
 
