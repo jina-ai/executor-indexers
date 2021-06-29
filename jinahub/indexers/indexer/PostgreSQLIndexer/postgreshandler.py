@@ -162,7 +162,7 @@ class PostgreSQLDBMSHandler:
     def close(self):
         self.postgreSQL_pool.closeall()
 
-    def query(self, docs: DocumentArray, **kwargs):
+    def search(self, docs: DocumentArray, **kwargs):
         """Use the Postgres db as a key-value engine, returning the metadata of a document id"""
         cursor = self.connection.cursor()
         for doc in docs:

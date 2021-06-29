@@ -101,8 +101,8 @@ class PostgreSQLSearcher(Executor):
         except (Exception, Error) as error:
             self.logger.error('Error while closing: ', error)
 
-    @requests(on='/query')
-    def query(self, docs: DocumentArray, parameters: Dict, **kwargs):
+    @requests(on='/search')
+    def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Get the Documents by the ids of the docs in the DocArray
 
         :param docs: the DocumentArray to search with

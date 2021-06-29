@@ -113,8 +113,8 @@ from jina import Flow, Document
 f = Flow().add(uses='jinahub+docker://PostgreSQLSearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(id='your_search_id'), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
