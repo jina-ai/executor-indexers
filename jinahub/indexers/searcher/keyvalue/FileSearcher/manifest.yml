@@ -1,5 +1,6 @@
 manifest_version: 1
 name: FileSearcher
+alias: FileSearcher
 description: A basic file based query indexer
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://github.com/jina-ai/executor-indexers/tree/main/jinahub/indexers/searcher/keyvalue/FileSearcher
