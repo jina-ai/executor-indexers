@@ -10,7 +10,7 @@ from jina import Document, Flow, DocumentArray, requests
 from jina_commons.indexers.dump import dump_docs
 from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
 from jinahub.indexers.searcher.keyvalue.FileSearcher import FileSearcher
-from jinahub.indexers.tests.integration.psql_dump_reload.test_dump_psql import (
+from tests.integration.psql_dump_reload.test_dump_psql import (
     MatchMerger,
 )
 

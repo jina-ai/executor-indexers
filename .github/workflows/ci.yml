@@ -15,7 +15,7 @@ jobs:
           sudo apt-get install jq
           echo "::set-output name=matrix::$(bash scripts/get-all-test-paths.sh)"
         env:
-          CHANGED_FILES: ${{ steps.changed-files.outputs.all }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.added_modified }}
       - id: debug
         run: |
           echo ${{ steps.set-matrix.outputs.matrix }}
