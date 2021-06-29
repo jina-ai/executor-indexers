@@ -1,4 +1,4 @@
-FROM jinaai/jina:master as base
+FROM jinaai/jina:2.0.0rc9 as base
 
 # install and upgrade pip
 RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git
@@ -8,12 +8,12 @@ RUN python3.7 -m pip install --upgrade pip
 COPY . /workspace
 WORKDIR /workspace
 
-FROM base
-
 # install Jina and third-party requirements
 RUN python3.7 -m pip install -r requirements.txt
-RUN python3.7 -m pip install pytest
 
+FROM base as test
+RUN python3.7 -m pip install pytest
 RUN pytest -s -v tests/
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+FROM base as entrypoint
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

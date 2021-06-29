@@ -1,12 +1,11 @@
 import mmap
 import os
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List
 
 from jina import Executor, requests, DocumentArray, Document
-from jina.logging.logger import JinaLogger
-
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_metas
+
 from .file_writer import FileWriterMixin
 
 HEADER_NONE_ENTRY = (-1, -1, -1)

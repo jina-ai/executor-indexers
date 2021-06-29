@@ -24,7 +24,7 @@ See below figure for how this would look like:
 
 In the above case, the DBMS could be the [PostgreSQL](./jinahub/indexers/indexer/PostgreSQLIndexer)-based Indexer, while the Query Flow could be based on [NumpyPostgresSearcher](./jinahub/indexers/searcher/compound/NumpyPostgresSearcher).
 
-For a showcase code, check our [integration tests](./jinahub/indexers/tests/integration/psql_dump_reload).
+For a showcase code, check our [integration tests](tests/integration/psql_dump_reload).
 
 The split between indexing and search Flows allows you to continuously serve requests in your application (in the search Flow), while still being able to write or modify the underlying data. Then when you want to update the state of the searchable data for your users, you perform a dump and rolling update.
 
@@ -34,7 +34,7 @@ The communication between index and search Flows is done via this pair of action
 The **dump** action tells the indexers to export its internal data (from whatever format it stores it in) to a disk location, optimized to be read by the shards in your search Flow.
 At the other end, the **rolling update** tells the search Flow to recreate its internal state with the new version of the data.
 
-Looking at the [test](./jinahub/indexers/tests/integration/psql_dump_reload/test_dump_psql.py), we can see how this is called:
+Looking at the [test](tests/integration/psql_dump_reload/test_dump_psql.py), we can see how this is called:
 
 ```python
 flow_dbms.post(

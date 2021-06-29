@@ -1,5 +1,5 @@
+import time
 from collections import OrderedDict
-
 
 import numpy as np
 import os
@@ -15,23 +15,20 @@ from typing import Dict
 
 # required pytest fixture
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.tests import docker_compose
+from tests import docker_compose
 
-
-from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
+# noinspection PyUnresolvedReferences
 from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
     doc_without_embedding,
 )
 
-# REQUIRED INDEXERS
+# required in order to be found by Flow creation
 # noinspection PyUnresolvedReferences
 from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
-
-# REQUIRED INDEXERS
-# noinspection PyUnresolvedReferences
-from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
+from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLIndexer
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
+compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
 dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
 query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
 
@@ -59,11 +56,14 @@ class MatchMerger(Executor):
                 top_k = int(top_k)
 
             for doc in results.values():
-                doc.matches = sorted(
-                    doc.matches,
-                    key=lambda m: m.scores['similarity'].value,
-                    reverse=True,
-                )[:top_k]
+                try:
+                    doc.matches = sorted(
+                        doc.matches,
+                        key=lambda m: m.scores['similarity'].value,
+                        reverse=True,
+                    )[:top_k]
+                except TypeError as e:
+                    print(f'##### {e}')
 
             docs = DocumentArray(list(results.values()))
             return docs
@@ -71,7 +71,8 @@ class MatchMerger(Executor):
 
 def get_documents(nr=10, index_start=0, emb_size=7):
     for i in range(index_start, nr + index_start):
-        with Document(id=i) as d:
+        with Document() as d:
+            d.id = i
             d.text = f'hello world {i}'
             d.embedding = np.random.random(emb_size)
             d.tags['field'] = f'tag data {i}'
@@ -122,16 +123,20 @@ def path_size(dump_path):
 @pytest.mark.parametrize('shards', [3, 7])
 @pytest.mark.parametrize('nr_docs', [10])
 @pytest.mark.parametrize('emb_size', [10])
-def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
+    # for psql to start
+    time.sleep(2)
     top_k = 5
-    docs = list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
+    docs = DocumentArray(
+        list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
+    )
+    # make sure to delete any overlapping docs
+    PostgreSQLIndexer().delete(docs, {})
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(str(tmpdir), 'dbms_ws')
-    os.environ['QUERY_WORKSPACE'] = os.path.join(str(tmpdir), 'query_ws')
-    print(f'DBMS_WORKSPACE = {os.environ["DBMS_WORKSPACE"]}')
-    print(f'DBMS_WORKSPACE = {os.environ["QUERY_WORKSPACE"]}')
+    os.environ['DBMS_WORKSPACE'] = os.path.join(str(tmpdir), 'index_ws')
     os.environ['SHARDS'] = str(shards)
     if shards > 1:
         os.environ['USES_AFTER'] = 'MatchMerger'
@@ -161,12 +166,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
             assert dir_size > 0
             print(f'### dump path size: {dir_size} MBs')
 
-            # assert data dumped is correct
-            for pea_id in range(shards):
-                assert_dump_data(dump_path, docs, shards, pea_id)
-
             flow_query.rolling_update(pod_name='indexer_query', dump_path=dump_path)
-
             results = flow_query.post(
                 on='/search',
                 inputs=docs,
@@ -176,9 +176,31 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = LMDBIndexer(
-        metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'lmdb'},
-        map_size=1048576000,
-        runtime_args={'pea_id': 0},
-    )
+    idx = PostgreSQLIndexer()
     assert idx.size == nr_docs
+
+    # assert data dumped is correct
+    for pea_id in range(shards):
+        assert_dump_data(dump_path, docs, shards, pea_id)
+
+
+def _in_docker():
+    """ Returns: True if running in a Docker container, else False """
+    with open('/proc/1/cgroup', 'rt') as ifh:
+        if 'docker' in ifh.read():
+            print('in docker, skipping benchmark')
+            return True
+        return False
+
+
+# benchmark only
+@pytest.mark.skipif(
+    _in_docker() or ('GITHUB_WORKFLOW' in os.environ),
+    reason='skip the benchmark test on github workflow or docker',
+)
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_benchmark(tmpdir, docker_compose):
+    nr_docs = 100000
+    return test_dump_reload(
+        tmpdir, nr_docs=nr_docs, emb_size=128, shards=3, docker_compose=compose_yml
+    )

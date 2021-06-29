@@ -13,5 +13,5 @@ FROM base as test
 # for testing the image
 RUN pip install pytest && pytest -s -v tests
 
-FROM base
+FROM base as entrypoint
 ENTRYPOINT ["jina", "pea", "--uses", "config.yml"]

@@ -20,7 +20,7 @@
 
 ## 🚀 Usages
 
-Check [integration tests](../../../tests/integration/lmdb_dump_reload) for an example on how to use it.
+Check [integration tests](../../../../../tests/integration/lmdb_dump_reload) for an example on how to use it.
 
 ### 🚚 Via JinaHub
 

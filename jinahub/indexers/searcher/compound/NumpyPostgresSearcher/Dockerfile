@@ -16,8 +16,10 @@ WORKDIR /workspace
 
 ENV POSTGRES_PASSWORD=123456
 
+RUN nohup bash -c "docker-entrypoint.sh postgres &" && sleep 3
+
 FROM base as test
-RUN nohup bash -c "docker-entrypoint.sh postgres &" && sleep 3 && python3.7 -m pytest -s -v tests/
+RUN echo no tests here. Check integration tests
 
 FROM base as entrypoint
 EXPOSE 5432

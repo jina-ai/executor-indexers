@@ -22,7 +22,7 @@ Additionally, you will need a running PostgreSQL database. This can be a local i
 
 ## 🚀 Usages
 
-Check [integration tests](../../../tests/integration/psql_dump_reload) for an example on how to use it.
+Check [integration tests](../../../../../tests/integration/psql_dump_reload) for an example on how to use it.
 
 ### 🚚 Via JinaHub
 

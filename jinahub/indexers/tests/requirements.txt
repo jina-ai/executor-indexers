@@ -1,5 +1,0 @@
-git+https://github.com/jina-ai/jina.git@v2.0.0rc9#egg=jina[hub]
-git+https://github.com/jina-ai/jina-commons
-psycopg2-binary==2.8.6
-pytest
-lmdb==1.2.1
