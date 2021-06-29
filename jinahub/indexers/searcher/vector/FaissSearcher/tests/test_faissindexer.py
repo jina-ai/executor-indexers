@@ -68,7 +68,7 @@ def test_faiss_indexer_empty(metas, tmpdir_dump):
         metas=metas,
         runtime_args={'pea_id': 0},
     )
-    indexer.query(query_docs, parameters={'top_k': 4})
+    indexer.search(query_docs, parameters={'top_k': 4})
     assert len(query_docs[0].matches) == 0
 
 
@@ -87,7 +87,7 @@ def test_faiss_indexer(metas, tmpdir_dump):
         metas=metas,
         runtime_args={'pea_id': 0},
     )
-    indexer.query(query_docs, parameters={'top_k': 4})
+    indexer.search(query_docs, parameters={'top_k': 4})
     assert len(query_docs[0].matches) == 4
     for d in query_docs:
         assert (
@@ -133,7 +133,7 @@ def test_faiss_indexer_known(metas, train_data, tmpdir):
     )
     TOP_K = 2
     docs = _get_docs_from_vecs(queries)
-    indexer.query(docs, parameters={'top_k': TOP_K})
+    indexer.search(docs, parameters={'top_k': TOP_K})
     idx = docs.traverse_flat(['m']).get_attributes('id')
     dist = docs.traverse_flat(['m']).get_attributes('scores')
     np.testing.assert_equal(
@@ -190,7 +190,7 @@ def test_faiss_indexer_known_big(metas, tmpdir):
     assert isinstance(indexer, FaissSearcher)
     docs = _get_docs_from_vecs(queries)
     top_k = 1
-    indexer.query(docs, parameters={'top_k': top_k})
+    indexer.search(docs, parameters={'top_k': top_k})
     idx = docs.traverse_flat(['m']).get_attributes('id')
     np.testing.assert_equal(
         idx,
@@ -264,7 +264,7 @@ def test_indexer_train(metas, train_data, max_num_points, tmpdir):
 
     query_docs = _get_docs_from_vecs(query)
     top_k = 4
-    indexer.query(query_docs, parameters={'top_k': top_k})
+    indexer.search(query_docs, parameters={'top_k': top_k})
     # idx, dist =
     idx = query_docs.traverse_flat(['m']).get_attributes('id')
     dist = query_docs.traverse_flat(['m']).get_attributes('scores')
@@ -303,6 +303,6 @@ def test_faiss_normalization(metas, distance, tmpdir):
     query = np.zeros((1, num_dims))
     query[0, 0] = 5
     docs = _get_docs_from_vecs(query.astype('float32'))
-    indexer.query(docs, parameters={'top_k': 2})
+    indexer.search(docs, parameters={'top_k': 2})
     dist = docs.traverse_flat(['m']).get_attributes('scores')
     assert dist[0]['distance'].value == 0

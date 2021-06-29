@@ -185,7 +185,7 @@ class FaissSearcher(Executor):
         return
 
     @requests(on='/search')
-    def query(
+    def search(
         self, docs: DocumentArray, parameters: Optional[Dict] = None, *args, **kwargs
     ):
         """Find the top-k vectors with smallest ``metric`` and return their ids in ascending order.

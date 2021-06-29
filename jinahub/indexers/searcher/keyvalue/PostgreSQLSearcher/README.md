@@ -20,6 +20,12 @@
 
 Additionally, you will need a running PostgreSQL database. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters.
 
+You can run a Docker container, like so:
+
+```bash
+docker run -e POSTGRES_PASSWORD=123456  -p 127.0.0.1:5432:5432/tcp postgres:13.2
+```
+
 ## 🚀 Usages
 
 ### 🚚 Via JinaHub
@@ -66,14 +72,14 @@ pods:
 1. Install the `executor-indexers` package.
 
 	```bash
-	pip install git+https://github.com/jina-ai/EXECUTOR_REPO_NAME.git
+	pip install git+https://github.com/jina-ai/executor-indexers
 	```
 
 1. Use `executor-indexers` in your code
 
 	```python
 	from jina import Flow
-	from jinahub.SUB_PACKAGE_NAME.MODULE_NAME import PostgreSQLSearcher
+	from jinahub.indexers.searcher.keyvalue.PostgreSQLSearcher import PostgreSQLSearcher
 	
 	f = Flow().add(uses=PostgreSQLSearcher)
 	```
@@ -84,17 +90,17 @@ pods:
 1. Clone the repo and build the docker image
 
 	```shell
-	git clone https://github.com/jina-ai/EXECUTOR_REPO_NAME.git
-	cd EXECUTOR_REPO_NAME
-	docker build -t my-dummy-executor-image .
+	git clone https://github.com/jina-ai/executor-indexers
+	cd executor-indexers/jinahub/indexers/searcher/keyvalue/PostgreSQLSearcher
+	docker build -t psql-searcher-image .
 	```
 
-1. Use `my-dummy-executor-image` in your codes
+1. Use `psql-searcher-image` in your codes
 
 	```python
 	from jina import Flow
 	
-	f = Flow().add(uses='docker://my-dummy-executor-image:latest')
+	f = Flow().add(uses='docker://psql-searcher-image:latest')
 	```
 	
 
@@ -107,19 +113,20 @@ from jina import Flow, Document
 f = Flow().add(uses='jinahub+docker://PostgreSQLSearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(id='your_search_id'), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
 
-`Document` with `blob` of the shape `256`.
+Any `Document`s that have ids. 
 
 ### Returns
 
-`Document` with `embedding` fields filled with an `ndarray` of the shape `embedding_dim` (=128, by default) with `dtype=nfloat32`.
+The matched `Document`, reconstructed from the `bytes` retrieved from PostgreSQL.
 
 
 ## 🔍️ Reference
-- Some reference
+
+- https://www.postgresql.org/
 
