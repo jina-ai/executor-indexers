@@ -1,7 +1,9 @@
 manifest_version: 1
 name: LMDBIndexer
-alias: lmdb_dbms_indexer
+alias: LMDBIndexer
 description: DBMS-type indexer powered by the lmdb disk-based storage system
 author: Jina AI Dev-Team (dev-team@jina.ai)
+documentation: https://github.com/jina-ai/executor-indexers/tree/main/jinahub/indexers/indexer/LMDBIndexer
+license: apache-2.0
 url: https://jina.ai
 keywords: [dbms, storage, indexer, lmdb]

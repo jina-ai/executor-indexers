@@ -25,7 +25,8 @@
 ### 🚚 Via JinaHub
 
 #### using docker images
-Use the prebuilt images from JinaHub in your python codes, 
+
+Use the prebuilt images from JinaHub in your Python code: 
 
 ```python
 from jina import Flow
@@ -101,10 +102,13 @@ pods:
 ## 🎉️ Example 
 
 ```python
-indexer = LMDBIndexer(
-    map_size = 10485760,  
-    default_traversal_paths = ['r'],
-)
+from jina import Flow, Document
+
+f = Flow().add(uses='jinahub://LMDBIndexer')
+
+with f:
+    resp = f.post(on='/index', inputs=Document(), return_results=True)
+    print(f'{resp}')
 ```
 
 Parameters:
