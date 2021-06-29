@@ -108,7 +108,7 @@ pods:
 import numpy as np
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://FAISSSearcher')
+f = Flow().add(uses='jinahub+docker://FaissSearcher')
 
 with f:
     resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
