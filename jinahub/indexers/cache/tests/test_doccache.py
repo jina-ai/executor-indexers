@@ -29,7 +29,10 @@ def test_cache(tmpdir, cache_fields):
             return_results=True
         )
         assert len(response[0].docs) == 1
-        assert set([d.content for d in response[0].docs]) == {'a'}
+        if cache_fields == '[content_hash]':
+            assert set([d.content for d in response[0].docs]) == {'a'}
+        elif cache_fields == '[id]':
+            assert set([d.id for d in response[0].docs]) == {'a'}
 
         response = f.post(
             on='/index',
@@ -38,7 +41,10 @@ def test_cache(tmpdir, cache_fields):
         )
         assert len(response[0].docs) == 1
         # assert the correct docs have been removed
-        assert set([d.content for d in response[0].docs]) == {'b'}
+        if cache_fields == '[content_hash]':
+            assert set([d.content for d in response[0].docs]) == {'b'}
+        elif cache_fields == '[id]':
+            assert set([d.id for d in response[0].docs]) == {'b'}
 
 
 def test_cache_id_content_hash(tmpdir):
