@@ -1,4 +1,4 @@
-FROM jinaai/jina:1.2.0
+FROM jinaai/jina:2.0.0rc9
 # tests fail with jina:master for some reason
 
 # install the third-party requirements

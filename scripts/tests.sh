@@ -58,15 +58,5 @@ for test_dir in ${changed_folders[@]}; do
   cd $root_dir
   done
 
-# always run integration tests
-pip install -r jinahub/indexers/tests/requirements.txt
-export PYTHONPATH=.
-pytest -s -v jinahub/indexers/tests/integration
-local_exit_code=$?
-if [[ ! $local_exit_code == 0 ]]; then
-  EXIT_CODE=$local_exit_code
-  echo integration test failed
-fi
-
 echo final exit code = $EXIT_CODE
 exit $EXIT_CODE

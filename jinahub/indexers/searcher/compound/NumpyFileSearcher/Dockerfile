@@ -1,4 +1,4 @@
-FROM jinaai/jina:master
+FROM jinaai/jina:2.0.0rc9
 
 # install the third-party requirements
 RUN apt-get update && apt-get install --no-install-recommends -y gcc build-essential git

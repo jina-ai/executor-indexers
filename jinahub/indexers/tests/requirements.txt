@@ -1,5 +1,8 @@
-git+https://github.com/jina-ai/jina.git@010789331ce896ffcaea897402d698944f1a9d40
+jina[hub]==2.0.0rc9
 psycopg2-binary==2.8.6
 git+https://github.com/jina-ai/jina-commons
 pytest
 lmdb==1.2.1
+pytest
+pytest-mock
+git+https://github.com/jina-ai/executor-indexers.git

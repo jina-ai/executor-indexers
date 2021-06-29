@@ -1,4 +1,4 @@
-FROM jinaai/jina:1.2.0
+FROM jinaai/jina:2.0.0rc9
 
 # install and upgrade pip
 RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git

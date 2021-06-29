@@ -3,7 +3,7 @@ name: CI
 on: [pull_request]
 
 jobs:
-  hub-build-test:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,3 +15,11 @@ jobs:
         run: ./scripts/tests.sh
         env:
           CHANGED_FILES: ${{ steps.changed-files.outputs.all }}
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - id: tests
+        run: ./scripts/integration.sh
