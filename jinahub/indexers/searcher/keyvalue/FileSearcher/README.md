@@ -105,8 +105,8 @@ from jina import Flow, Document
 f = Flow().add(uses='jinahub+docker://FileSearcher')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(), return_results=True)
-	print(f'{resp}')
+    resp = f.post(on='/search', inputs=Document(), return_results=True)
+    print(f'{resp}')
 ```
 
 ### Inputs 
