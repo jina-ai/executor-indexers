@@ -54,7 +54,8 @@ class DocCache(Executor):
             fields = ('content_hash', ),
         self.fields = fields
         self.logger = get_logger(self)
-        os.makedirs(self.workspace)
+        if not os.path.exists(self.workspace):
+            os.makedirs(self.workspace)
         self.cache_handler = _CacheHandler(
             os.path.join(self.workspace, 'cache'), self.logger
         )

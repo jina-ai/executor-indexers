@@ -1,11 +1,13 @@
 import os
-import pytest
+import shutil
 
+import pytest
 from jina import Flow, DocumentArray, Document
 
 from .. import DocCache
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
+default_config = os.path.abspath(os.path.join(cur_dir, '..', 'config.yml'))
 
 
 @pytest.mark.parametrize('cache_fields', ['[content_hash]', '[id]'])
@@ -127,3 +129,35 @@ def test_cache_crud(tmpdir):
     cache.delete(docs)
     assert cache.ids_count == 0
     assert cache.hashes_count == 0
+
+
+def test_default_config(tmpdir):
+    shutil.rmtree(os.path.join(cur_dir, '..', 'cache'), ignore_errors=True)
+    docs = DocumentArray([
+        Document(id=1, content='🐯'),
+        Document(id=2, content='🐯'),
+        Document(id=3, content='🐻'),
+    ])
+
+    f = Flow(return_results=True).add(uses=default_config)
+
+    with f:
+        response = f.post(on='/index', inputs=docs, return_results=True)
+
+        assert len(response[0].data.docs) == 2  # the duplicated Document is removed from the request
+        assert set([doc.id for doc in response[0].data.docs]) == set(['1', '3'])
+
+    docs_to_update = DocumentArray([
+        Document(id=2, content='🐼')
+    ])
+
+    with f:
+        response = f.post(on='/update', inputs=docs_to_update, return_results=True)
+        assert len(response[0].data.docs) == 1  # the Document with `id=2` is no longer duplicated.
+
+    with f:
+        response = f.post(on='/index', inputs=docs[-1], return_results=True)
+        assert len(response[0].data.docs) == 0  # the Document has been cached
+        f.post(on='/delete', inputs=docs[-1])
+        response = f.post(on='/index', inputs=docs[-1], return_results=True)
+        assert len(response[0].data.docs) == 1  # the Document is cached again after the deletion
