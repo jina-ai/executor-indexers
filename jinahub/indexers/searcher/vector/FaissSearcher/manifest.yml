@@ -1,6 +1,6 @@
 manifest_version: 1
 name: FaissSearcher
-alias: FAISSSearcher
+alias: FaissSearcher
 description: Faiss powered vector indexer
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://github.com/jina-ai/executor-indexers/tree/main/jinahub/indexers/searcher/vector/FaissSearcher
