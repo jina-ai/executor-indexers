@@ -106,37 +106,35 @@ pods:
 In a Flow:
 
 ```python
-from jina import Flow, Document, DocumentArray
+from jina import Flow, DocumentArray, Document
+
 
 docs = DocumentArray([
-	Document(id=1, content='🐯'),
-	Document(id=2, content='🐯'),
-	Document(id=3, content='🐻'),
+    Document(id=1, content='🐯'),
+    Document(id=2, content='🐯'),
+    Document(id=3, content='🐻'),
 ])
 
 f = Flow(return_results=True).add(uses='jinahub+docker://DocCache')
 
 with f:
-    response = f.post(on='/index', inputs=docs)
+    response = f.post(on='/index', inputs=docs, return_results=True)
 
-assert len(response.data.docs) == 2  # the duplicated Document is removed from the request
-assert set([doc.id for doc in response.data.docs]) == set([1, 3])
+    assert len(response[0].data.docs) == 2  # the duplicated Document is removed from the request
+    assert set([doc.id for doc in response[0].data.docs]) == set(['1', '3'])
 
-docs_to_update = DocumentArray([
-	Document(id=2, content='🐼')
-])
+    docs_to_update = DocumentArray([
+        Document(id=2, content='🐼')
+    ])
 
-with f:
-	response = f.post(on='/update', inputs=docs_to_update)
+    response = f.post(on='/update', inputs=docs_to_update, return_results=True)
+    assert len(response[0].data.docs) == 1  # the Document with `id=2` is no longer duplicated.
 
-assert len(response.data.docs) == 1  # the Document with `id=2` is no longer duplicated.
-
-with f:
-	response = f.post(on='/index', inputs=docs[-1])
-	assert len(response.data.docs) == 0  # the Document has been cached
-	f.post(on='/delete', inputs=docs[-1])
-	response = f.post(on='/index', inputs=docs[-1])
-	assert len(response.data.docs) == 1 # the Document is cached again after the deletion
+    response = f.post(on='/index', inputs=docs[-1], return_results=True)
+    assert len(response[0].data.docs) == 0  # the Document has been cached
+    f.post(on='/delete', inputs=docs[-1])
+    response = f.post(on='/index', inputs=docs[-1], return_results=True)
+    assert len(response[0].data.docs) == 1  # the Document is cached again after the deletion
 ```
 
 ## Initialization

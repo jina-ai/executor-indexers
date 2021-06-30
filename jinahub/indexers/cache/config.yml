@@ -1,6 +1,6 @@
 jtype: DocCache
 with:
-  fields: content_hash
+  fields: [content_hash]
 metas:
   name: cache
   py_modules:
