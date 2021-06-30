@@ -43,6 +43,6 @@ class NumpyPostgresSearcher(Executor):
             kv_parameters['traversal_paths'] = [
                 path + 'm' for path in kv_parameters.get('traversal_paths', ['r'])
             ]
-            self._kv_indexer.query(docs, kv_parameters)
+            self._kv_indexer.search(docs, kv_parameters)
         else:
             return

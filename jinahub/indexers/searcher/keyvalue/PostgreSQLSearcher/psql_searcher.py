@@ -113,4 +113,4 @@ class PostgreSQLSearcher(Executor):
         )
 
         with self.handler as postgres_handler:
-            postgres_handler.query(docs.traverse_flat(traversal_paths))
+            postgres_handler.search(docs.traverse_flat(traversal_paths))
