@@ -28,6 +28,25 @@ docker run -e POSTGRES_PASSWORD=123456  -p 127.0.0.1:5432:5432/tcp postgres:13.2
 
 ## 🚀 Usages
 
+### Loading data
+
+Since this is a "Searcher"-type Executor, it does not _index_ new data. Rather they are write-once classes, which take as data source a `dump_path`. 
+
+This can be provided in different ways:
+
+- in the YAML definition
+  
+```yaml
+jtype: PostgreSQLSearcher
+with:
+    dump_path: /tmp/your_dump_location
+...
+```
+
+- from the `Flow.rolling_update` method. See [README](../../../../../README.md).
+
+The folder needs to contain the data exported from your Indexer. Again, see [README](../../../../../README.md).
+
 ### 🚚 Via JinaHub
 
 #### using docker images

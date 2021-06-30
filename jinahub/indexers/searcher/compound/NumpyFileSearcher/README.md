@@ -22,6 +22,25 @@
 
 Check [integration tests](../../../../../tests/integration/lmdb_dump_reload) for an example on how to use it.
 
+### Loading data
+
+Since this is a "Searcher"-type Executor, it does not _index_ new data. Rather they are write-once classes, which take as data source a `dump_path`. 
+
+This can be provided in different ways:
+
+- in the YAML definition
+  
+```yaml
+jtype: NumpyFileSearcher
+with:
+    dump_path: /tmp/your_dump_location
+...
+```
+
+- from the `Flow.rolling_update` method. See [README](../../../../../README.md).
+
+The folder needs to contain the data exported from your Indexer. Again, see [README](../../../../../README.md).
+
 ### 🚚 Via JinaHub
 
 #### using docker images
