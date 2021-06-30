@@ -1,4 +1,4 @@
 annoy==1.17.0
-jina[hub]==2.0.0rc9
+jina[hub]==2.0.0
 numpy==1.18.5
 git+https://github.com/jina-ai/jina-commons
