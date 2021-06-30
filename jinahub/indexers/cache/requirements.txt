@@ -1,2 +1,2 @@
 git+https://github.com/jina-ai/jina-commons
-jina[hub]==2.0.0rc9
+jina[hub]==2.0.0
