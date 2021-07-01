@@ -84,6 +84,9 @@ class LMDBStorage(Executor):
             self.index(da, parameters={})
 
     def _handler(self):
+        # required to create a new connection to the same file
+        # on each subprocess
+        # https://github.com/jnwatson/py-lmdb/issues/289
         return _LMDBHandler(self.file, self.map_size)
 
     @requests(on='/index')
