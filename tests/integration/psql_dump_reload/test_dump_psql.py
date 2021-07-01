@@ -1,8 +1,10 @@
+import os
 import time
 from collections import OrderedDict
+from pathlib import Path
+from typing import Dict
 
 import numpy as np
-import os
 import pytest
 from jina import Flow, Document, Executor, DocumentArray, requests
 from jina.logging.profile import TimeContext
@@ -10,8 +12,6 @@ from jina_commons.indexers.dump import (
     import_vectors,
     import_metas,
 )
-from pathlib import Path
-from typing import Dict
 
 
 @pytest.fixture()
@@ -81,7 +81,7 @@ class MatchMerger(Executor):
 def get_documents(nr=10, index_start=0, emb_size=7):
     for i in range(index_start, nr + index_start):
         with Document() as d:
-            d.id = i
+            d.id = f'aa{i}'  # to test it supports non-int ids
             d.text = f'hello world {i}'
             d.embedding = np.random.random(emb_size)
             d.tags['field'] = f'tag data {i}'
@@ -89,6 +89,9 @@ def get_documents(nr=10, index_start=0, emb_size=7):
 
 
 def assert_dump_data(dump_path, docs, shards, pea_id):
+    docs = sorted(
+        docs, key=lambda doc: doc.id
+    )  # necessary since the ordering is done as str in PSQL
     size_shard = len(docs) // shards
     size_shard_modulus = len(docs) % shards
     ids_dump, vectors_dump = import_vectors(
@@ -106,7 +109,7 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     # TODO these might fail if we implement any ordering of elements on dumping / reloading
     ids_dump = list(ids_dump)
     vectors_dump = list(vectors_dump)
-    np.testing.assert_equal(ids_dump, [d.id for d in docs_expected])
+    np.testing.assert_equal(set(ids_dump), set([d.id for d in docs_expected]))
     np.testing.assert_allclose(vectors_dump, [d.embedding for d in docs_expected])
 
     _, metas_dump = import_metas(
@@ -130,7 +133,7 @@ def path_size(dump_path):
 # replicas w 1 shard doesn't work
 # @pytest.mark.parametrize('shards', [1, 3, 7])
 @pytest.mark.parametrize('shards', [3, 7])
-@pytest.mark.parametrize('nr_docs', [10])
+@pytest.mark.parametrize('nr_docs', [100])
 @pytest.mark.parametrize('emb_size', [10])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
