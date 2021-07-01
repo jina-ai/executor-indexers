@@ -8,8 +8,8 @@ import pytest
 from jina import Document, Flow, DocumentArray, requests
 
 from jina_commons.indexers.dump import dump_docs
-from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
-from jinahub.indexers.searcher.keyvalue.FileSearcher import FileSearcher
+from jinahub.searcher import NumpyFileSearcher
+from jinahub.searcher import FileSearcher
 from tests.integration.psql_dump_reload.test_dump_psql import (
     MatchMerger,
 )
@@ -112,6 +112,6 @@ def test_shards_numpy_filequery(tmpdir, num_shards):
             on='/tag_search',
             inputs=inputs,
             parameters={'top_k': TOP_K},
-            return_results=True
+            return_results=True,
         )
         validate_diff_sources(results, num_shards, docs_indexed)

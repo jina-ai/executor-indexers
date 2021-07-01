@@ -1,4 +1,4 @@
-jtype: LMDBIndexer
+jtype: LMDBStorage
 metas:
-  name: indexer
+  name: storage
   workspace: $DBMS_WORKSPACE

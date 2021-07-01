@@ -3,8 +3,8 @@ import os
 from jina import Flow, DocumentArray, Document
 
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.cache import DocCache
-from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
+from jinahub.cache import DocCache
+from jinahub.storage.LMDBStorage import LMDBStorage
 
 
 def test_cache(tmpdir):
@@ -18,14 +18,10 @@ def test_cache(tmpdir):
     ]
 
     with Flow().add(uses='cache.yml').add(uses='dbms.yml') as f:
-        response = f.post(
-            on='/index',
-            inputs=DocumentArray(docs),
-            return_results=True
-        )
+        response = f.post(on='/index', inputs=DocumentArray(docs), return_results=True)
         assert len(response[0].docs) == 1
 
-        dbms = LMDBIndexer(
+        dbms = LMDBStorage(
             metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )
@@ -40,7 +36,7 @@ def test_cache(tmpdir):
             on='/update',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBIndexer(
+        dbms = LMDBStorage(
             metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )
@@ -50,7 +46,7 @@ def test_cache(tmpdir):
             on='/delete',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBIndexer(
+        dbms = LMDBStorage(
             metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
             runtime_args={'pea_id': 0},
         )

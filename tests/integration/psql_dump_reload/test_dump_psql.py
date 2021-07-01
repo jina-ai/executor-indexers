@@ -27,14 +27,14 @@ def docker_compose(request):
 
 
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
+from jinahub.storage.PostgreSQLStorage.postgreshandler import (
     doc_without_embedding,
 )
 
 # required in order to be found by Flow creation
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
-from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLIndexer
+from jinahub.searcher.compound import NumpyPostgresSearcher
+from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
@@ -141,7 +141,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
         list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
     )
     # make sure to delete any overlapping docs
-    PostgreSQLIndexer().delete(docs, {})
+    PostgreSQLStorage().delete(docs, {})
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
@@ -180,12 +180,12 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
                 on='/search',
                 inputs=docs,
                 parameters={'top_k': top_k},
-                return_results=True
+                return_results=True,
             )
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = PostgreSQLIndexer()
+    idx = PostgreSQLStorage()
     assert idx.size == nr_docs
 
     # assert data dumped is correct

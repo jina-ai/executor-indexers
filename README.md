@@ -6,11 +6,9 @@ They are referred to as Indexers.
 
 They are split by usage and interface. The types are:
 
-1. [indexers](./jinahub/indexers/indexer). This category is for *storing* data, in a CRUD-like interface. These Executors are reliable and performant in write/update/delete operations. They are *NOT* meant to be used in search. For that we have:
-1. [searchers](./jinahub/indexers/searcher) This category of Executors are to be used at search time.
-    1. [vector-based](./jinahub/indexers/searcher/vector) These usually implement a form of similarity search, based on the embeddings created by the encoders you have chosen in your Flow.
-    1. [metadata](./jinahub/indexers/searcher/keyvalue) These are simple interfaces for key-value lookup. They are meant to be used to retrieve the full metadata of a `Document`, based on the results from the vector-based searchers above.
-    1. [compound](./jinahub/indexers/searcher/compound) These are compound classes, usually made up of a vector-based and a key-value searcher.
+1. [storage](jinahub/storage). This category is for *storing* data, in a CRUD-like interface. These Executors are reliable and performant in write/read/update/delete operations. They can only search by a Document's `id`.
+1. [vector searchers](jinahub/searcher/) These usually implement a form of similarity search, based on the embeddings created by the encoders you have chosen in your Flow.
+1. [compound](jinahub/searcher/compound) These are compound classes, usually made up of a vector-based and a storage, for retrieving the Document's original metadata.
 
 ## Indexing vs Searching Operations
 
@@ -22,7 +20,7 @@ See below figure for how this would look like:
 
 ![](./.github/img/replicas.jpg)
 
-In the above case, the DBMS could be the [PostgreSQL](./jinahub/indexers/indexer/PostgreSQLIndexer)-based Indexer, while the Query Flow could be based on [NumpyPostgresSearcher](./jinahub/indexers/searcher/compound/NumpyPostgresSearcher).
+In the above case, the DBMS could be the [PostgreSQL](jinahub/storage/PostgreSQLStorage)-based Indexer, while the Query Flow could be based on [NumpyPostgresSearcher](jinahub/searcher/compound/NumpyPostgresSearcher).
 
 For a showcase code, check our [integration tests](tests/integration/psql_dump_reload).
 
