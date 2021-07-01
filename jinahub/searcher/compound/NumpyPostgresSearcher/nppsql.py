@@ -7,10 +7,8 @@ from typing import Dict
 from jina import requests, DocumentArray, Executor
 
 from jina_commons import get_logger
-from jinahub.searcher import (
-    PostgreSQLSearcher,
-)
 from jinahub.searcher.NumpySearcher import NumpySearcher
+from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
 
 
 class NumpyPostgresSearcher(Executor):
@@ -29,7 +27,7 @@ class NumpyPostgresSearcher(Executor):
         self._vec_indexer = None
         if dump_path:
             self._vec_indexer = NumpySearcher(dump_path=dump_path, **kwargs)
-            self._kv_indexer = PostgreSQLSearcher(**kwargs)
+            self._kv_indexer = PostgreSQLStorage(**kwargs)
         else:
             self.logger.warning(
                 f'No dump path provided for {self}. Use .rolling_update() to re-initialize...'

@@ -12,8 +12,9 @@ from .postgreshandler import PostgreSQLDBMSHandler
 
 
 class PostgreSQLStorage(Executor):
-    """:class:`PostgreSQLIndexer` PostgreSQL based DBMS Indexer.
-    Initialize the PostgreSQLDBIndexer.
+    """:class:`PostgreSQLIndexer` PostgreSQL-based Storage Indexer.
+
+    Initialize the PostgreSQLStorage.
 
     :param hostname: hostname of the machine
     :param port: the port

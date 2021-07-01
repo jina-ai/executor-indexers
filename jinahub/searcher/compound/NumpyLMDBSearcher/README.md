@@ -92,9 +92,9 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
+   from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
    
-   f = Flow().add(uses=NumpyFileSearcher)
+   f = Flow().add(uses=NumpyLMDBSearcher)
    ```
 
 

@@ -6,15 +6,15 @@ from typing import Dict
 
 from jina import requests, DocumentArray, Executor
 
-from jinahub.searcher import FileSearcher
 from jinahub.searcher.NumpySearcher import NumpySearcher
+from jinahub.storage.LMDBStorage import LMDBStorage
 
 
-class NumpyFileSearcher(Executor):
+class NumpyLMDBSearcher(Executor):
     def __init__(self, dump_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._vec_indexer = NumpySearcher(dump_path=dump_path, *args, **kwargs)
-        self._kv_indexer = FileSearcher(dump_path=dump_path, *args, **kwargs)
+        self._kv_indexer = LMDBStorage(dump_path=dump_path, *args, **kwargs)
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict = None, **kwargs):

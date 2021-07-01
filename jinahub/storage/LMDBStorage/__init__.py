@@ -3,38 +3,27 @@ from typing import Dict, List
 
 import lmdb
 from jina import Executor, Document, DocumentArray, requests
-
 from jina_commons import get_logger
-from jina_commons.indexers.dump import export_dump_streaming
+from jina_commons.indexers.dump import (
+    export_dump_streaming,
+    import_metas,
+)
 
 
-class LMDBStorage(Executor):
-    """An lmdb-based DBMS Indexer for Jina
-
-    For more information on lmdb check their documentation: https://lmdb.readthedocs.io/en/release/
-
-    :param map_size: the maximal size of teh database. Check more information at
-        https://lmdb.readthedocs.io/en/release/#environment-class
-    :param default_traversal_paths: fallback traversal path in case there is not traversal path sent in the request
-    """
-
-    def __init__(
-        self,
-        map_size: int = 1048576000,  # in bytes, 1000 MB
-        default_traversal_paths: List[str] = ['r'],
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.default_traversal_paths = default_traversal_paths
-        self.file = os.path.join(self.workspace, 'db.lmdb')
-        if not os.path.exists(self.workspace):
-            os.makedirs(self.workspace)
-        self.logger = get_logger(self)
+class _LMDBHandler:
+    def __init__(self, file, map_size):
         # see https://lmdb.readthedocs.io/en/release/#environment-class for usage
-        self.env = lmdb.Environment(
+        self.file = file
+        self.map_size = map_size
+
+    @property
+    def env(self):
+        return self._env
+
+    def __enter__(self):
+        self._env = lmdb.Environment(
             self.file,
-            map_size=map_size,
+            map_size=self.map_size,
             subdir=False,
             readonly=False,
             metasync=True,
@@ -50,6 +39,52 @@ class LMDBStorage(Executor):
             max_spare_txns=1,
             lock=True,
         )
+        return self._env
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if hasattr(self, '_env'):
+            self._env.close()
+
+
+class LMDBStorage(Executor):
+    """An lmdb-based Storage Indexer for Jina
+
+    For more information on lmdb check their documentation: https://lmdb.readthedocs.io/en/release/
+
+    :param map_size: the maximal size of teh database. Check more information at
+        https://lmdb.readthedocs.io/en/release/#environment-class
+    :param default_traversal_paths: fallback traversal path in case there is not traversal path sent in the request
+    """
+
+    def __init__(
+        self,
+        map_size: int = 1048576000,  # in bytes, 1000 MB
+        default_traversal_paths: List[str] = ['r'],
+        dump_path: str = None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.map_size = map_size
+        self.default_traversal_paths = default_traversal_paths
+        self.file = os.path.join(self.workspace, 'db.lmdb')
+        if not os.path.exists(self.workspace):
+            os.makedirs(self.workspace)
+        self.logger = get_logger(self)
+
+        self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
+        if self.dump_path is not None:
+            self.logger.info(f'Importing data from {self.dump_path}')
+            ids, metas = import_metas(self.dump_path, str(self.runtime_args.pea_id))
+            da = DocumentArray()
+            for id, meta in zip(ids, metas):
+                serialized_doc = Document(meta)
+                serialized_doc.id = id
+                da.append(serialized_doc)
+            self.index(da, parameters={})
+
+    def _handler(self):
+        return _LMDBHandler(self.file, self.map_size)
 
     @requests(on='/index')
     def index(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -61,9 +96,10 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as transaction:
-            for d in docs.traverse_flat(traversal_paths):
-                transaction.put(d.id.encode(), d.SerializeToString())
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                for d in docs.traverse_flat(traversal_paths):
+                    transaction.put(d.id.encode(), d.SerializeToString())
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -75,13 +111,14 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as transaction:
-            for d in docs.traverse_flat(traversal_paths):
-                # TODO figure out if there is a better way to do update in LMDB
-                # issue: the defacto update method is an upsert (if a value didn't exist, it is created)
-                # see https://lmdb.readthedocs.io/en/release/#lmdb.Cursor.replace
-                if transaction.delete(d.id.encode()):
-                    transaction.replace(d.id.encode(), d.SerializeToString())
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                for d in docs.traverse_flat(traversal_paths):
+                    # TODO figure out if there is a better way to do update in LMDB
+                    # issue: the defacto update method is an upsert (if a value didn't exist, it is created)
+                    # see https://lmdb.readthedocs.io/en/release/#lmdb.Cursor.replace
+                    if transaction.delete(d.id.encode()):
+                        transaction.replace(d.id.encode(), d.SerializeToString())
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -93,9 +130,10 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        with self.env.begin(write=True) as transaction:
-            for d in docs.traverse_flat(traversal_paths):
-                transaction.delete(d.id.encode())
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                for d in docs.traverse_flat(traversal_paths):
+                    transaction.delete(d.id.encode())
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
@@ -108,11 +146,13 @@ class LMDBStorage(Executor):
             'traversal_paths', self.default_traversal_paths
         )
         docs_to_get = docs.traverse_flat(traversal_paths)
-        with self.env.begin(write=True) as transaction:
-            for i, d in enumerate(docs_to_get):
-                id = d.id
-                docs[i] = Document(transaction.get(d.id.encode()))
-                docs[i].id = id
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                for i, d in enumerate(docs_to_get):
+                    id = d.id
+                    serialized_doc = Document(transaction.get(d.id.encode()))
+                    d.update(serialized_doc)
+                    d.id = id
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):
@@ -140,25 +180,23 @@ class LMDBStorage(Executor):
     @property
     def size(self):
         """Compute size (nr of elements in lmdb)"""
-        with self.env.begin(write=False) as transaction:
-            stats = transaction.stat()
-            return stats['entries']
-
-    def close(self) -> None:
-        """Close the lmdb environment"""
-        self.env.close()
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                stats = transaction.stat()
+                return stats['entries']
 
     def _dump_generator(self):
-        with self.env.begin(write=False) as transaction:
-            cursor = transaction.cursor()
-            cursor.iternext()
-            iterator = cursor.iternext(keys=True, values=True)
-            for it in iterator:
-                id, data = it
-                doc = Document(data)
-                yield id.decode(), doc.embedding, LMDBStorage._doc_without_embedding(
-                    doc
-                ).SerializeToString()
+        with self._handler() as env:
+            with env.begin(write=True) as transaction:
+                cursor = transaction.cursor()
+                cursor.iternext()
+                iterator = cursor.iternext(keys=True, values=True)
+                for it in iterator:
+                    id, data = it
+                    doc = Document(data)
+                    yield id.decode(), doc.embedding, LMDBStorage._doc_without_embedding(
+                        doc
+                    ).SerializeToString()
 
     @staticmethod
     def _doc_without_embedding(d):
