@@ -1,6 +1,6 @@
-# ✨ PostgreSQLIndexer
+# ✨ PostgreSQLStorage
 
-**PostgreSQLIndexer** is Indexer wrapper around the PostgreSQL DBMS. Postgres is an open source object-relational database. You can read more about it here: https://www.postgresql.org/
+**PostgreSQLStorage** is Indexer wrapper around the PostgreSQL DBMS. Postgres is an open source object-relational database. You can read more about it here: https://www.postgresql.org/
 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -39,7 +39,7 @@ Use the prebuilt images from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub+docker://PostgreSQLIndexer')
+f = Flow().add(uses='jinahub+docker://PostgreSQLStorage')
 ```
 
 or in the `.yml` config.
@@ -48,7 +48,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub+docker://PostgreSQLIndexer'
+    uses: 'jinahub+docker://PostgreSQLStorage'
 ```
 
 #### using source codes
@@ -57,7 +57,7 @@ Use the source codes from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub://PostgreSQLIndexer')
+f = Flow().add(uses='jinahub://PostgreSQLStorage')
 ```
 
 or in the `.yml` config.
@@ -66,7 +66,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub://PostgreSQLIndexer'
+    uses: 'jinahub://PostgreSQLStorage'
 ```
 
 
@@ -94,7 +94,7 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers
-	cd executor-indexers/jinahub/indexers/indexer/PostgreSQLIndexer
+	cd executor-indexers/jinahub/indexers/indexer/PostgreSQLStorage
 	docker build -t psql-indexer-image .
 	```
 
@@ -113,7 +113,7 @@ pods:
 ```python
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub://PostgreSQLIndexer')
+f = Flow().add(uses='jinahub://PostgreSQLStorage')
 
 with f:
     resp = f.post(on='/index', inputs=Document(), return_results=True)

@@ -12,7 +12,7 @@ from .postgreshandler import PostgreSQLDBMSHandler
 
 
 class PostgreSQLStorage(Executor):
-    """:class:`PostgreSQLIndexer` PostgreSQL-based Storage Indexer.
+    """:class:`PostgreSQLStorage` PostgreSQL-based Storage Indexer.
 
     Initialize the PostgreSQLStorage.
 

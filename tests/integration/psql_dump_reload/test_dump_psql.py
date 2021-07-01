@@ -212,7 +212,7 @@ def _in_docker():
 )
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_benchmark(tmpdir, docker_compose):
-    nr_docs = 100000
+    nr_docs = 1000
     return test_dump_reload(
         tmpdir, nr_docs=nr_docs, emb_size=128, shards=3, docker_compose=compose_yml
     )
