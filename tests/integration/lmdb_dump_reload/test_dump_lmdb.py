@@ -19,12 +19,10 @@ from jinahub.storage.PostgreSQLStorage.postgreshandler import (
 )
 
 # REQUIRED INDEXERS
-# noinspection PyUnresolvedReferences
-from jinahub.searcher.compound import NumpyPostgresSearcher
+from jinahub.searcher.compound.NumpyPostgresSearcher import NumpyPostgresSearcher
 
 # REQUIRED INDEXERS
-# noinspection PyUnresolvedReferences
-from jinahub.searcher import NumpyFileSearcher
+from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')

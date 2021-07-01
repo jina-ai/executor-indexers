@@ -1,6 +1,6 @@
-# ✨ NumpyFileSearcher
+# ✨ NumpyLMDBSearcher
 
-**NumpyFileSearcher** is a compound Searcher Executor for Jina, made up of [NumpySearcher](../../NumpySearcher) for performing similarity search on the embeddings, and of [FileSearcher](../../keyvalue/FileSearcher) for retrieving the metadata of the Documents. 
+**NumpyLMDBSearcher** is a compound Searcher Executor for Jina, made up of [NumpySearcher](../../NumpySearcher) for performing similarity search on the embeddings, and of [FileSearcher](../../keyvalue/FileSearcher) for retrieving the metadata of the Documents. 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -31,7 +31,7 @@ This can be provided in different ways:
 - in the YAML definition
   
 ```yaml
-jtype: NumpyFileSearcher
+jtype: NumpyLMDBSearcher
 with:
     dump_path: /tmp/your_dump_location
 ...
@@ -49,7 +49,7 @@ Use the prebuilt images from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub+docker://NumpyFileSearcher')
+f = Flow().add(uses='jinahub+docker://NumpyLMDBSearcher')
 ```
 
 or in the `.yml` config.
@@ -58,7 +58,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub+docker://NumpyFileSearcher'
+    uses: 'jinahub+docker://NumpyLMDBSearcher'
 ```
 
 #### using source codes
@@ -67,7 +67,7 @@ Use the source codes from JinaHub in your code
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub://NumpyFileSearcher')
+f = Flow().add(uses='jinahub://NumpyLMDBSearcher')
 ```
 
 or in the `.yml` config.
@@ -76,7 +76,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub://NumpyFileSearcher'
+    uses: 'jinahub://NumpyLMDBSearcher'
 ```
 
 
@@ -104,7 +104,7 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/searcher/compound/NumpyFileSearcher
+	cd jinahub/indexers/searcher/compound/NumpyLMDBSearcher
 	docker build -t numpy-file-image .
 	```
 
@@ -123,7 +123,7 @@ pods:
 ```python
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://NumpyFileSearcher')
+f = Flow().add(uses='jinahub+docker://NumpyLMDBSearcher')
 
 with f:
     resp = f.post(on='/search', inputs=Document(), return_results=True)

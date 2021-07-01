@@ -1,4 +1,4 @@
-jtype: NumpyFileSearcher
+jtype: NumpyLMDBSearcher
 with:
   {}
 metas:

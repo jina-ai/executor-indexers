@@ -1,6 +1,6 @@
 manifest_version: 1
-name: NumpyFileSearcher
-alias: NumpyFileSearcher
+name: NumpyLMDBSearcher
+alias: NumpyLMDBSearcher
 description: A compounded file and numpy based query indexer
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
