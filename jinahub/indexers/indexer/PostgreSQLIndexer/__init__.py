@@ -61,7 +61,7 @@ class PostgreSQLIndexer(Executor):
         with self.handler as handler:
             # always order the dump by id as integer
             cursor = handler.connection.cursor()
-            cursor.execute(f'SELECT * from {handler.table} ORDER BY ID::int')
+            cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
                 yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
