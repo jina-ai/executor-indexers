@@ -36,7 +36,7 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
     assert indexer.size == len(docs)
 
     query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
-    indexer._get(query_docs, {})
+    indexer.search(query_docs, {})
     for q, d in zip(query_docs, docs):
         assert d.id == q.id
         assert d.text == q.text
@@ -50,7 +50,7 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
     indexer.update(update_docs, {})
 
     query_docs = DocumentArray([Document(id=id) for id in [d.id for d in docs]])
-    indexer._get(query_docs, {})
+    indexer.search(query_docs, {})
     for q, d in zip(query_docs, update_docs):
         assert d.id == q.id
         assert d.text == q.text
