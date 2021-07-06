@@ -1,4 +1,0 @@
-jtype: LMDBIndexer
-metas:
-  name: indexer
-  workspace: $DBMS_WORKSPACE

@@ -1,9 +1,0 @@
-jtype: PostgreSQLIndexer
-with:
-  {}
-metas:
-  py_modules:
-    - __init__.py
-    - postgreshandler.py
-  workspace: workspace/
-  name: psql

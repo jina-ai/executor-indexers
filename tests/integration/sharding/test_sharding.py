@@ -8,8 +8,8 @@ import pytest
 from jina import Document, Flow, DocumentArray, requests
 
 from jina_commons.indexers.dump import dump_docs
-from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
-from jinahub.indexers.searcher.keyvalue.FileSearcher import FileSearcher
+from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
+from jinahub.storage.LMDBStorage import LMDBStorage
 from tests.integration.psql_dump_reload.test_dump_psql import (
     MatchMerger,
 )
@@ -30,7 +30,7 @@ class TagMatchMerger(MatchMerger):
         )
 
 
-class TaggingFileSearcher(FileSearcher):
+class TaggingFileSearcher(LMDBStorage):
     def __init__(
         self,
         **kwargs,
@@ -40,13 +40,13 @@ class TaggingFileSearcher(FileSearcher):
     def search(self, docs: DocumentArray, parameters: Dict = None, **kwargs) -> None:
         # TODO shouldn't be necessary
         parameters = {'traversal_paths': ['m']}
-        FileSearcher.search(self, docs, parameters=parameters, **kwargs)
+        LMDBStorage.search(self, docs, parameters=parameters, **kwargs)
         for doc in docs:
             for match in doc.matches:
                 match.tags[ORIGIN_TAG] = self.runtime_args.pea_id
 
 
-class NumpyTaggingFileSearcher(NumpyFileSearcher):
+class NumpyTaggingFileSearcher(NumpyLMDBSearcher):
     def __init__(
         self,
         dump_path=None,
@@ -112,6 +112,6 @@ def test_shards_numpy_filequery(tmpdir, num_shards):
             on='/tag_search',
             inputs=inputs,
             parameters={'top_k': TOP_K},
-            return_results=True
+            return_results=True,
         )
         validate_diff_sources(results, num_shards, docs_indexed)

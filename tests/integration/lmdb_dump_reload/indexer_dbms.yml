@@ -1,6 +1,0 @@
-jtype: LMDBIndexer
-with:
-  map_size: 1048576000
-metas:
-  workspace: $DBMS_WORKSPACE
-  name: lmdb

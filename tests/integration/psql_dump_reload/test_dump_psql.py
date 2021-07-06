@@ -27,18 +27,18 @@ def docker_compose(request):
 
 
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
+from jinahub.storage.PostgreSQLStorage.postgreshandler import (
     doc_without_embedding,
 )
 
 # required in order to be found by Flow creation
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
-from jinahub.indexers.indexer.PostgreSQLIndexer import PostgreSQLIndexer
+from jinahub.searcher.compound import NumpyPostgresSearcher
+from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
-dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
+storage_flow_yml = os.path.join(cur_dir, 'flow_storage.yml')
 query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
 
 
@@ -144,29 +144,29 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
         list(get_documents(nr=nr_docs, index_start=0, emb_size=emb_size))
     )
     # make sure to delete any overlapping docs
-    PostgreSQLIndexer().delete(docs, {})
+    PostgreSQLStorage().delete(docs, {})
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(str(tmpdir), 'index_ws')
+    os.environ['STORAGE_WORKSPACE'] = os.path.join(str(tmpdir), 'index_ws')
     os.environ['SHARDS'] = str(shards)
     if shards > 1:
         os.environ['USES_AFTER'] = 'MatchMerger'
     else:
         os.environ['USES_AFTER'] = 'Pass'
 
-    with Flow.load_config(dbms_flow_yml) as flow_dbms:
+    with Flow.load_config(storage_flow_yml) as flow_storage:
         with Flow.load_config(query_flow_yml) as flow_query:
             with TimeContext(f'### indexing {len(docs)} docs'):
-                flow_dbms.post(on='/index', inputs=docs)
+                flow_storage.post(on='/index', inputs=docs)
 
             results = flow_query.post(on='/search', inputs=docs, return_results=True)
             assert len(results[0].docs[0].matches) == 0
 
             with TimeContext(f'### dumping {len(docs)} docs'):
-                flow_dbms.post(
+                flow_storage.post(
                     on='/dump',
-                    target_peapod='indexer_dbms',
+                    target_peapod='indexer_storage',
                     parameters={
                         'dump_path': dump_path,
                         'shards': shards,
@@ -188,7 +188,7 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = PostgreSQLIndexer()
+    idx = PostgreSQLStorage()
     assert idx.size == nr_docs
 
     # assert data dumped is correct
@@ -212,7 +212,7 @@ def _in_docker():
 )
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_benchmark(tmpdir, docker_compose):
-    nr_docs = 100000
+    nr_docs = 1000
     return test_dump_reload(
         tmpdir, nr_docs=nr_docs, emb_size=128, shards=3, docker_compose=compose_yml
     )

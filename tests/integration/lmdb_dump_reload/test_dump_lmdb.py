@@ -13,19 +13,19 @@ from jina_commons.indexers.dump import (
     import_metas,
 )
 
-from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
-from jinahub.indexers.indexer.PostgreSQLIndexer.postgreshandler import (
+from jinahub.storage.LMDBStorage import LMDBStorage
+from jinahub.storage.PostgreSQLStorage.postgreshandler import (
     doc_without_embedding,
 )
+
 # REQUIRED INDEXERS
-# noinspection PyUnresolvedReferences
-from jinahub.indexers.searcher.compound import NumpyPostgresSearcher
+from jinahub.searcher.compound.NumpyPostgresSearcher import NumpyPostgresSearcher
+
 # REQUIRED INDEXERS
-# noinspection PyUnresolvedReferences
-from jinahub.indexers.searcher.compound.NumpyFileSearcher import NumpyFileSearcher
+from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
-dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
+storage_flow_yml = os.path.join(cur_dir, 'flow_storage.yml')
 query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
 
 
@@ -92,10 +92,10 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
     )
     if pea_id == shards - 1:
         docs_expected = docs[
-                        (pea_id) * size_shard: (pea_id + 1) * size_shard + size_shard_modulus
-                        ]
+            (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
+        ]
     else:
-        docs_expected = docs[(pea_id) * size_shard: (pea_id + 1) * size_shard]
+        docs_expected = docs[(pea_id) * size_shard : (pea_id + 1) * size_shard]
     print(f'### pea {pea_id} has {len(docs_expected)} docs')
 
     # TODO these might fail if we implement any ordering of elements on dumping / reloading
@@ -117,7 +117,7 @@ def assert_dump_data(dump_path, docs, shards, pea_id):
 
 def path_size(dump_path):
     dir_size = (
-            sum(f.stat().st_size for f in Path(dump_path).glob('**/*') if f.is_file()) / 1e6
+        sum(f.stat().st_size for f in Path(dump_path).glob('**/*') if f.is_file()) / 1e6
     )
     return dir_size
 
@@ -133,28 +133,28 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(str(tmpdir), 'dbms_ws')
+    os.environ['STORAGE_WORKSPACE'] = os.path.join(str(tmpdir), 'storage_ws')
     os.environ['QUERY_WORKSPACE'] = os.path.join(str(tmpdir), 'query_ws')
-    print(f'DBMS_WORKSPACE = {os.environ["DBMS_WORKSPACE"]}')
-    print(f'DBMS_WORKSPACE = {os.environ["QUERY_WORKSPACE"]}')
+    print(f'STORAGE_WORKSPACE = {os.environ["STORAGE_WORKSPACE"]}')
+    print(f'STORAGE_WORKSPACE = {os.environ["QUERY_WORKSPACE"]}')
     os.environ['SHARDS'] = str(shards)
     if shards > 1:
         os.environ['USES_AFTER'] = 'MatchMerger'
     else:
         os.environ['USES_AFTER'] = 'Pass'
 
-    with Flow.load_config(dbms_flow_yml) as flow_dbms:
+    with Flow.load_config(storage_flow_yml) as flow_storage:
         with Flow.load_config(query_flow_yml) as flow_query:
             with TimeContext(f'### indexing {len(docs)} docs'):
-                flow_dbms.post(on='/index', inputs=docs)
+                flow_storage.post(on='/index', inputs=docs)
 
             results = flow_query.post(on='/search', inputs=docs, return_results=True)
             assert len(results[0].docs[0].matches) == 0
 
             with TimeContext(f'### dumping {len(docs)} docs'):
-                flow_dbms.post(
+                flow_storage.post(
                     on='/dump',
-                    target_peapod='indexer_dbms',
+                    target_peapod='indexer_storage',
                     parameters={
                         'dump_path': dump_path,
                         'shards': shards,
@@ -176,13 +176,13 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards):
                 on='/search',
                 inputs=docs,
                 parameters={'top_k': top_k},
-                return_results=True
+                return_results=True,
             )
             assert len(results[0].docs[0].matches) == top_k
             assert results[0].docs[0].matches[0].scores['similarity'].value == 1.0
 
-    idx = LMDBIndexer(
-        metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'lmdb'},
+    idx = LMDBStorage(
+        metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'lmdb'},
         map_size=1048576000,
         runtime_args={'pea_id': 0},
     )

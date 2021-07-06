@@ -3,13 +3,13 @@ import os
 from jina import Flow, DocumentArray, Document
 
 # noinspection PyUnresolvedReferences
-from jinahub.indexers.cache import DocCache
-from jinahub.indexers.indexer.LMDBIndexer import LMDBIndexer
+from jinahub.cache import DocCache
+from jinahub.storage.LMDBStorage import LMDBStorage
 
 
 def test_cache(tmpdir):
     os.environ['CACHE_WORKSPACE'] = os.path.join(tmpdir, 'cache')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(tmpdir, 'indexer')
+    os.environ['STORAGE_WORKSPACE'] = os.path.join(tmpdir, 'indexer')
 
     docs = [
         Document(id=1, content='a'),
@@ -17,19 +17,15 @@ def test_cache(tmpdir):
         Document(id=3, content='a'),
     ]
 
-    with Flow().add(uses='cache.yml').add(uses='dbms.yml') as f:
-        response = f.post(
-            on='/index',
-            inputs=DocumentArray(docs),
-            return_results=True
-        )
+    with Flow().add(uses='cache.yml').add(uses='storage.yml') as f:
+        response = f.post(on='/index', inputs=DocumentArray(docs), return_results=True)
         assert len(response[0].docs) == 1
 
-        dbms = LMDBIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+        storage = LMDBStorage(
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 1
+        assert storage.size == 1
 
         docs = [
             Document(id=1, content='b'),
@@ -40,18 +36,18 @@ def test_cache(tmpdir):
             on='/update',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+        storage = LMDBStorage(
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 1
+        assert storage.size == 1
 
         f.post(
             on='/delete',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBIndexer(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+        storage = LMDBStorage(
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 0
+        assert storage.size == 0
