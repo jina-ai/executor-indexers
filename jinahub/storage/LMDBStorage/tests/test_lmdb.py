@@ -28,7 +28,7 @@ def get_documents(nr=10, index_start=0, emb_size=7, text='hello world'):
 def test_lmdb_crud(tmpdir, nr_docs=10):
     docs = get_documents(nr=nr_docs)
 
-    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0}
+    metas = {'workspace': str(tmpdir), 'name': 'storage', 'pea_id': 0}
 
     # indexing
     indexer = LMDBStorage(map_size=10485760 * 1000, metas=metas)
@@ -64,7 +64,7 @@ def test_lmdb_crud(tmpdir, nr_docs=10):
 
 
 def test_lmdb_crud_flow(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms'}
+    metas = {'workspace': str(tmpdir), 'name': 'storage'}
     runtime_args = {'pea_id': 0, 'replica_id': None}
 
     def _get_flow() -> Flow:
@@ -84,7 +84,7 @@ def test_lmdb_crud_flow(tmpdir):
         f.index(
             inputs=docs,
             parameters={
-                'dbms': {'traversal_paths': ['r']},
+                'storage': {'traversal_paths': ['r']},
             },
         )
 
@@ -100,7 +100,7 @@ def test_lmdb_crud_flow(tmpdir):
             on='/update',
             inputs=update_docs,
             parameters={
-                'dbms': {'traversal_paths': ['r']},
+                'storage': {'traversal_paths': ['r']},
             },
         )
 
@@ -172,7 +172,7 @@ def _assert_dump_data(dump_path, docs, shards, pea_id):
 
 @pytest.mark.parametrize('shards', [2, 3, 7])
 def test_dump(tmpdir, shards):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms'}
+    metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
     def _get_flow() -> Flow:

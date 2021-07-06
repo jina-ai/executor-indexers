@@ -17,15 +17,15 @@ def test_cache(tmpdir):
         Document(id=3, content='a'),
     ]
 
-    with Flow().add(uses='cache.yml').add(uses='dbms.yml') as f:
+    with Flow().add(uses='cache.yml').add(uses='storage.yml') as f:
         response = f.post(on='/index', inputs=DocumentArray(docs), return_results=True)
         assert len(response[0].docs) == 1
 
-        dbms = LMDBStorage(
+        storage = LMDBStorage(
             metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 1
+        assert storage.size == 1
 
         docs = [
             Document(id=1, content='b'),
@@ -36,18 +36,18 @@ def test_cache(tmpdir):
             on='/update',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBStorage(
+        storage = LMDBStorage(
             metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 1
+        assert storage.size == 1
 
         f.post(
             on='/delete',
             inputs=DocumentArray(docs),
         )
-        dbms = LMDBStorage(
+        storage = LMDBStorage(
             metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
-        assert dbms.size == 0
+        assert storage.size == 0

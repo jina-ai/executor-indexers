@@ -8,7 +8,7 @@ from jina import Executor, requests, DocumentArray
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import export_dump_streaming
-from .postgreshandler import PostgreSQLDBMSHandler
+from .postgreshandler import PostgreSQLHandler
 
 
 class PostgreSQLStorage(Executor):
@@ -48,7 +48,7 @@ class PostgreSQLStorage(Executor):
         self.database = database
         self.table = table
         self.logger = get_logger(self)
-        self.handler = PostgreSQLDBMSHandler(
+        self.handler = PostgreSQLHandler(
             hostname=self.hostname,
             port=self.port,
             username=self.username,

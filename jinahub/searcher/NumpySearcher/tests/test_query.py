@@ -5,7 +5,12 @@ from .. import NumpySearcher
 
 
 def test_query_vector(tmpdir):
-    runtime = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    runtime = {
+        'workspace': str(tmpdir),
+        'name': 'searcher',
+        'pea_id': 0,
+        'replica_id': 0,
+    }
     indexer = NumpySearcher(dump_path='tests/dump1', runtime_args=runtime)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     TOP_K = 5
@@ -16,7 +21,12 @@ def test_query_vector(tmpdir):
 
 
 def test_empty_shard(tmpdir):
-    runtime = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    runtime = {
+        'workspace': str(tmpdir),
+        'name': 'searcher',
+        'pea_id': 0,
+        'replica_id': 0,
+    }
     indexer = NumpySearcher(dump_path='tests/dump_empty', runtime_args=runtime)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     TOP_K = 5

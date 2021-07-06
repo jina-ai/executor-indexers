@@ -72,7 +72,7 @@ class LMDBStorage(Executor):
             os.makedirs(self.workspace)
         self.logger = get_logger(self)
 
-        self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
+        self.dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if self.dump_path is not None:
             self.logger.info(f'Importing data from {self.dump_path}')
             ids, metas = import_metas(self.dump_path, str(self.runtime_args.pea_id))

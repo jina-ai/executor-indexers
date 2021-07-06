@@ -8,7 +8,7 @@ They are split by usage and interface. The types are:
 
 1. [storage](jinahub/storage). This category is for *storing* data, in a CRUD-like interface. These Executors are reliable and performant in write/read/update/delete operations. They can only search by a Document's `id`.
 1. [vector searchers](jinahub/searcher/) These usually implement a form of similarity search, based on the embeddings created by the encoders you have chosen in your Flow.
-1. [compound](jinahub/searcher/compound) These are compound classes, usually made up of a vector-based and a storage, for retrieving the Document's original metadata.
+1. [compound](jinahub/searcher/compound) These are compound classes, usually made up of a vector-based searcher, for computing the most similar matches, and a storage, for retrieving the match's original metadata.
 
 ## Indexing vs Searching Operations
 
@@ -18,9 +18,9 @@ In order to search them, you need to start a Search Flow, dump the data from the
 
 See below figure for how this would look like:
 
-![](./.github/img/replicas.jpg)
+![](./.github/img/replicas.png)
 
-In the above case, the DBMS could be the [PostgreSQL](jinahub/storage/PostgreSQLStorage)-based Indexer, while the Query Flow could be based on [NumpyPostgresSearcher](jinahub/searcher/compound/NumpyPostgresSearcher).
+In the above case, the Storage could be the [PostgreSQL](jinahub/storage/PostgreSQLStorage)-based Storage, while the Query Flow could be based on [NumpyPostgresSearcher](jinahub/searcher/compound/NumpyPostgresSearcher).
 
 For a showcase code, check our [integration tests](tests/integration/psql_dump_reload).
 
@@ -35,9 +35,9 @@ At the other end, the **rolling update** tells the search Flow to recreate its i
 Looking at the [test](tests/integration/psql_dump_reload/test_dump_psql.py), we can see how this is called:
 
 ```python
-flow_dbms.post(
+flow_storage.post(
      on='/dump',
-     target_peapod='indexer_dbms',
+     target_peapod='indexer_storage',
      parameters={
          'dump_path': dump_path,
          'shards': shards,
@@ -48,7 +48,7 @@ flow_dbms.post(
 
 where
 
-- `flow_dbms` is the Flow with the storage Indexer
+- `flow_storage` is the Flow with the storage Indexer
 - `target_peapod` is the name of the executor, defined in your `flow.yml`
 - `dump_path` is the path (on local disk) where you want the data to be stored
 - `shards` is the nr of shards you have in your search Flow. **NOTE** This doesn't change the value in the Flow. You need to keep track of how you configured your search Flow

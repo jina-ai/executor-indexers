@@ -38,7 +38,7 @@ from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.join(cur_dir, 'docker-compose.yml')
-dbms_flow_yml = os.path.join(cur_dir, 'flow_dbms.yml')
+storage_flow_yml = os.path.join(cur_dir, 'flow_storage.yml')
 query_flow_yml = os.path.join(cur_dir, 'flow_query.yml')
 
 
@@ -148,25 +148,25 @@ def test_dump_reload(tmpdir, nr_docs, emb_size, shards, docker_compose):
     assert len(docs) == nr_docs
 
     dump_path = os.path.join(str(tmpdir), 'dump_dir')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(str(tmpdir), 'index_ws')
+    os.environ['STORAGE_WORKSPACE'] = os.path.join(str(tmpdir), 'index_ws')
     os.environ['SHARDS'] = str(shards)
     if shards > 1:
         os.environ['USES_AFTER'] = 'MatchMerger'
     else:
         os.environ['USES_AFTER'] = 'Pass'
 
-    with Flow.load_config(dbms_flow_yml) as flow_dbms:
+    with Flow.load_config(storage_flow_yml) as flow_storage:
         with Flow.load_config(query_flow_yml) as flow_query:
             with TimeContext(f'### indexing {len(docs)} docs'):
-                flow_dbms.post(on='/index', inputs=docs)
+                flow_storage.post(on='/index', inputs=docs)
 
             results = flow_query.post(on='/search', inputs=docs, return_results=True)
             assert len(results[0].docs[0].matches) == 0
 
             with TimeContext(f'### dumping {len(docs)} docs'):
-                flow_dbms.post(
+                flow_storage.post(
                     on='/dump',
-                    target_peapod='indexer_dbms',
+                    target_peapod='indexer_storage',
                     parameters={
                         'dump_path': dump_path,
                         'shards': shards,

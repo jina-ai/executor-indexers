@@ -43,7 +43,7 @@ def test_simple_annoy():
 
 
 def test_query_vector(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
 
     indexer = AnnoySearcher(dump_path=DUMP_PATH, top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
@@ -66,7 +66,7 @@ def test_query_vector(tmpdir):
 
 
 def test_query_vector_empty(tmpdir):
-    metas = {'workspace': str(tmpdir), 'name': 'dbms', 'pea_id': 0, 'replica_id': 0}
+    metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
 
     indexer = AnnoySearcher(top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])

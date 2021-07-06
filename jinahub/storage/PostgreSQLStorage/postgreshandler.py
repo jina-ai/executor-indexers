@@ -16,7 +16,7 @@ def doc_without_embedding(d: Document):
     return new_doc.SerializeToString()
 
 
-class PostgreSQLDBMSHandler:
+class PostgreSQLHandler:
     """
     Postgres Handler to connect to the database and can apply add, update, delete and query.
 
@@ -112,7 +112,11 @@ class PostgreSQLDBMSHandler:
                 cursor,
                 f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
                 [
-                    (doc.id, doc.embedding.tobytes() if doc.embedding is not None else None, doc_without_embedding(doc))
+                    (
+                        doc.id,
+                        doc.embedding.tobytes() if doc.embedding is not None else None,
+                        doc_without_embedding(doc),
+                    )
                     for doc in docs
                 ],
             )
@@ -136,7 +140,11 @@ class PostgreSQLDBMSHandler:
             cursor,
             f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
             [
-                (doc.embedding.tobytes() if doc.embedding is not None else None, doc_without_embedding(doc), doc.id)
+                (
+                    doc.embedding.tobytes() if doc.embedding is not None else None,
+                    doc_without_embedding(doc),
+                    doc.id,
+                )
                 for doc in docs
             ],
         )

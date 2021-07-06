@@ -1,4 +1,4 @@
 jtype: PostgreSQLStorage
 metas:
-  workspace: $DBMS_WORKSPACE
+  workspace: $STORAGE_WORKSPACE
   name: psql
