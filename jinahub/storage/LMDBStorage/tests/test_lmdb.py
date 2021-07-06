@@ -125,9 +125,7 @@ def _in_docker():
 )
 def test_lmdb_bm(tmpdir):
     nr = 100000
-    # Cristian: running lmdb benchmark with 10000 docs ...	running lmdb benchmark with 10000 docs takes 5 seconds (5.50s)
-    # running lmdb benchmark with 20000 docs ...	running lmdb benchmark with 20000 docs takes 10 seconds (10.86s)
-    # running lmdb benchmark with 100000 docs ...	running lmdb benchmark with 100000 docs takes 1 minute and 3 seconds (63.11s)
+    # Cristian: running lmdb benchmark with 100000 docs ...	running lmdb benchmark with 100000 docs takes 1 minute and 53 seconds
     with TimeContext(f'running lmdb benchmark with {nr} docs'):
         test_lmdb_crud(tmpdir, nr)
 
