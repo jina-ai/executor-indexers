@@ -9,7 +9,7 @@ from jinahub.storage.LMDBStorage import LMDBStorage
 
 def test_cache(tmpdir):
     os.environ['CACHE_WORKSPACE'] = os.path.join(tmpdir, 'cache')
-    os.environ['DBMS_WORKSPACE'] = os.path.join(tmpdir, 'indexer')
+    os.environ['STORAGE_WORKSPACE'] = os.path.join(tmpdir, 'indexer')
 
     docs = [
         Document(id=1, content='a'),
@@ -22,7 +22,7 @@ def test_cache(tmpdir):
         assert len(response[0].docs) == 1
 
         dbms = LMDBStorage(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 1
@@ -37,7 +37,7 @@ def test_cache(tmpdir):
             inputs=DocumentArray(docs),
         )
         dbms = LMDBStorage(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 1
@@ -47,7 +47,7 @@ def test_cache(tmpdir):
             inputs=DocumentArray(docs),
         )
         dbms = LMDBStorage(
-            metas={'workspace': os.environ['DBMS_WORKSPACE'], 'name': 'indexer'},
+            metas={'workspace': os.environ['STORAGE_WORKSPACE'], 'name': 'storage'},
             runtime_args={'pea_id': 0},
         )
         assert dbms.size == 0

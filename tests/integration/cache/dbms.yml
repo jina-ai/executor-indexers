@@ -1,4 +1,4 @@
 jtype: LMDBStorage
 metas:
   name: storage
-  workspace: $DBMS_WORKSPACE
+  workspace: $STORAGE_WORKSPACE
