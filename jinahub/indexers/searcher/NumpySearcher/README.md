@@ -1,6 +1,6 @@
-# ✨ NumpyPostgresSearcher
+# ✨ NumpySearcher
 
-**NumpyPostgresSearcher** is a compound Searcher Executor for Jina, made up of [NumpySearcher](../../NumpySearcher) for performing similarity search on the embeddings, and of [PostgresSearcher](../../keyvalue/PostgresSearcher) for retrieving the metadata of the Documents. 
+**NumpySearcher** is a Numpy-based vector similarity Searcher for Jina. 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -18,17 +18,9 @@
 - This Executor works on Python 3.7 and 3.8. 
 - Make sure to install the [requirements](requirements.txt)
 
-Additionally, you will need a running PostgreSQL database. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters.
-
-You can start one in a Docker container, like so: 
-
-```bash
-docker run -e POSTGRES_PASSWORD=123456  -p 127.0.0.1:5432:5432/tcp postgres:13.2 
-```
-
 ## 🚀 Usages
 
-Check [integration tests](../../../../tests/integration/psql_dump_reload) for an example on how to use it.
+Check [tests](tests) for an example on how to use it.
 
 ### Loading data
 
@@ -39,7 +31,7 @@ This can be provided in different ways:
 - in the YAML definition
   
 ```yaml
-jtype: NumpyPostgresSearcher
+jtype: NumpySearcher
 with:
     dump_path: /tmp/your_dump_location
 ...
@@ -57,7 +49,7 @@ Use the prebuilt images from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub+docker://NumpyPostgresSearcher')
+f = Flow().add(uses='jinahub+docker://NumpySearcher')
 ```
 
 or in the `.yml` config.
@@ -66,7 +58,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub+docker://NumpyPostgresSearcher'
+    uses: 'jinahub+docker://NumpySearcher'
 ```
 
 #### using source codes
@@ -75,7 +67,7 @@ Use the source codes from JinaHub in your code
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub://NumpyPostgresSearcher')
+f = Flow().add(uses='jinahub://NumpySearcher')
 ```
 
 or in the `.yml` config.
@@ -84,7 +76,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub://NumpyPostgresSearcher'
+    uses: 'jinahub://NumpySearcher'
 ```
 
 
@@ -100,9 +92,9 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.searcher.compound import NumpyPostgresSearcher
+   from jinahub.indexers.searcher import NumpySearcher
    
-   f = Flow().add(uses=NumpyPostgresSearcher)
+   f = Flow().add(uses=NumpySearcher)
    ```
 
 
@@ -112,16 +104,16 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/searcher/compound/NumpyPostgresSearcher
-	docker build -t numpy-psql-image .
+	cd jinahub/indexers/searcher/vector/NumpySearcher
+	docker build -t numpy-image .
 	```
 
-1. Use `numpy-psql-image` in your codes
+1. Use `numpy-image` in your codes
 
 	```python
 	from jina import Flow
 	
-	f = Flow().add(uses='docker://numpy-psql-image:latest')
+	f = Flow().add(uses='docker://numpy-image:latest')
 	```
 	
 
@@ -129,21 +121,23 @@ pods:
 
 
 ```python
+import numpy as np
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://NumpyPostgresSearcher')
+f = Flow().add(uses='jinahub+docker://NumpySearcher')
 
 with f:
-    resp = f.post(on='/search', inputs=Document(), return_results=True)
+    resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
     print(f'{resp}')
 ```
 
 ### Inputs 
 
-`Document` with `.embedding` the same shape as the `Documents` stored in the `NumpySearcher`. The ids of the `Documents` stored in `NumpySearcher` need to exist in the `PostgresSearcher`. Otherwise you will not get back the original metadata. 
+`Document` with `.embedding` the same shape as the `Documents` it has stored.
 
 ### Returns
 
-The NumpySearcher attaches matches to the Documents sent as inputs, with the id of the match, and its embedding.
-Then, the PostgresSearcher retrieves the full metadata (original text or image blob) and attaches those to the Document.
-You receive back the full Document.
+Attaches matches to the Documents sent as inputs, with the id of the match, and its embedding. For retrieving the full metadata (original text or image blob), use a [key-value searcher](./../../keyvalue).
+
+
+## 🔍️ Reference

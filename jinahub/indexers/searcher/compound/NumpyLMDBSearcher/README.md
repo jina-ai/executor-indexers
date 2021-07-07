@@ -1,6 +1,6 @@
-# ✨ NumpySearcher
+# ✨ NumpyLMDBSearcher
 
-**NumpySearcher** is a Numpy-based vector similarity Searcher for Jina. 
+**NumpyLMDBSearcher** is a compound Searcher Executor for Jina, made up of [NumpySearcher](../../NumpySearcher) for performing similarity search on the embeddings, and of [FileSearcher](../../keyvalue/FileSearcher) for retrieving the metadata of the Documents. 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -20,7 +20,7 @@
 
 ## 🚀 Usages
 
-Check [tests](tests) for an example on how to use it.
+Check [integration tests](../../../../../tests/integration/lmdb_dump_reload) for an example on how to use it.
 
 ### Loading data
 
@@ -31,15 +31,15 @@ This can be provided in different ways:
 - in the YAML definition
   
 ```yaml
-jtype: NumpySearcher
+jtype: NumpyLMDBSearcher
 with:
     dump_path: /tmp/your_dump_location
 ...
 ```
 
-- from the `Flow.rolling_update` method. See [README](../../../README.md).
+- from the `Flow.rolling_update` method. See [README](../../../../../README.md).
 
-The folder needs to contain the data exported from your Indexer. Again, see [README](../../../README.md).
+The folder needs to contain the data exported from your Indexer. Again, see [README](../../../../../README.md).
 
 ### 🚚 Via JinaHub
 
@@ -49,7 +49,7 @@ Use the prebuilt images from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub+docker://NumpySearcher')
+f = Flow().add(uses='jinahub+docker://NumpyLMDBSearcher')
 ```
 
 or in the `.yml` config.
@@ -58,7 +58,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub+docker://NumpySearcher'
+    uses: 'jinahub+docker://NumpyLMDBSearcher'
 ```
 
 #### using source codes
@@ -67,7 +67,7 @@ Use the source codes from JinaHub in your code
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub://NumpySearcher')
+f = Flow().add(uses='jinahub://NumpyLMDBSearcher')
 ```
 
 or in the `.yml` config.
@@ -76,7 +76,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub://NumpySearcher'
+    uses: 'jinahub://NumpyLMDBSearcher'
 ```
 
 
@@ -92,9 +92,9 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.searcher.NumpySearcher import NumpySearcher
+   from jinahub.indexers.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
    
-   f = Flow().add(uses=NumpySearcher)
+   f = Flow().add(uses=NumpyLMDBSearcher)
    ```
 
 
@@ -104,16 +104,16 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/searcher/vector/NumpySearcher
-	docker build -t numpy-image .
+	cd jinahub/indexers/searcher/compound/NumpyLMDBSearcher
+	docker build -t numpy-file-image .
 	```
 
-1. Use `numpy-image` in your codes
+1. Use `numpy-file-image` in your codes
 
 	```python
 	from jina import Flow
 	
-	f = Flow().add(uses='docker://numpy-image:latest')
+	f = Flow().add(uses='docker://numpy-file-image:latest')
 	```
 	
 
@@ -121,23 +121,21 @@ pods:
 
 
 ```python
-import numpy as np
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://NumpySearcher')
+f = Flow().add(uses='jinahub+docker://NumpyLMDBSearcher')
 
 with f:
-    resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
+    resp = f.post(on='/search', inputs=Document(), return_results=True)
     print(f'{resp}')
 ```
 
 ### Inputs 
 
-`Document` with `.embedding` the same shape as the `Documents` it has stored.
+`Document` with `.embedding` the same shape as the `Documents` stored in the `NumpySearcher`. The ids of the `Documents` stored in `NumpySearcher` need to exist in the `FileSearcher`. Otherwise you will not get back the original metadata. 
 
 ### Returns
 
-Attaches matches to the Documents sent as inputs, with the id of the match, and its embedding. For retrieving the full metadata (original text or image blob), use a [key-value searcher](./../../keyvalue).
-
-
-## 🔍️ Reference
+The NumpySearcher attaches matches to the Documents sent as inputs, with the id of the match, and its embedding.
+Then, the FileSearcher retrieves the full metadata (original text or image blob) and attaches those to the Document.
+You receive back the full Document.

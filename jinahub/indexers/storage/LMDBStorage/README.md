@@ -74,7 +74,7 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.storage.LMDBStorage import LMDBStorage
+   from jinahub.indexers.storage.LMDBStorage import LMDBStorage
    
    f = Flow().add(uses=LMDBStorage)
    ```

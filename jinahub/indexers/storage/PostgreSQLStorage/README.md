@@ -82,7 +82,7 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
+   from jinahub.indexers.storage.PostgreSQLStorage import PostgreSQLStorage
    
    f = Flow().add(uses=PostgreSQLStorage)
    ```

@@ -13,16 +13,14 @@ from jina_commons.indexers.dump import (
     import_metas,
 )
 
-from jinahub.storage.LMDBStorage import LMDBStorage
-from jinahub.storage.PostgreSQLStorage.postgreshandler import (
+from jinahub.indexers.storage.LMDBStorage import LMDBStorage
+from jinahub.indexers.storage.PostgreSQLStorage.postgreshandler import (
     doc_without_embedding,
 )
 
 # REQUIRED INDEXERS
-from jinahub.searcher.compound.NumpyPostgresSearcher import NumpyPostgresSearcher
 
 # REQUIRED INDEXERS
-from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 storage_flow_yml = os.path.join(cur_dir, 'flow_storage.yml')

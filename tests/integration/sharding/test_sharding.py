@@ -8,8 +8,8 @@ import pytest
 from jina import Document, Flow, DocumentArray, requests
 
 from jina_commons.indexers.dump import dump_docs
-from jinahub.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
-from jinahub.storage.LMDBStorage import LMDBStorage
+from jinahub.indexers.searcher.compound.NumpyLMDBSearcher import NumpyLMDBSearcher
+from jinahub.indexers.storage.LMDBStorage import LMDBStorage
 from tests.integration.psql_dump_reload.test_dump_psql import (
     MatchMerger,
 )
