@@ -27,14 +27,16 @@ def docker_compose(request):
 
 
 # noinspection PyUnresolvedReferences
-from jinahub.storage.PostgreSQLStorage.postgreshandler import (
+from jinahub.indexers.storage.PostgreSQLStorage.postgreshandler import (
     doc_without_embedding,
 )
 
 # required in order to be found by Flow creation
 # noinspection PyUnresolvedReferences
-from jinahub.searcher.compound import NumpyPostgresSearcher
-from jinahub.storage.PostgreSQLStorage import PostgreSQLStorage
+from jinahub.indexers.searcher.compound.NumpyPostgresSearcher import (
+    NumpyPostgresSearcher,
+)
+from jinahub.indexers.storage.PostgreSQLStorage import PostgreSQLStorage
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.join(cur_dir, 'docker-compose.yml')

@@ -39,9 +39,9 @@ with:
 ...
 ```
 
-- from the `Flow.rolling_update` method. See [README](../../../README.md).
+- from the `Flow.rolling_update` method. See [README](../../../../README.md).
 
-The folder needs to contain the data exported from your Indexer. Again, see [README](../../../README.md).
+The folder needs to contain the data exported from your Indexer. Again, see [README](../../../../README.md).
 
 ### 🚚 Via JinaHub
 
@@ -94,7 +94,7 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.searcher.AnnoySearcher import AnnoySearcher
+   from jinahub.indexers.searcher import AnnoySearcher
    
    f = Flow().add(uses=AnnoySearcher)
    ```
