@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional, List
 
 import numpy as np
 from jina import Executor, DocumentArray, requests, Document
@@ -10,16 +10,24 @@ class SimpleIndexer(Executor):
 
     To be used as a unified indexer, combining both indexing and searching"""
 
-    def __init__(self, index_file_name: str, **kwargs):
+    def __init__(self, index_file_name: str,
+                 default_traversal_paths: Optional[List[str]] = None,
+                 **kwargs):
         super().__init__(**kwargs)
         self._docs = DocumentArrayMemmap(self.workspace + f'/{index_file_name}')
+        self.default_traversal_paths = default_traversal_paths or ['r']
 
     @requests(on='/index')
-    def index(self, docs: 'DocumentArray', **kwargs):
+    def index(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
         """All Documents to the DocumentArray
-
-        :param docs: the docs to add"""
-        self._docs.extend(docs)
+        :param docs: the docs to add
+        :param parameters: the parameters dictionary
+        """
+        traversal_path = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+        flat_docs = docs.traverse_flat(traversal_path)
+        self._docs.extend(flat_docs)
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
@@ -27,13 +35,17 @@ class SimpleIndexer(Executor):
 
         :param docs: the Documents to search with
         :param parameters: the parameters for the search"""
-        a = np.stack(docs.get_attributes('embedding'))
+        traversal_path = parameters.get(
+            'traversal_paths', self.default_traversal_paths
+        )
+        flat_docs = docs.traverse_flat(traversal_path)
+        a = np.stack(flat_docs.get_attributes('embedding'))
         b = np.stack(self._docs.get_attributes('embedding'))
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
         dists = _cosine(q_emb, d_emb)
         idx, dist = self._get_sorted_top_k(dists, int(parameters['top_k']))
-        for _q, _ids, _dists in zip(docs, idx, dist):
+        for _q, _ids, _dists in zip(flat_docs, idx, dist):
             for _id, _dist in zip(_ids, _dists):
                 d = Document(self._docs[int(_id)], copy=True)
                 d.scores['cosine'] = 1 - _dist
