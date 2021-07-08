@@ -10,12 +10,16 @@ class SimpleIndexer(Executor):
 
     To be used as a unified indexer, combining both indexing and searching"""
 
-    def __init__(self, index_file_name: str,
-                 default_traversal_paths: Optional[List[str]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        index_file_name: str,
+        default_traversal_paths: Optional[List[str]] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self._docs = DocumentArrayMemmap(self.workspace + f'/{index_file_name}')
         self.default_traversal_paths = default_traversal_paths or ['r']
+        self._flush = False
 
     @requests(on='/index')
     def index(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
@@ -23,11 +27,10 @@ class SimpleIndexer(Executor):
         :param docs: the docs to add
         :param parameters: the parameters dictionary
         """
-        traversal_path = parameters.get(
-            'traversal_paths', self.default_traversal_paths
-        )
+        traversal_path = parameters.get('traversal_paths', self.default_traversal_paths)
         flat_docs = docs.traverse_flat(traversal_path)
         self._docs.extend(flat_docs)
+        self._flush = True
 
     @requests(on='/search')
     def search(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
@@ -35,12 +38,16 @@ class SimpleIndexer(Executor):
 
         :param docs: the Documents to search with
         :param parameters: the parameters for the search"""
-        traversal_path = parameters.get(
-            'traversal_paths', self.default_traversal_paths
-        )
+        traversal_path = parameters.get('traversal_paths', self.default_traversal_paths)
         flat_docs = docs.traverse_flat(traversal_path)
         a = np.stack(flat_docs.get_attributes('embedding'))
-        b = np.stack(self._docs.get_attributes('embedding'))
+        b = (
+            np.stack(self._docs.get_attributes('embedding'))
+            if self._flush
+            else self._docs_embeddings
+        )
+        if self._flush:
+            self._docs_embeddings = b
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
         dists = _cosine(q_emb, d_emb)

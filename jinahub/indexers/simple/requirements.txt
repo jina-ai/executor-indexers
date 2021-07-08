@@ -1,2 +1,1 @@
-jina[hub]==2.0.3
-git+https://github.com/jina-ai/jina-commons
+jina-commons @ git+https://github.com/jina-ai/jina-commons.git#egg=jina-commons
