@@ -35,7 +35,7 @@ class MongoHandler:
             )
         else:
             self._connection = MongoClient(f'mongodb://{self._host}:{self._port}')
-        self.logger.info(f'Connected to mongodb instance at {self.host}:{self._port}')
+        self._logger.info(f'Connected to mongodb instance at {self.host}:{self._port}')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._connection:
@@ -43,13 +43,15 @@ class MongoHandler:
 
     @property
     def collection(self):
-        if self._connection:
+        if not self._collection:
             self._collection = self._connection[self._database_name][
                 self._collection_name
             ]
             self._collection.create_index(
                 'id', unique=True
             )  # create index on doc.id field if index not exist.
+            return self._collection
+        else:
             return self._collection
 
     def add(self, docs: DocumentArray, **kwargs):
