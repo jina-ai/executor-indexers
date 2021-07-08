@@ -1,14 +1,14 @@
 import numpy as np
-from jina import Flow, Document
+from jina import Flow, Document, DocumentArray
 
 from jinahub.indexers.simple import SimpleIndexer
 
 
-def test_simple_indexer():
+def test_simple_indexer_flow(tmpdir):
     f = Flow().add(
         uses=SimpleIndexer,
         override_with={'index_file_name': 'name'},
-        override_metas={'workspace': 'ws'},
+        override_metas={'workspace': str(tmpdir)},
     )
 
     with f:
@@ -25,3 +25,21 @@ def test_simple_indexer():
             parameters={'top_k': 5},
         )
         assert resp[0].docs[0].matches[0].id == 'a'
+
+
+def test_simple_indexer(tmpdir):
+    metas = {'workspace': str(tmpdir)}
+    indexer = SimpleIndexer(index_file_name='name', metas=metas)
+
+    assert not indexer._flush
+    index_docs = DocumentArray([Document(id='a', embedding=np.array([1]))])
+    indexer.index(index_docs, {})
+    assert indexer._flush
+
+    search_docs = DocumentArray(([Document(embedding=np.array([1]))]))
+    indexer.search(
+        docs=search_docs,
+        parameters={'top_k': 5},
+    )
+    assert not indexer._flush
+    assert search_docs[0].matches[0].id == 'a'

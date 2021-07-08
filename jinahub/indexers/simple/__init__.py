@@ -48,6 +48,7 @@ class SimpleIndexer(Executor):
         )
         if self._flush:
             self._docs_embeddings = b
+            self._flush = False
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
         dists = _cosine(q_emb, d_emb)
