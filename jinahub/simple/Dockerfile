@@ -1,4 +1,4 @@
-FROM jinaai/jina:2.0 as base
+FROM jinaai/jina:2.0.4
 # install the third-party requirements
 RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git
 
@@ -7,6 +7,6 @@ COPY . /workspace
 WORKDIR /workspace
 
 RUN python3.7 -m pip install -r requirements.txt
+RUN pip install lz4
 
-FROM base as entrypoint
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

@@ -12,10 +12,12 @@ class SimpleIndexer(Executor):
 
     def __init__(self, index_file_name: str,
                  default_traversal_paths: Optional[List[str]] = None,
+                 default_top_k: int = 5,
                  **kwargs):
         super().__init__(**kwargs)
         self._docs = DocumentArrayMemmap(self.workspace + f'/{index_file_name}')
         self.default_traversal_paths = default_traversal_paths or ['r']
+        self.default_top_k = default_top_k
 
     @requests(on='/index')
     def index(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
@@ -38,13 +40,16 @@ class SimpleIndexer(Executor):
         traversal_path = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        top_k = parameters.get(
+            'top_k', self.default_top_k
+        )
         flat_docs = docs.traverse_flat(traversal_path)
         a = np.stack(flat_docs.get_attributes('embedding'))
         b = np.stack(self._docs.get_attributes('embedding'))
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
         dists = _cosine(q_emb, d_emb)
-        idx, dist = self._get_sorted_top_k(dists, int(parameters['top_k']))
+        idx, dist = self._get_sorted_top_k(dists, int(top_k))
         for _q, _ids, _dists in zip(flat_docs, idx, dist):
             for _id, _dist in zip(_ids, _dists):
                 d = Document(self._docs[int(_id)], copy=True)
