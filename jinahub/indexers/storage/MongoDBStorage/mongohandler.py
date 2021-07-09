@@ -76,4 +76,4 @@ class MongoHandler:
     def search(self, docs: DocumentArray, **kwargs):
         for doc in docs:
             result = self.collection.find_one(filter={'id': doc.id})
-            doc = Document(result)
+            doc.update(result)
