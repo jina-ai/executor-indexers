@@ -80,3 +80,29 @@ class MongoDBStorage(Executor):
 
         with self.handler as mongo_handler:
             mongo_handler.search(docs.traverse_flat(traversal_paths))
+
+    @requests(on='/dump')
+    def dump(self, parameters: Dict, **kwargs):
+        """Dump the index
+
+        :param parameters: a dictionary containing the parameters for the dump
+        """
+
+        path = parameters.get('dump_path')
+        if path is None:
+            self.logger.error(f'No "dump_path" provided for {self}')
+
+        shards = int(parameters.get('shards'))
+        if shards is None:
+            self.logger.error(f'No "shards" provided for {self}')
+
+        export_dump_streaming(
+            path, shards=shards, size=self.size, data=self._get_generator()
+        )
+
+    def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
+        with self.handler as mongo_handler:
+            # always order the dump by id as integer
+            cursor = mongo_handler.collection.find({})
+            for document in cursor:
+                yield document
