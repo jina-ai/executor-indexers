@@ -31,7 +31,7 @@ def test_simple_indexer(tmpdir):
     metas = {'workspace': str(tmpdir)}
     indexer = SimpleIndexer(index_file_name='name', metas=metas)
 
-    assert not indexer._flush
+    assert indexer._flush
     index_docs = DocumentArray([Document(id='a', embedding=np.array([1]))])
     indexer.index(index_docs, {})
     assert indexer._flush

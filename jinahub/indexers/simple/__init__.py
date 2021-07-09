@@ -19,7 +19,8 @@ class SimpleIndexer(Executor):
         self._docs = DocumentArrayMemmap(self.workspace + f'/{index_file_name}')
         self.default_traversal_paths = default_traversal_paths or ['r']
         self.default_top_k = default_top_k
-        self._flush = False
+        self._flush = True
+        self._docs_embeddings = None
 
     @requests(on='/index')
     def index(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
