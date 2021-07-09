@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Generator, Dict, List
+from typing import Tuple, Generator, Dict, List, Optional
 
 import numpy as np
 from jina.logging.logger import JinaLogger
