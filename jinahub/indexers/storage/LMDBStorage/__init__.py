@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import lmdb
 from jina import Executor, Document, DocumentArray, requests
@@ -59,14 +59,14 @@ class LMDBStorage(Executor):
     def __init__(
         self,
         map_size: int = 1048576000,  # in bytes, 1000 MB
-        default_traversal_paths: List[str] = ['r'],
+        default_traversal_paths: Optional[List[str]] = None,
         dump_path: str = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.map_size = map_size
-        self.default_traversal_paths = default_traversal_paths
+        self.default_traversal_paths = default_traversal_paths or ['r']
         self.file = os.path.join(self.workspace, 'db.lmdb')
         if not os.path.exists(self.workspace):
             os.makedirs(self.workspace)
@@ -150,14 +150,25 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        lookup_type = parameters.get('lookup_type', 'self')
         docs_to_get = docs.traverse_flat(traversal_paths)
+        if lookup_type == 'parent':
+            parent_docs = DocumentArray()
         with self._handler() as env:
             with env.begin(write=True) as transaction:
                 for i, d in enumerate(docs_to_get):
-                    id = d.id
-                    serialized_doc = Document(transaction.get(d.id.encode()))
-                    d.update(serialized_doc)
-                    d.id = id
+                    if lookup_type == 'self':
+                        id = d.id
+                        serialized_doc = Document(transaction.get(d.id.encode()))
+                        d.update(serialized_doc)
+                        d.id = id
+                    elif lookup_type == 'parent':
+                        serialized_doc = Document(transaction.get(d.parent_id.encode()))
+                        serialized_doc.id = d.parent_id
+                        parent_docs.append(serialized_doc)
+        if lookup_type == 'parent':
+            self.logger.warning(f'Length of parents: {len(parent_docs)}')
+            return DocumentArray([Document(chunks=docs), Document(chunks=parent_docs)])
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):
