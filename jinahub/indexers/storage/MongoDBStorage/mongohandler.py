@@ -15,8 +15,8 @@ class MongoHandler:
         port: int = 27017,
         username: Optional[str] = None,
         password: Optional[str] = None,
-        database: str = 'jina_index_database',
-        collection: str = 'jina_index_collection',
+        database: str = 'jina_index',
+        collection: str = 'jina_index',
     ):
         self._logger = JinaLogger('mongo_handler')
         self._host = host
