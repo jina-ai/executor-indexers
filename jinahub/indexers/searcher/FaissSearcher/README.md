@@ -40,9 +40,9 @@ with:
 ...
 ```
 
-- from the `Flow.rolling_update` method. See [README](../../../README.md).
+- from the `Flow.rolling_update` method. See [README](../../../../README.md).
 
-The folder needs to contain the data exported from your Indexer. Again, see [README](../../../README.md).
+The folder needs to contain the data exported from your Indexer. Again, see [README](../../../../README.md).
 
 ### 🚚 Via JinaHub
 
@@ -95,7 +95,7 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.searcher.FaissSearcher import FaissSearcher
+   from jinahub.indexers.searcher import FaissSearcher
    
    f = Flow().add(uses=FaissSearcher)
    ```

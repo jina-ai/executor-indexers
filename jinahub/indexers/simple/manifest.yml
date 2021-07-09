@@ -6,4 +6,4 @@ author: Jina AI Dev-Team (dev-team@jina.ai)
 documentation: https://github.com/jina-ai/executor-indexers/tree/main/jinahub/simple/
 license: apache-2.0
 url: https://jina.ai
-keywords: [indexer, simple]
+keywords: [indexer]
