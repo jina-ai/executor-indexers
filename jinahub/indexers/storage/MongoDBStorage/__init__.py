@@ -80,9 +80,3 @@ class MongoDBStorage(Executor):
 
         with self.handler as mongo_handler:
             mongo_handler.search(docs.traverse_flat(traversal_paths))
-
-    def close(self) -> None:
-        """
-        Close the connections in the connection pool
-        """
-        self.handler.close()
