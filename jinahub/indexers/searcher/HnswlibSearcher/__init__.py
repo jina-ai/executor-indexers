@@ -12,13 +12,13 @@ from jina_commons.indexers.dump import import_vectors
 
 
 class HnswlibSearcher(Executor):
-    """Annoy powered vector indexer
+    """Hnswlib powered vector indexer
 
-    For more information about the Annoy supported parameters, please consult:
-        - https://github.com/spotify/annoy
+    For more information about the Hnswlib supported parameters, please consult:
+        - https://github.com/nmslib/hnswlib
 
     .. note::
-        Annoy package dependency is only required at the query time.
+        Hnswlib package dependency is only required at the query time.
     """
 
     def __init__(
@@ -28,11 +28,11 @@ class HnswlibSearcher(Executor):
         num_trees: int = 10,
         dump_path: Optional[str] = None,
         index_path: str = './hnswlib.index',
-        default_traversal_paths: List[str] = ['r'],
+        default_traversal_paths: List[str] = None,
         **kwargs,
     ):
         """
-        Initialize an AnnoyIndexer
+        Initialize an HnswlibSearcher
 
         :param top_k: get tok k vectors
         :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
@@ -46,7 +46,7 @@ class HnswlibSearcher(Executor):
         self.top_k = top_k
         self.metric = metric
         self.num_trees = num_trees
-        self.default_traversal_paths = default_traversal_paths
+        self.default_traversal_paths = default_traversal_paths or ['r']
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
@@ -56,16 +56,18 @@ class HnswlibSearcher(Executor):
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
             self._indexer = hnswlib.Index(space='cosine', dim=num_dim)
+            self._indexer.init_index(max_elements=len(self._vecs), ef_construction=400, M=64)
+
             self._doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs, index_path)
         else:
             self.logger.warning(
-                'No data loaded in "AnnoyIndexer". Use .rolling_update() to re-initialize it...'
+                'No data loaded in "HnswlibSearcher". Use .rolling_update() to re-initialize it...'
             )
 
     def _load_index(self, ids, vecs, index_path):
         for idx, v in enumerate(vecs):
-            self._indexer.add_item(v.astype(np.float32),idx)
+            self._indexer.add_items(v.astype(np.float32),idx)
             self._doc_id_to_offset[ids[idx]] = idx
         #self._indexer.build(self.num_trees)
         self._indexer.save_index(index_path)
@@ -83,7 +85,7 @@ class HnswlibSearcher(Executor):
 
         for doc in docs.traverse_flat(traversal_paths):
             indices, dists = self._indexer.knn_query(doc.embedding, k=self.top_k)
-            for idx, dist in zip(indices, dists):
+            for idx, dist in zip(indices[0], dists[0]):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
                 match.scores['distance'] = 1 / (1 + dist)
                 doc.matches.append(match)
@@ -92,5 +94,5 @@ class HnswlibSearcher(Executor):
     def fill_embedding(self, query_da: DocumentArray, **kwargs):
         for doc in query_da:
             doc.embedding = np.array(
-                self._indexer.get_item_vector(int(self._doc_id_to_offset[str(doc.id)]))
+                self._indexer.get_items([int(self._doc_id_to_offset[str(doc.id)])])[0]
             )

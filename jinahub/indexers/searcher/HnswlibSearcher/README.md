@@ -2,7 +2,7 @@
 
 **HnswlibSearcher** is a Hnswlib-powered vector Searcher.
 
-Faiss is a library for efficient similarity search and clustering of dense vectors. It contains algorithms that search in sets of vectors of any size, up to ones that possibly do not fit in RAM. It also contains supporting code for evaluation and parameter tuning. Faiss is written in C++ with complete wrappers for Python/numpy. Some of the most useful algorithms are implemented on the GPU. It is developed by Facebook AI Research.
+Hnswlib is a fast approximate nearest neighbor search library and clustering of dense vectors.
 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -34,7 +34,7 @@ This can be provided in different ways:
 - in the YAML definition
   
 ```yaml
-jtype: FaissSearcher
+jtype: HnswlibSearcher
 with:
     dump_path: /tmp/your_dump_location
 ...
@@ -52,7 +52,7 @@ Use the prebuilt images from JinaHub in your python codes,
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub+docker://FaissSearcher')
+f = Flow().add(uses='jinahub+docker://HnswlibSearcher')
 ```
 
 or in the `.yml` config.
@@ -61,7 +61,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub+docker://FaissSearcher'
+    uses: 'jinahub+docker://HnswlibSearcher'
 ```
 
 #### using source codes
@@ -70,7 +70,7 @@ Use the source codes from JinaHub in your code
 ```python
 from jina import Flow
 	
-f = Flow().add(uses='jinahub://FaissSearcher')
+f = Flow().add(uses='jinahub://HnswlibSearcher')
 ```
 
 or in the `.yml` config.
@@ -79,7 +79,7 @@ or in the `.yml` config.
 jtype: Flow
 pods:
   - name: indexer
-    uses: 'jinahub://FaissSearcher'
+    uses: 'jinahub://HnswlibSearcher'
 ```
 
 
@@ -95,9 +95,9 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.indexers.searcher import FaissSearcher
+   from jinahub.indexers.searcher import HnswlibSearcher
    
-   f = Flow().add(uses=FaissSearcher)
+   f = Flow().add(uses=HnswlibSearcher)
    ```
 
 
@@ -107,16 +107,16 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/searcher/vector/FaissSearcher
-	docker build -t faiss-image .
+	cd jinahub/indexers/searcher/vector/HnswlibSearcher
+	docker build -t hnswlib-image .
 	```
 
-1. Use `faiss-image` in your codes
+1. Use `hnswlib-image` in your codes
 
 	```python
 	from jina import Flow
 	
-	f = Flow().add(uses='docker://faiss-image:latest')
+	f = Flow().add(uses='docker://hnswlib-image:latest')
 	```
 	
 
@@ -127,7 +127,7 @@ pods:
 import numpy as np
 from jina import Flow, Document
 
-f = Flow().add(uses='jinahub+docker://FaissSearcher')
+f = Flow().add(uses='jinahub+docker://HnswlibSearcher')
 
 with f:
     resp = f.post(on='/search', inputs=Document(embedding=np.array([1,2,3])), return_results=True)
@@ -145,4 +145,4 @@ Attaches matches to the Documents sent as inputs, with the id of the match, and 
 
 ## 🔍️ Reference
 
-- [Facebook Research's Faiss](https://github.com/facebookresearch/faiss)
+- [Hnswlib](https://github.com/nmslib/hnswlib)

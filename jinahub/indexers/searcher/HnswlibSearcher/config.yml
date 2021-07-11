@@ -1,6 +1,6 @@
 jtype: HnswlibSearcher
 with:
-  index_key: 'IVF10,PQ4'
+  metric: 'euclidean'
 metas:
   py_modules:
     # - you can put more dependencies here
