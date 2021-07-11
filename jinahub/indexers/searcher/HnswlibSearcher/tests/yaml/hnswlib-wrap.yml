@@ -8,6 +8,6 @@ with:
     with:
       backend: numpy
       index_filename: wrap-npidx
-      metric: euclidean
+      metric: cosine
 metas:
   workspace: $TEST_WORKSPACE

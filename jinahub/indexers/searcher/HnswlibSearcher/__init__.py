@@ -24,7 +24,7 @@ class HnswlibSearcher(Executor):
     def __init__(
         self,
         default_top_k: int = 10,
-        metric: str = 'euclidean',
+        metric: str = 'cosine',
         dump_path: Optional[str] = None,
         default_traversal_paths: List[str] = None,
         **kwargs,
@@ -33,7 +33,7 @@ class HnswlibSearcher(Executor):
         Initialize an HnswlibSearcher
 
         :param default_top_k: get tok k vectors
-        :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
+        :param metric: Metric can be 'l2', 'ip', or 'cosine'
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
         :param args:
@@ -51,7 +51,7 @@ class HnswlibSearcher(Executor):
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
-            self._indexer = hnswlib.Index(space='cosine', dim=num_dim)
+            self._indexer = hnswlib.Index(space=self.metric, dim=num_dim)
             self._indexer.init_index(max_elements=len(self._vecs), ef_construction=400, M=64)
 
             self._doc_id_to_offset = {}
