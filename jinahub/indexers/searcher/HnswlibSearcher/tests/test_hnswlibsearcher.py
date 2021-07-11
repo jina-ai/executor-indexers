@@ -55,7 +55,7 @@ def test_query_vector(tmpdir):
 def test_query_vector_empty(tmpdir):
     metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
 
-    indexer = HnswlibSearcher(top_k=TOP_K, metas=metas)
+    indexer = HnswlibSearcher(default_top_k=TOP_K, metas=metas)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})
     assert len(docs[0].matches) == 0
