@@ -110,8 +110,8 @@ class MongoDBStorage(Executor):
             return self._handler.get_size()
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
-        with self.handler as mongo_handler:
+        with self._handler:
             # always order the dump by id as integer
-            cursor = mongo_handler.collection.find({})
+            cursor = self._handler.collection.find({})
             for document in cursor:
                 yield document

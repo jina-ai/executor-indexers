@@ -5,6 +5,7 @@ import pytest
 from jina import Document, DocumentArray
 
 from .. import MongoDBStorage
+from .. import MongoHandler
 
 
 @pytest.fixture(autouse=True)
@@ -24,7 +25,26 @@ def docs_to_index():
     return docu_array
 
 
-def test_add(docs_to_index):
+def test_mongo_storage(docs_to_index, tmpdir):
+    # add
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
-    assert storage.size == 10
+    assert storage.size >= 10
+    # # update & search
+    doc_id_to_update = docs_to_index[0].id
+    storage.update(
+        docs=DocumentArray([Document(id=doc_id_to_update, text='hello test')])
+    )
+    docs_to_search = DocumentArray([Document(id=doc_id_to_update)])
+    storage.search(docs=docs_to_search)
+    assert docs_to_search[0].text == 'hello test'
+    # delete
+    doc_id_to_delete = docs_to_index[0].id
+    storage.delete(docs=DocumentArray([Document(id=doc_id_to_delete)]))
+    docs_to_search = DocumentArray([Document(id=doc_id_to_delete)])
+    assert len(docs_to_search) == 1
+    assert docs_to_search[0].text == ''  # find no result
+    # test dump
+    # parameters = {'dump_path': os.path.join(str(tmpdir), 'dump.json'), 'shards': 2}
+    # storage.dump(parameters=parameters)
+    # assert os.path.exists(os.path.join(str(tmpdir), 'dump.json'))

@@ -61,12 +61,10 @@ class MongoHandler:
         )
 
     def update(self, docs: DocumentArray, **kwargs):
-        doc_ids, docs = [(doc.id, doc.dict()) for doc in docs]
-        self.collection.update_many(
-            filter={'id': {'$in': [d['id'] for d in docs]}},
-            update={'$set': docs},
-            upsert=True,
-        )
+        for doc in docs:
+            self.collection.update_one(
+                filter={'id': {'$eq': doc.id}}, update={'$set': doc.dict()}, upsert=True
+            )
 
     def delete(self, docs: DocumentArray, **kwargs):
         doc_ids = [doc.id for doc in docs]
@@ -74,8 +72,11 @@ class MongoHandler:
 
     def search(self, docs: DocumentArray, **kwargs):
         for doc in docs:
-            result = self.collection.find_one(filter={'id': doc.id})
-            doc.update(result)
+            result = self.collection.find_one(
+                filter={'id': doc.id}, projection={'_id': False}
+            )
+            if result:
+                doc.update(Document(result))
 
     def get_size(self):
         return self.collection.count()
