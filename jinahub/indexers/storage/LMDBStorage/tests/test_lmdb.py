@@ -191,3 +191,33 @@ def test_dump(tmpdir, shards):
 
     for pea_id in range(shards):
         _assert_dump_data(dump_path, docs, shards, pea_id)
+
+
+def test_parent_lookup(tmpdir):
+    docs = []
+    for i in range(10):
+        with Document() as d:
+            d.text = f'abc {i}'
+            d.embedding = np.random.random(20)
+            d.tags['field'] = f'tag data {i}'
+        docs.append(d)
+    docs = DocumentArray(docs)
+    metas = {'workspace': str(tmpdir), 'name': 'storage'}
+    indexer = LMDBStorage(metas=metas, default_lookup_type='parent',
+                          default_traversal_paths=['r'])
+    indexer.index(docs, parameters={})
+    search_doc = Document()
+    search_doc.chunks.append(Document())
+    search_doc.chunks.append(Document())
+    search_doc.chunks[0].matches.append(Document(parent_id=docs[6].id))
+    search_doc.chunks[0].matches.append(Document(parent_id=docs[7].id))
+    search_doc.chunks[1].matches.append(Document(parent_id=docs[4].id))
+    search_doc.chunks[1].matches.append(Document(parent_id=docs[6].id))
+    indexer.search(DocumentArray([search_doc]),
+                   parameters={'lookup_type': 'parent',
+                               'traversal_paths': ['cm']})
+    returned_parents = [doc.id for doc in search_doc.matches]
+    assert len(returned_parents) == 3
+    assert docs[6].id in returned_parents
+    assert docs[4].id in returned_parents
+    assert docs[7].id in returned_parents
