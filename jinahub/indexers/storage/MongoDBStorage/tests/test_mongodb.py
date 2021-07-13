@@ -7,7 +7,7 @@ from jina import Document, DocumentArray
 from .. import MongoDBStorage
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mongo_docker_compose():
     os.system(f"docker-compose --project-directory . up  --build -d --remove-orphans")
     time.sleep(5)
