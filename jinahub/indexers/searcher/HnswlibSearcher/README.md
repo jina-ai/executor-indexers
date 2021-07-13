@@ -107,7 +107,7 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/searcher/vector/HnswlibSearcher
+	cd jinahub/indexers/searcher/HnswlibSearcher
 	docker build -t hnswlib-image .
 	```
 
