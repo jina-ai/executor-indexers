@@ -1,6 +1,6 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
-
+import json
 from typing import Tuple, Generator, Dict, List, Optional
 
 import numpy as np
@@ -113,4 +113,6 @@ class MongoDBStorage(Executor):
         # always order the dump by id as integer
         cursor = self._handler.collection.find({})
         for document in cursor:
-            yield document
+            yield document['ID'], np.asarray(document['VECS']), json.dumps(
+                document['METAS']
+            ).encode('utf-8')

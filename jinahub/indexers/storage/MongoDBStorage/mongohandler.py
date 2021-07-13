@@ -3,9 +3,17 @@ __license__ = "Apache-2.0"
 
 from typing import Optional
 
+import numpy as np
 from pymongo import MongoClient
 from jina.logging.logger import JinaLogger
 from jina import Document, DocumentArray
+
+
+def doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    new_doc.ClearField('id')
+    return new_doc.dict()
 
 
 class MongoHandler:
@@ -32,44 +40,63 @@ class MongoHandler:
 
     @property
     def collection(self):
+        """Get the collection, if the collection is new, create index based on ID field."""
         if not self._collection:
             self._collection = self._connection[self._database_name][
                 self._collection_name
             ]
             self._collection.create_index(
-                'id', unique=True
+                'ID', unique=True
             )  # create index on doc.id field if index not exist.
             return self._collection
         else:
             return self._collection
 
     def add(self, docs: DocumentArray, **kwargs):
+        """Insert document ID, VECS and METAS from docs into mongodb instance."""
+        dict_docs = []
+        for doc in docs:
+            item = {}
+            item['ID'] = doc.id
+            item['VECS'] = doc.embedding.tolist()
+            item['METAS'] = doc_without_embedding(doc)
+            dict_docs.append(item)
         self.collection.insert_many(
-            documents=[doc.dict() for doc in docs],
+            documents=dict_docs,
             ordered=False,  # all document inserts will be attempted.
         )
 
     def update(self, docs: DocumentArray, **kwargs):
+        """Update item ID, VECS and METAS from docs based on doc id."""
         for doc in docs:
+            embed = []
+            if doc.embedding:
+                embed = doc.embedding.tolist()
             self.collection.update_one(
-                filter={'id': {'$eq': doc.id}}, update={'$set': doc.dict()}, upsert=True
+                filter={'ID': {'$eq': doc.id}},
+                update={'$set': {'VECS': embed, 'METAS': doc_without_embedding(doc)}},
+                upsert=True,
             )
 
     def delete(self, docs: DocumentArray, **kwargs):
+        """Delete item from docs based on doc id."""
         doc_ids = [doc.id for doc in docs]
-        self.collection.delete_many(filter={'id': {'$in': doc_ids}})
+        self.collection.delete_many(filter={'ID': {'$in': doc_ids}})
 
     def search(self, docs: DocumentArray, **kwargs):
         for doc in docs:
             result = self.collection.find_one(
-                filter={'id': doc.id}, projection={'_id': False}
+                filter={'ID': doc.id}, projection={'_id': False, 'METAS': 1}
             )
             if result:
-                doc.update(Document(result))
+                retrieved_doc = Document(result['METAS'])
+                doc.update(retrieved_doc)
 
     def get_size(self):
+        """Get the size of collection"""
         return self.collection.count()
 
     def close(self):
+        """Close connection."""
         if self._connection:
             self._connection.close()
