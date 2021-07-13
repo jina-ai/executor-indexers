@@ -35,7 +35,7 @@ class MongoHandler:
             )
         else:
             self._connection = MongoClient(f'mongodb://{self._host}:{self._port}')
-        self._logger.info(f'Connected to mongodb instance at {self.host}:{self._port}')
+        self._logger.info(f'Connected to mongodb instance at {self._host}:{self._port}')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._connection:
@@ -55,9 +55,8 @@ class MongoHandler:
             return self._collection
 
     def add(self, docs: DocumentArray, **kwargs):
-        docs = [doc.dict() for doc in docs]
         self.collection.insert_many(
-            documents=docs,
+            documents=[doc.dict() for doc in docs],
             ordered=False,  # all document inserts will be attempted.
         )
 
@@ -77,3 +76,6 @@ class MongoHandler:
         for doc in docs:
             result = self.collection.find_one(filter={'id': doc.id})
             doc.update(result)
+
+    def get_size(self):
+        return self.collection.count()
