@@ -19,27 +19,16 @@ class MongoHandler:
         collection: str = 'jina_index',
     ):
         self._logger = JinaLogger('mongo_handler')
-        self._host = host
-        self._port = port
-        self._username = username
-        self._password = password
         self._database_name = database
         self._collection_name = collection
-        self._connection = None
         self._collection = None
-
-    def __enter__(self):
-        if self._username and self._password:
+        if username and password:
             self._connection = MongoClient(
-                f'mongodb://{self._username}:{self._password}@{self._host}:{self._port}'
+                f'mongodb://{username}:{password}@{host}:{port}'
             )
         else:
-            self._connection = MongoClient(f'mongodb://{self._host}:{self._port}')
-        self._logger.info(f'Connected to mongodb instance at {self._host}:{self._port}')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._connection:
-            self._connection.close()
+            self._connection = MongoClient(f'mongodb://{host}:{port}')
+        self._logger.info(f'Connected to mongodb instance at {host}:{port}')
 
     @property
     def collection(self):
@@ -80,3 +69,7 @@ class MongoHandler:
 
     def get_size(self):
         return self.collection.count()
+
+    def close(self):
+        if self._connection:
+            self._connection.close()

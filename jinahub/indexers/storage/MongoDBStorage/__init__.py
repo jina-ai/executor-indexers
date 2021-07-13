@@ -44,8 +44,7 @@ class MongoDBStorage(Executor):
         :param parameters: parameters to the request
         """
         traversal_paths = parameters.get('traversal_paths', self._traversal_paths)
-        with self._handler:
-            self._handler.add(docs.traverse_flat(traversal_paths))
+        self._handler.add(docs.traverse_flat(traversal_paths))
 
     @requests(on='/update')
     def update(self, docs: DocumentArray, parameters: Dict = {}, **kwargs):
@@ -55,8 +54,7 @@ class MongoDBStorage(Executor):
         :param parameters: parameters to the request
         """
         traversal_paths = parameters.get('traversal_paths', self._traversal_paths)
-        with self._handler:
-            self._handler.update(docs.traverse_flat(traversal_paths))
+        self._handler.update(docs.traverse_flat(traversal_paths))
 
     @requests(on='/delete')
     def delete(self, docs: DocumentArray, parameters: Dict = {}, **kwargs):
@@ -66,8 +64,7 @@ class MongoDBStorage(Executor):
         :param parameters: parameters to the request
         """
         traversal_paths = parameters.get('traversal_paths', self._traversal_paths)
-        with self._handler:
-            self._handler.delete(docs.traverse_flat(traversal_paths))
+        self._handler.delete(docs.traverse_flat(traversal_paths))
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, parameters: Dict = {}, **kwargs):
@@ -77,9 +74,7 @@ class MongoDBStorage(Executor):
         :param parameters: the parameters to this request
         """
         traversal_paths = parameters.get('traversal_paths', self._traversal_paths)
-
-        with self._handler:
-            self._handler.search(docs.traverse_flat(traversal_paths))
+        self._handler.search(docs.traverse_flat(traversal_paths))
 
     @requests(on='/dump')
     def dump(self, parameters: Dict = {}, **kwargs):
@@ -106,12 +101,16 @@ class MongoDBStorage(Executor):
 
         .. # noqa: DAR201
         """
-        with self._handler:
-            return self._handler.get_size()
+        return self._handler.get_size()
+
+    def close(self) -> None:
+        """
+        Close the connections in the connection pool
+        """
+        self._handler.close()
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
-        with self._handler:
-            # always order the dump by id as integer
-            cursor = self._handler.collection.find({})
-            for document in cursor:
-                yield document
+        # always order the dump by id as integer
+        cursor = self._handler.collection.find({})
+        for document in cursor:
+            yield document
