@@ -13,8 +13,8 @@ class MongoHandler:
         self,
         host: str = 'localhost',
         port: int = 27017,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: Optional[str] = 'root',
+        password: Optional[str] = '123456',
         database: str = 'jina_index',
         collection: str = 'jina_index',
     ):
