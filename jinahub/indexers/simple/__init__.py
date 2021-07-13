@@ -6,19 +6,39 @@ from jina.types.arrays.memmap import DocumentArrayMemmap
 
 
 class SimpleIndexer(Executor):
-    """A simple indexer that stores all the Document data together, in a DocumentArrayMemmap object
+    """
+    A simple indexer that stores all the Document data together,
+    in a DocumentArrayMemmap object
 
-    To be used as a unified indexer, combining both indexing and searching"""
+    To be used as a unified indexer, combining both indexing and searching
+    """
 
     def __init__(self,
                  index_file_name: str,
                  default_traversal_paths: Optional[List[str]] = None,
                  default_top_k: int = 5,
+                 distance_metric: str = 'cosine',
                  **kwargs):
+        """
+        Initializer function for the simple indexer
+        :param index_file_name: The file name for the index file
+        :param default_traversal_paths: The default traversal path that is used
+            if no traversal path is given in the parameters of the request.
+            This defaults to ['r'].
+        :param default_top_k: default value for the top_k parameter
+        :param distance_metric: The distance metric to be used for finding the
+            most similar embeddings. Either 'euclidean' or 'cosine'.
+        """
         super().__init__(**kwargs)
         self._docs = DocumentArrayMemmap(self.workspace + f'/{index_file_name}')
         self.default_traversal_paths = default_traversal_paths or ['r']
         self.default_top_k = default_top_k
+        if distance_metric == 'cosine':
+            self.distance = _cosine
+        elif distance_metric == 'euclidean':
+            self.distance = _euclidean
+        else:
+            raise ValueError('This distance metric is not available!')
         self._flush = True
         self._docs_embeddings = None
 
@@ -57,7 +77,7 @@ class SimpleIndexer(Executor):
             self._flush = False
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
-        dists = _cosine(q_emb, d_emb)
+        dists = self.distance(q_emb, d_emb)
         idx, dist = self._get_sorted_top_k(dists, int(top_k))
         for _q, _ids, _dists in zip(flat_docs, idx, dist):
             for _id, _dist in zip(_ids, _dists):
