@@ -54,12 +54,14 @@ class LMDBStorage(Executor):
     :param map_size: the maximal size of teh database. Check more information at
         https://lmdb.readthedocs.io/en/release/#environment-class
     :param default_traversal_paths: fallback traversal path in case there is not traversal path sent in the request
+    :param default_lookup_type: The lookup type, can be either 'parent' or 'self'
     """
 
     def __init__(
         self,
         map_size: int = 1048576000,  # in bytes, 1000 MB
         default_traversal_paths: Optional[List[str]] = None,
+        default_lookup_type: str = 'self',
         dump_path: str = None,
         *args,
         **kwargs,
@@ -67,6 +69,7 @@ class LMDBStorage(Executor):
         super().__init__(*args, **kwargs)
         self.map_size = map_size
         self.default_traversal_paths = default_traversal_paths or ['r']
+        self.default_lookup_type = default_lookup_type
         self.file = os.path.join(self.workspace, 'db.lmdb')
         if not os.path.exists(self.workspace):
             os.makedirs(self.workspace)
@@ -150,9 +153,10 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
-        lookup_type = parameters.get('lookup_type', 'self')
+        lookup_type = parameters.get('lookup_type', self.default_lookup_type)
         docs_to_get = docs.traverse_flat(traversal_paths)
         if lookup_type == 'parent':
+            parent_ids = []
             parent_docs = DocumentArray()
         with self._handler() as env:
             with env.begin(write=True) as transaction:
@@ -165,10 +169,14 @@ class LMDBStorage(Executor):
                     elif lookup_type == 'parent':
                         serialized_doc = Document(transaction.get(d.parent_id.encode()))
                         serialized_doc.id = d.parent_id
-                        parent_docs.append(serialized_doc)
+                        if d.parent_id not in parent_ids:
+                            parent_docs.append(serialized_doc)
+                            parent_ids.append(d.parent_id)
+                    else:
+                        raise ValueError('Invalid lookup type in LMDBStorage!')
         if lookup_type == 'parent':
-            self.logger.warning(f'Length of parents: {len(parent_docs)}')
-            return DocumentArray([Document(chunks=docs), Document(chunks=parent_docs)])
+            # Set the parent docs in the matches array of the search document
+            docs[0].matches = parent_docs
 
     @requests(on='/dump')
     def dump(self, parameters: Dict, **kwargs):
