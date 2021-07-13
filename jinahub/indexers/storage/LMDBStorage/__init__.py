@@ -47,13 +47,14 @@ class _LMDBHandler:
 
 
 class LMDBStorage(Executor):
-    """An lmdb-based Storage Indexer for Jina
-
+    """
+    An lmdb-based Storage Indexer for Jina
     For more information on lmdb check their documentation: https://lmdb.readthedocs.io/en/release/
 
-    :param map_size: the maximal size of teh database. Check more information at
+    :param map_size: the maximal size of the database. Check more information at
         https://lmdb.readthedocs.io/en/release/#environment-class
-    :param default_traversal_paths: fallback traversal path in case there is not traversal path sent in the request
+    :param default_traversal_paths: fallback traversal path in case there is no
+        traversal_path sent in the request, defaults to ['r']
     :param default_lookup_type: The lookup type, can be either 'parent' or 'self'
     """
 
@@ -146,6 +147,13 @@ class LMDBStorage(Executor):
     @requests(on='/search')
     def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """Retrieve Document contents by ids
+        Two different lookup types are available during query/search time.
+        These can be set in the constructor or via the parameters dict.
+        'self' lookup: Look for the id of the documents in docs and update docs
+            based on the data in the lmdb storage.
+        'parent' lookup: Search for the parent id of the traversed docs and
+            create a list of all parents. This list is then returned in docs[0].matches.
+            Use another executor to rank/process all matched parents.
 
         :param docs: the list of Documents (they only need to contain the ids)
         :param parameters: the parameters for this request
