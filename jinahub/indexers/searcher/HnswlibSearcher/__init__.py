@@ -24,24 +24,25 @@ class HnswlibSearcher(Executor):
     def __init__(
         self,
         default_top_k: int = 10,
-        metric: str = 'cosine',
+        distance: str = 'cosine',
         dump_path: Optional[str] = None,
         default_traversal_paths: List[str] = None,
+        *args,
         **kwargs,
     ):
         """
         Initialize an HnswlibSearcher
 
         :param default_top_k: get tok k vectors
-        :param metric: Metric can be 'l2', 'ip', or 'cosine'
+        :param distance: distance can be 'l2', 'ip', or 'cosine'
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
         :param args:
         :param kwargs:
         """
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         self.default_top_k = default_top_k
-        self.metric = metric
+        self.distance = distance
         self.default_traversal_paths = default_traversal_paths or ['r']
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
@@ -51,7 +52,7 @@ class HnswlibSearcher(Executor):
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
-            self._indexer = hnswlib.Index(space=self.metric, dim=num_dim)
+            self._indexer = hnswlib.Index(space=self.distance, dim=num_dim)
             self._indexer.init_index(max_elements=len(self._vecs), ef_construction=400, M=64)
 
             self._doc_id_to_offset = {}
@@ -81,7 +82,7 @@ class HnswlibSearcher(Executor):
             indices, dists = self._indexer.knn_query(doc.embedding, k=top_k)
             for idx, dist in zip(indices[0], dists[0]):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.scores['distance'] = 1 / (1 + dist)
+                match.scores['distance'] = dist
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')

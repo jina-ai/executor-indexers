@@ -1,6 +1,6 @@
 jtype: HnswlibSearcher
 with:
-  metric: 'cosine'
+  distance: 'cosine'
 metas:
   py_modules:
     # - you can put more dependencies here
