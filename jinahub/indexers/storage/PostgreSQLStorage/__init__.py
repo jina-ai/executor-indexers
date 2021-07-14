@@ -83,6 +83,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -96,6 +98,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -109,6 +113,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -121,7 +127,6 @@ class PostgreSQLStorage(Executor):
 
         :param parameters: a dictionary containing the parameters for the dump
         """
-
         path = parameters.get('dump_path')
         if path is None:
             self.logger.error(f'No "dump_path" provided for {self}')
@@ -147,6 +152,8 @@ class PostgreSQLStorage(Executor):
         :param docs: the DocumentArray to search with (they only need to have the `.id` set)
         :param parameters: the parameters to this request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
