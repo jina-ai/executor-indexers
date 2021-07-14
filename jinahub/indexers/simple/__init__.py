@@ -13,12 +13,14 @@ class SimpleIndexer(Executor):
     To be used as a unified indexer, combining both indexing and searching
     """
 
-    def __init__(self,
-                 index_file_name: str,
-                 default_traversal_paths: Optional[List[str]] = None,
-                 default_top_k: int = 5,
-                 distance_metric: str = 'cosine',
-                 **kwargs):
+    def __init__(
+        self,
+        index_file_name: str,
+        default_traversal_paths: Optional[List[str]] = None,
+        default_top_k: int = 5,
+        distance_metric: str = 'cosine',
+        **kwargs,
+    ):
         """
         Initializer function for the simple indexer
         :param index_file_name: The file name for the index file
@@ -66,12 +68,8 @@ class SimpleIndexer(Executor):
 
         :param docs: the Documents to search with
         :param parameters: the parameters for the search"""
-        traversal_path = parameters.get(
-            'traversal_paths', self.default_traversal_paths
-        )
-        top_k = parameters.get(
-            'top_k', self.default_top_k
-        )
+        traversal_path = parameters.get('traversal_paths', self.default_traversal_paths)
+        top_k = parameters.get('top_k', self.default_top_k)
         flat_docs = docs.traverse_flat(traversal_path)
         a = np.stack(flat_docs.get_attributes('embedding'))
         b = self.index_embeddings
@@ -100,6 +98,15 @@ class SimpleIndexer(Executor):
             dist = np.take_along_axis(dist, idx_fs, axis=1)
 
         return idx, dist
+
+    @requests(on='/fill_embedding')
+    def fill_embedding(self, query_da: DocumentArray, **kwargs):
+        """retrieve embedding of Documents by id
+
+        :param query_da: DocumentArray to search with
+        """
+        for doc in query_da:
+            doc.embedding = self._docs[doc.id].embedding
 
 
 def _ext_A(A):

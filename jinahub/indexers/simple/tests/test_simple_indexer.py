@@ -43,3 +43,8 @@ def test_simple_indexer(tmpdir):
     )
     assert not indexer._flush
     assert search_docs[0].matches[0].id == 'a'
+
+    search_docs_id = DocumentArray([Document(id='a')])
+    assert search_docs_id[0].embedding is None
+    indexer.fill_embedding(search_docs_id)
+    assert search_docs_id[0].embedding is not None
