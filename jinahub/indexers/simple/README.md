@@ -117,7 +117,7 @@ Parameters:
 
 ### Inputs 
 
-`Document`, with any data. It is stored in full, in bytes.
+`Document`, with any data. It is stored in a `DocumentArrayMemmap`
 
 ### Returns
 
