@@ -1,12 +1,11 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Dict
 
-import numpy as np
 import hnswlib
+import numpy as np
 from jina import Executor, requests, DocumentArray, Document
-
 from jina_commons import get_logger
 from jina_commons.indexers.dump import import_vectors
 
@@ -22,13 +21,16 @@ class HnswlibSearcher(Executor):
     """
 
     def __init__(
-        self,
-        default_top_k: int = 10,
-        distance: str = 'cosine',
-        dump_path: Optional[str] = None,
-        default_traversal_paths: List[str] = None,
-        *args,
-        **kwargs,
+            self,
+            default_top_k: int = 10,
+            distance: str = 'cosine',
+            dump_path: Optional[str] = None,
+            default_traversal_paths: List[str] = None,
+            ef_construction: int = 400,
+            ef_query: int = 50,
+            max_connection: int = 64,
+            *args,
+            **kwargs,
     ):
         """
         Initialize an HnswlibSearcher
@@ -37,6 +39,9 @@ class HnswlibSearcher(Executor):
         :param distance: distance can be 'l2', 'ip', or 'cosine'
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
+        :param ef_construction: defines a construction time/accuracy trade-off
+        :param ef_query:  sets the query time accuracy/speed trade-off
+        :param max_connection: defines tha maximum number of outgoing connections in the graph
         :param args:
         :param kwargs:
         """
@@ -44,6 +49,9 @@ class HnswlibSearcher(Executor):
         self.default_top_k = default_top_k
         self.distance = distance
         self.default_traversal_paths = default_traversal_paths or ['r']
+        self.ef_construction = ef_construction
+        self.ef_query = ef_query
+        self.max_connection = max_connection
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
@@ -53,7 +61,7 @@ class HnswlibSearcher(Executor):
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
             self._indexer = hnswlib.Index(space=self.distance, dim=num_dim)
-            self._indexer.init_index(max_elements=len(self._vecs), ef_construction=400, M=64)
+            self._indexer.init_index(max_elements=len(self._vecs), ef_construction=self.ef_construction, M=self.max_connection)
 
             self._doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs)
@@ -64,9 +72,9 @@ class HnswlibSearcher(Executor):
 
     def _load_index(self, ids, vecs):
         for idx, v in enumerate(vecs):
-            self._indexer.add_items(v.astype(np.float32),idx)
+            self._indexer.add_items(v.astype(np.float32), idx)
             self._doc_id_to_offset[ids[idx]] = idx
-        self._indexer.set_ef(50)
+        self._indexer.set_ef(self.ef_query)
 
     @requests(on='/search')
     def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
