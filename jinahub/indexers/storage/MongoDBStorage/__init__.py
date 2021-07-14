@@ -25,7 +25,6 @@ class MongoDBStorage(Executor):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self._logger = JinaLogger('mongo_handler')
         self._handler = MongoHandler(
             host=host,
             port=port,
@@ -108,6 +107,7 @@ class MongoDBStorage(Executor):
         Close the connections in the connection pool
         """
         self._handler.close()
+        super().__close__()
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         # always order the dump by id as integer
