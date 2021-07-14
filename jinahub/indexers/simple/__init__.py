@@ -102,13 +102,9 @@ class SimpleIndexer(Executor):
         return idx, dist
 
 
-def _get_ones(x, y):
-    return np.ones((x, y))
-
-
 def _ext_A(A):
     nA, dim = A.shape
-    A_ext = _get_ones(nA, dim * 3)
+    A_ext = np.ones((nA, dim * 3))
     A_ext[:, dim : 2 * dim] = A
     A_ext[:, 2 * dim :] = A ** 2
     return A_ext
@@ -116,7 +112,7 @@ def _ext_A(A):
 
 def _ext_B(B):
     nB, dim = B.shape
-    B_ext = _get_ones(dim * 3, nB)
+    B_ext = np.ones((dim * 3, nB))
     B_ext[:dim] = (B ** 2).T
     B_ext[dim : 2 * dim] = -2.0 * B.T
     del B
