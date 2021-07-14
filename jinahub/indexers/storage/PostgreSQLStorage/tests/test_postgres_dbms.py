@@ -27,7 +27,7 @@ c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
 
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
-compose_yml = os.path.abspath(os.path.join(cur_dir, '../docker-compose.yml'))
+compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
 
 
 @pytest.fixture(scope='function', autouse=True)
