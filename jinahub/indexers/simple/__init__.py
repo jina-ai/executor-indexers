@@ -45,9 +45,9 @@ class SimpleIndexer(Executor):
     @property
     def index_embeddings(self):
         if self._flush:
-            return np.stack(self._docs.get_attributes('embedding'))
-        else:
-            return self._docs_embeddings
+            self._docs_embeddings = np.stack(self._docs.get_attributes('embedding'))
+            self._flush = False
+        return self._docs_embeddings
 
     @requests(on='/index')
     def index(self, docs: 'DocumentArray', parameters: Dict, **kwargs):
@@ -75,9 +75,6 @@ class SimpleIndexer(Executor):
         flat_docs = docs.traverse_flat(traversal_path)
         a = np.stack(flat_docs.get_attributes('embedding'))
         b = self.index_embeddings
-        if self._flush:
-            self._docs_embeddings = b
-            self._flush = False
         q_emb = _ext_A(_norm(a))
         d_emb = _ext_B(_norm(b))
         dists = self.distance(q_emb, d_emb)

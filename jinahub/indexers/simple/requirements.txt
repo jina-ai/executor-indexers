@@ -1,2 +1,1 @@
-jina[hub,uvloop]==2.0.4
 jina-commons @ git+https://github.com/jina-ai/jina-commons.git#egg=jina-commons
