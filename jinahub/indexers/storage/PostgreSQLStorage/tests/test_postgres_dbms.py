@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from jina import Document, DocumentArray, Flow
 from jina.logging.profile import TimeContext
+from jina_commons.indexers.dump import import_vectors, import_metas
 
 from .. import PostgreSQLStorage
 from ..postgreshandler import doc_without_embedding
@@ -131,7 +132,7 @@ def test_postgres(tmpdir, docker_compose):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mwu(tmpdir, docker_compose):
+def test_mwu_empty_dump(tmpdir, docker_compose):
     f = Flow().add(uses=PostgreSQLStorage)
 
     with f:
@@ -139,3 +140,18 @@ def test_mwu(tmpdir, docker_compose):
             on='/index', inputs=DocumentArray([Document()]), return_results=True
         )
         print(f'{resp}')
+
+    dump_path = os.path.join(tmpdir, 'dump')
+
+    with f:
+        f.post(
+            on='/dump',
+            parameters={'dump_path': os.path.join(tmpdir, 'dump'), 'shards': 1},
+        )
+
+    # assert dump contents
+    ids, vecs = import_vectors(dump_path, pea_id='0')
+    assert ids is not None
+    ids, metas = import_metas(dump_path, pea_id='0')
+    assert vecs is not None
+    assert metas is not None

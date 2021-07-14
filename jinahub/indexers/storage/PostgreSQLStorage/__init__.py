@@ -65,7 +65,9 @@ class PostgreSQLStorage(Executor):
             cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
-                yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
+                vec = np.frombuffer(bytes(rec[1])) if rec[1] else None
+                metas = bytes(rec[2]) if rec[2] else None
+                yield rec[0], vec, metas
 
     @property
     def size(self):
