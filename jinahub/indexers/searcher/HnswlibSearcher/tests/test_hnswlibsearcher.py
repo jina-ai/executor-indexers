@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 import pytest
-from jina import Document, DocumentArray
+from jina import Document, DocumentArray, Flow
 from jina.executors.metas import get_default_metas
 from jina_commons.indexers.dump import import_vectors
 
@@ -59,3 +59,27 @@ def test_query_vector_empty(tmpdir):
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})
     assert len(docs[0].matches) == 0
+
+
+def test_flow(tmpdir):
+    metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
+
+    flow = Flow().add(uses=HnswlibSearcher,override_with={'dump_path':DUMP_PATH, 'default_top_k':TOP_K},override_metas=metas)
+    with flow:
+        resp = flow.post(
+            on='/search',
+            inputs=DocumentArray([Document(embedding=np.random.random(7))]),
+            return_results=True
+        )
+    assert len(resp[0].data.docs[0].matches) == TOP_K
+
+    doc_array = DocumentArray([Document(id=0), Document(id=1), Document(id=2)])
+    with flow:
+        resp = flow.post(
+            on='/fill_embedding',
+            inputs=doc_array,
+            return_results=True
+        )
+    for i, doc in enumerate(resp[0].data.docs):
+        assert doc.embedding
+        assert doc.embedding.dense.shape == [7]

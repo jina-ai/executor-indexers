@@ -77,7 +77,7 @@ class HnswlibSearcher(Executor):
         self._indexer.set_ef(self.ef_query)
 
     @requests(on='/search')
-    def search(self, docs: DocumentArray, parameters: Dict, **kwargs):
+    def search(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
         if not hasattr(self, '_indexer'):
             self.logger.warning('Querying against an empty index')
             return
@@ -94,8 +94,8 @@ class HnswlibSearcher(Executor):
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
-    def fill_embedding(self, query_da: DocumentArray, **kwargs):
-        for doc in query_da:
+    def fill_embedding(self, docs: Optional[DocumentArray], **kwargs):
+        for doc in docs:
             doc.embedding = np.array(
                 self._indexer.get_items([int(self._doc_id_to_offset[str(doc.id)])])[0]
             )
