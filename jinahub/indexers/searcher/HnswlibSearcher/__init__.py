@@ -61,7 +61,8 @@ class HnswlibSearcher(Executor):
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
             self._indexer = hnswlib.Index(space=self.distance, dim=num_dim)
-            self._indexer.init_index(max_elements=len(self._vecs), ef_construction=self.ef_construction, M=self.max_connection)
+            self._indexer.init_index(max_elements=len(self._vecs), ef_construction=self.ef_construction,
+                                     M=self.max_connection)
 
             self._doc_id_to_offset = {}
             self._load_index(self._ids, self._vecs)
