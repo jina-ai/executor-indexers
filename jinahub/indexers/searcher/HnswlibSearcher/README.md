@@ -47,8 +47,22 @@ The folder needs to contain the data exported from your Indexer. Again, see [REA
 ### 🚚 Via JinaHub
 
 #### using docker images
-Use the prebuilt images from JinaHub is not available for now.
+Use the prebuilt images from JinaHub in your python codes, 
 
+```python
+from jina import Flow
+	
+f = Flow().add(uses='jinahub+docker://HnswlibSearcher')
+```
+
+or in the `.yml` config.
+	
+```yaml
+jtype: Flow
+pods:
+  - name: indexer
+    uses: 'jinahub+docker://HnswlibSearcher'
+```
 
 #### using source codes
 Use the source codes from JinaHub in your code
