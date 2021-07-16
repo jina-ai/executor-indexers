@@ -14,5 +14,4 @@ COPY . /workspace
 WORKDIR /workspace
 
 FROM base as entrypoint
-EXPOSE 27017
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
