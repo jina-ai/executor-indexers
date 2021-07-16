@@ -174,11 +174,10 @@ class PostgreSQLHandler:
             # retrieve metadata
             cursor.execute(f'SELECT DOC FROM {self.table} WHERE ID = %s;', (doc.id,))
             result = cursor.fetchone()
-            data = result[0]
+            data = bytes(result[0])
             retrieved_doc = Document(data)
-            # how to assign all fields but embedding?
-            doc.content = retrieved_doc.content
-            doc.mime_type = doc.mime_type
+            retrieved_doc.pop('embedding')
+            doc.MergeFrom(retrieved_doc)
 
     def _close_connection(self, connection):
         # restore it to the pool
