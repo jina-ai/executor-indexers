@@ -11,6 +11,12 @@ from jina_commons.indexers.dump import export_dump_streaming
 from .postgreshandler import PostgreSQLHandler
 
 
+def doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    return new_doc.SerializeToString()
+
+
 class PostgreSQLStorage(Executor):
     """:class:`PostgreSQLStorage` PostgreSQL-based Storage Indexer.
 
@@ -67,7 +73,7 @@ class PostgreSQLStorage(Executor):
             for rec in records:
                 doc = Document(bytes(rec[1]))
                 vec = doc.embedding
-                metas = self._doc_without_embedding(doc)
+                metas = doc_without_embedding(doc)
                 yield rec[0], vec, metas
 
     @property
@@ -163,10 +169,3 @@ class PostgreSQLStorage(Executor):
 
         with self.handler as postgres_handler:
             postgres_handler.search(docs.traverse_flat(traversal_paths))
-
-
-    @staticmethod
-    def _doc_without_embedding(d):
-        new_doc = Document(d, copy=True)
-        new_doc.ClearField('embedding')
-        return new_doc
