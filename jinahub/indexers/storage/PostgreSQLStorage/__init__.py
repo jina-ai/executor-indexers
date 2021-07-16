@@ -65,7 +65,7 @@ class PostgreSQLStorage(Executor):
             cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
-                doc = Document(rec[1])
+                doc = Document(bytes(rec[1]))
                 vec = doc.embedding
                 metas = self._doc_without_embedding(doc)
                 yield rec[0], vec, metas
