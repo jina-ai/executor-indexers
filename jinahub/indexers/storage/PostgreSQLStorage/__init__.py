@@ -36,11 +36,13 @@ class PostgreSQLStorage(Executor):
         table: str = 'default_table',
         max_connections=5,
         default_traversal_paths: List[str] = ['r'],
+        embedding_dtype: type = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.default_traversal_paths = default_traversal_paths
+        self.embedding_dtype = embedding_dtype
         self.hostname = hostname
         self.port = port
         self.username = username
@@ -65,7 +67,7 @@ class PostgreSQLStorage(Executor):
             cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
-                vec = np.frombuffer(bytes(rec[1])) if rec[1] else None
+                vec = np.frombuffer(bytes(rec[1]), dtype=self.embedding_dtype) if rec[1] else None
                 metas = bytes(rec[2]) if rec[2] else None
                 yield rec[0], vec, metas
 
