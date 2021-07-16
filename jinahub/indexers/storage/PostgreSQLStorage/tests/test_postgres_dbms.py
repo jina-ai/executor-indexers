@@ -87,13 +87,14 @@ def validate_db_side(postgres_indexer, expected_data):
     with postgres_indexer.handler as handler:
         cursor = handler.connection.cursor()
         cursor.execute(
-            f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID::int'
+            f'SELECT ID, DOC from {postgres_indexer.table} ORDER BY ID::int'
         )
         record = cursor.fetchall()
         for i in range(len(expected_data)):
             np.testing.assert_equal(ids[i], str(record[i][0]))
-            np.testing.assert_equal(vecs[i], np.frombuffer(record[i][1]))
-            np.testing.assert_equal(metas[i], bytes(record[i][2]))
+            doc=Document(bytes(record[i][1]))
+            np.testing.assert_equal(vecs[i], doc.embedding)
+            #np.testing.assert_equal(metas[i], bytes(record[i][2]))
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])

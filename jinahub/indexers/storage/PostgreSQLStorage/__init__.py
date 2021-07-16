@@ -4,7 +4,7 @@ __license__ = "Apache-2.0"
 from typing import Tuple, Generator, Dict, List
 
 import numpy as np
-from jina import Executor, requests, DocumentArray
+from jina import Executor, requests, DocumentArray, Document
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import export_dump_streaming
@@ -65,8 +65,9 @@ class PostgreSQLStorage(Executor):
             cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
-                vec = np.frombuffer(bytes(rec[1])) if rec[1] else None
-                metas = bytes(rec[2]) if rec[2] else None
+                doc = Document(rec[1])
+                vec = doc.embedding
+                metas = self._doc_without_embedding(doc)
                 yield rec[0], vec, metas
 
     @property
@@ -162,3 +163,10 @@ class PostgreSQLStorage(Executor):
 
         with self.handler as postgres_handler:
             postgres_handler.search(docs.traverse_flat(traversal_paths))
+
+
+    @staticmethod
+    def _doc_without_embedding(d):
+        new_doc = Document(d, copy=True)
+        new_doc.ClearField('embedding')
+        return new_doc
