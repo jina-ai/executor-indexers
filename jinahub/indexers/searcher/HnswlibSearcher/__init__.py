@@ -93,7 +93,7 @@ class HnswlibSearcher(Executor):
             indices, dists = self._indexer.knn_query(doc.embedding, k=top_k)
             for idx, dist in zip(indices[0], dists[0]):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.scores['distance'] = dist
+                match.scores[self.distance] = dist
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
