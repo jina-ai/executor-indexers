@@ -100,12 +100,12 @@ class SimpleIndexer(Executor):
         return idx, dist
 
     @requests(on='/fill_embedding')
-    def fill_embedding(self, query_da: DocumentArray, **kwargs):
+    def fill_embedding(self, docs: DocumentArray, **kwargs):
         """retrieve embedding of Documents by id
 
-        :param query_da: DocumentArray to search with
+        :param docs: DocumentArray to search with
         """
-        for doc in query_da:
+        for doc in docs:
             doc.embedding = self._docs[doc.id].embedding
 
 
