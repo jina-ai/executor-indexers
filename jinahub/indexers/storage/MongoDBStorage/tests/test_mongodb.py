@@ -3,7 +3,7 @@ import time
 
 import pytest
 import numpy as np
-from jina import Document, DocumentArray
+from jina import Document, DocumentArray, Flow
 
 from .. import MongoDBStorage
 from .. import MongoHandler
@@ -50,3 +50,13 @@ def test_mongo_storage(docs_to_index, tmpdir):
     parameters = {'dump_path': os.path.join(str(tmpdir), 'dump.json'), 'shards': 2}
     storage.dump(parameters=parameters)
     assert os.path.exists(os.path.join(str(tmpdir), 'dump.json'))
+
+
+def test_mwu(tmpdir):
+    f = Flow().add(uses=MongoDBStorage)
+
+    with f:
+        resp = f.post(
+            on='/index', inputs=DocumentArray([Document()]), return_results=True
+        )
+        print(f'{resp}')
