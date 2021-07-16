@@ -36,13 +36,12 @@ class PostgreSQLStorage(Executor):
         table: str = 'default_table',
         max_connections=5,
         default_traversal_paths: List[str] = ['r'],
-        embedding_dtype: type = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.default_traversal_paths = default_traversal_paths
-        self.embedding_dtype = embedding_dtype
+        self.embedding_dtype = None
         self.hostname = hostname
         self.port = port
         self.username = username
@@ -90,6 +89,11 @@ class PostgreSQLStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        for doc in docs.traverse_flat(traversal_paths):
+            if doc.embedding is not None:
+                self.embedding_dtype = doc.embedding.dtype
+                break
+
         with self.handler as postgres_handler:
             postgres_handler.add(docs.traverse_flat(traversal_paths))
 
