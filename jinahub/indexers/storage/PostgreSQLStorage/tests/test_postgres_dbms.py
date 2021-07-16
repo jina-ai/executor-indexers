@@ -26,7 +26,6 @@ def docker_compose(request):
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
 c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
 
-
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
 
@@ -92,9 +91,9 @@ def validate_db_side(postgres_indexer, expected_data):
         record = cursor.fetchall()
         for i in range(len(expected_data)):
             np.testing.assert_equal(ids[i], str(record[i][0]))
-            doc=Document(bytes(record[i][1]))
+            doc = Document(bytes(record[i][1]))
             np.testing.assert_equal(vecs[i], doc.embedding)
-            #np.testing.assert_equal(metas[i], bytes(record[i][2]))
+            np.testing.assert_equal(metas[i], doc_without_embedding(doc))
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
