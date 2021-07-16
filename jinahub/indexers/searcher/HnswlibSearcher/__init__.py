@@ -25,7 +25,7 @@ class HnswlibSearcher(Executor):
             default_top_k: int = 10,
             distance: str = 'cosine',
             dump_path: Optional[str] = None,
-            default_traversal_paths: List[str] = None,
+            default_traversal_paths: Optional[List[str]] = None,
             ef_construction: int = 400,
             ef_query: int = 50,
             max_connection: int = 64,
@@ -79,6 +79,8 @@ class HnswlibSearcher(Executor):
 
     @requests(on='/search')
     def search(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
+        if docs is None:
+            return
         if not hasattr(self, '_indexer'):
             self.logger.warning('Querying against an empty index')
             return
@@ -96,6 +98,8 @@ class HnswlibSearcher(Executor):
 
     @requests(on='/fill_embedding')
     def fill_embedding(self, docs: Optional[DocumentArray], **kwargs):
+        if docs is None:
+            return
         for doc in docs:
             doc.embedding = np.array(
                 self._indexer.get_items([int(self._doc_id_to_offset[str(doc.id)])])[0]
