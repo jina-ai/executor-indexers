@@ -10,7 +10,7 @@ COPY requirements.txt /requirements.txt
 # install Jina and third-party requirements
 RUN python3.7 -m pip install -r requirements.txt
 
-COPY .. /workspace
+COPY .s /workspace
 WORKDIR /workspace
 
 FROM base as entrypoint
