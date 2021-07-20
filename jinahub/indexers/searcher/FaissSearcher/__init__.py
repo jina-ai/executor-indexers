@@ -31,8 +31,7 @@ class FaissSearcher(Executor):
     :param distance: 'l2' or 'inner_product' accepted. Determines which distances to optimize by FAISS. l2...smaller is better, inner_product...larger is better
     :param normalize: whether or not to normalize the vectors e.g. for the cosine similarity https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances#how-can-i-index-vectors-for-cosine-similarity
     :param nprobe: Number of clusters to consider at search time.
-    :param reverse_score: True if add reversed distance as the `similarity` for match score, else return `distance` as score for match score.
-
+    :param is_distance: Boolean flag that describes if distance metric need to be reinterpreted as similarities.
 
     .. highlight:: python
     .. code-block:: python
@@ -64,7 +63,7 @@ class FaissSearcher(Executor):
         nprobe: int = 1,
         dump_path: Optional[str] = None,
         default_traversal_paths: List[str] = ['r'],
-        reverse_score: bool = True,
+        is_distance: bool = False,
         default_top_k: int = 5,
         on_gpu: bool = False,
         *args,
@@ -82,7 +81,7 @@ class FaissSearcher(Executor):
 
         self.default_top_k = default_top_k
         self.default_traversal_paths = default_traversal_paths
-        self.reverse_score = reverse_score
+        self.is_distance = is_distance
 
         self.logger = get_logger(self)
 
@@ -224,10 +223,14 @@ class FaissSearcher(Executor):
             for m_info in zip(*matches):
                 idx, dist = m_info
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                if self.reverse_score:
-                    match.scores['similarity'] = 1 / (1 + dist)
+                if self.is_distance:
+                    match.scores[self.distance] = dist
                 else:
-                    match.scores['distance'] = dist
+                    if self.distance == 'inner_product':
+                        match.scores[self.distance] = 1 - dist
+                    else:
+                        match.scores[self.distance] = 1 / (1 + dist)
+
                 query_docs[doc_idx].matches.append(match)
 
     def _train(self, index, data: 'np.ndarray', *args, **kwargs) -> None:

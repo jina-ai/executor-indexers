@@ -91,8 +91,8 @@ def test_faiss_indexer(metas, tmpdir_dump):
     assert len(query_docs[0].matches) == 4
     for d in query_docs:
         assert (
-            d.matches[0].scores['distance'].value
-            <= d.matches[1].scores['distance'].value
+            d.matches[0].scores[indexer.distance].value
+            >= d.matches[1].scores[indexer.distance].value
         )
 
 
@@ -305,4 +305,4 @@ def test_faiss_normalization(metas, distance, tmpdir):
     docs = _get_docs_from_vecs(query.astype('float32'))
     indexer.search(docs, parameters={'top_k': 2})
     dist = docs.traverse_flat(['m']).get_attributes('scores')
-    assert dist[0]['distance'].value == 0
+    assert dist[0][distance].value == 1

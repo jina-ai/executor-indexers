@@ -88,7 +88,10 @@ class AnnoySearcher(Executor):
             for idx, dist in zip(indices, dists):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
                 if self.is_distance:
-                    match.scores[self.metric] = dist
+                    if self.metric == 'dot':
+                        match.scores[self.metric] = 1 - dist
+                    else:
+                        match.scores[self.metric] = dist
                 else:
                     if self.metric == 'angular' or self.metric == 'hamming':
                         match.scores[self.metric] = 1 - dist

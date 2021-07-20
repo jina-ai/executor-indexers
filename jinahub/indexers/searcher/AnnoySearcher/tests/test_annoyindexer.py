@@ -45,20 +45,19 @@ def test_simple_annoy():
 @pytest.mark.parametrize(['metric', 'is_distance'],
                          [('angular', True), ('euclidean', True), ('manhattan', True), ('hamming', True),
                           ('dot', True), ('angular', False), ('euclidean', False), ('manhattan', False),
-                          ('hamming', False),('dot', False)])
-def test_metric(tmpdir, metric,is_distance):
+                          ('hamming', False), ('dot', False)])
+def test_metric(tmpdir, metric, is_distance):
     metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
 
     indexer = AnnoySearcher(dump_path=DUMP_PATH, top_k=TOP_K, metas=metas, metric=metric, is_distance=is_distance)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})
 
-    for i in range(len(docs[0].matches)-1):
-        if not is_distance or metric == 'dot':
-            assert docs[0].matches[i].scores[metric].value >= docs[0].matches[i+1].scores[metric].value
+    for i in range(len(docs[0].matches) - 1):
+        if not is_distance:
+            assert docs[0].matches[i].scores[metric].value >= docs[0].matches[i + 1].scores[metric].value
         else:
             assert docs[0].matches[i].scores[metric].value <= docs[0].matches[i + 1].scores[metric].value
-
 
 
 def test_query_vector(tmpdir):
