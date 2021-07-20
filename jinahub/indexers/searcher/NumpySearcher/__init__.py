@@ -58,12 +58,12 @@ class NumpySearcher(Executor):
         dists = _cosine(q_emb, d_emb)
         positions, dist = self._get_sorted_top_k(dists, top_k)
         for _q, _positions, _dists in zip(docs, positions, dist):
-            for position, _dist in zip(_positions, _dists):
+            for position, dist in zip(_positions, _dists):
                 d = Document(id=self._ids[position], embedding=self._vecs[position])
                 if self.reverse_score:
-                    d.scores['similarity'] = 1 / (1 + dist)
+                    d.scores['similarity'] = 1 / (1 - dist)
                 else:
-                    d.scores.scores['distance'] = dist
+                    d.scores['distance'] = dist
                 _q.matches.append(d)
 
     @staticmethod
