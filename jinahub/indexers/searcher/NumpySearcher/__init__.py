@@ -16,12 +16,12 @@ class NumpySearcher(Executor):
         dump_path: str = None,
         default_top_k: int = 5,
         default_traversal_paths: List[str] = ['r'],
-        reverse_score: bool = True,
+        is_distance: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.default_traversal_paths = default_traversal_paths
-        self.reverse_score = reverse_score
+        self.is_distance = is_distance
         self.dump_path = dump_path or kwargs.get('runtime_args').get('dump_path')
         self.logger = get_logger(self)
         self.default_top_k = default_top_k
@@ -60,10 +60,10 @@ class NumpySearcher(Executor):
         for _q, _positions, _dists in zip(docs, positions, dist):
             for position, dist in zip(_positions, _dists):
                 d = Document(id=self._ids[position], embedding=self._vecs[position])
-                if self.reverse_score:
-                    d.scores['similarity'] = 1 - dist
-                else:
+                if self.is_distance:
                     d.scores['distance'] = dist
+                else:
+                    d.scores['distance'] = 1 - dist
                 _q.matches.append(d)
 
     @staticmethod
