@@ -31,6 +31,8 @@ class FaissSearcher(Executor):
     :param distance: 'l2' or 'inner_product' accepted. Determines which distances to optimize by FAISS. l2...smaller is better, inner_product...larger is better
     :param normalize: whether or not to normalize the vectors e.g. for the cosine similarity https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances#how-can-i-index-vectors-for-cosine-similarity
     :param nprobe: Number of clusters to consider at search time.
+    :param reverse_score: True if add reversed distance as the `similarity` for match score, else return `distance` as score for match score.
+
 
     .. highlight:: python
     .. code-block:: python

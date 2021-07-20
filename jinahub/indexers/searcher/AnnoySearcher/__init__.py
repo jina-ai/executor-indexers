@@ -39,6 +39,7 @@ class AnnoySearcher(Executor):
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
+        :param reverse_score: True if add reversed distance as the `similarity` for match score, else return `distance` as score for match score.
         :param args:
         :param kwargs:
         """

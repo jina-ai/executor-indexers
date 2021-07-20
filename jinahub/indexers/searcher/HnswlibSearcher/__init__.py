@@ -40,6 +40,7 @@ class HnswlibSearcher(Executor):
         :param distance: distance can be 'l2', 'ip', or 'cosine'
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
+        :param reverse_score: True if add reversed distance as the `similarity` for match score, else return `distance` as score for match score.
         :param ef_construction: defines a construction time/accuracy trade-off
         :param ef_query:  sets the query time accuracy/speed trade-off
         :param max_connection: defines tha maximum number of outgoing connections in the graph
