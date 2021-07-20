@@ -62,6 +62,7 @@ class FaissSearcher(Executor):
         nprobe: int = 1,
         dump_path: Optional[str] = None,
         default_traversal_paths: List[str] = ['r'],
+        reverse_score: bool = True,
         default_top_k: int = 5,
         on_gpu: bool = False,
         *args,
@@ -79,6 +80,7 @@ class FaissSearcher(Executor):
 
         self.default_top_k = default_top_k
         self.default_traversal_paths = default_traversal_paths
+        self.reverse_score = reverse_score
 
         self.logger = get_logger(self)
 
@@ -220,7 +222,10 @@ class FaissSearcher(Executor):
             for m_info in zip(*matches):
                 idx, dist = m_info
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.scores['distance'] = dist
+                if self.reverse_score:
+                    match.scores['similarity'] = 1 / (1 + dist)
+                else:
+                    match.scores['distance'] = dist
                 query_docs[doc_idx].matches.append(match)
 
     def _train(self, index, data: 'np.ndarray', *args, **kwargs) -> None:

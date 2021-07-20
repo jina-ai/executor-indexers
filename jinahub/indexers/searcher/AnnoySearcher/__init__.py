@@ -28,6 +28,7 @@ class AnnoySearcher(Executor):
         num_trees: int = 10,
         dump_path: Optional[str] = None,
         default_traversal_paths: List[str] = ['r'],
+        reverse_score: bool = True,
         **kwargs,
     ):
         """
@@ -46,6 +47,7 @@ class AnnoySearcher(Executor):
         self.metric = metric
         self.num_trees = num_trees
         self.default_traversal_paths = default_traversal_paths
+        self.reverse_score = reverse_score
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
@@ -84,7 +86,10 @@ class AnnoySearcher(Executor):
             )
             for idx, dist in zip(indices, dists):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.scores['distance'] = 1 / (1 + dist)
+                if self.reverse_score:
+                    match.scores['similarity'] = 1 / (1 + dist)
+                else:
+                    match.scores['distance'] = dist
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')

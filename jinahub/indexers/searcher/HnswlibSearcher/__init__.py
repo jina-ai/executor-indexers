@@ -26,6 +26,7 @@ class HnswlibSearcher(Executor):
             distance: str = 'cosine',
             dump_path: Optional[str] = None,
             default_traversal_paths: Optional[List[str]] = None,
+            reverse_score: bool = True,
             ef_construction: int = 400,
             ef_query: int = 50,
             max_connection: int = 64,
@@ -49,6 +50,7 @@ class HnswlibSearcher(Executor):
         self.default_top_k = default_top_k
         self.distance = distance
         self.default_traversal_paths = default_traversal_paths or ['r']
+        self.reverse_score = reverse_score
         self.ef_construction = ef_construction
         self.ef_query = ef_query
         self.max_connection = max_connection
@@ -93,7 +95,10 @@ class HnswlibSearcher(Executor):
             indices, dists = self._indexer.knn_query(doc.embedding, k=top_k)
             for idx, dist in zip(indices[0], dists[0]):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                match.scores[self.distance] = dist
+                if self.reverse_score:
+                    match.scores['similarity'] = 1 / (1 + dist)
+                else:
+                    match.scores['distance'] = dist
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
