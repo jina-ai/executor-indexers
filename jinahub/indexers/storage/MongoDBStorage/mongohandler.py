@@ -12,7 +12,6 @@ from jina import Document, DocumentArray
 def doc_without_embedding(d: Document):
     new_doc = Document(d, copy=True)
     new_doc.ClearField('embedding')
-    new_doc.ClearField('id')
     return new_doc.dict()
 
 
@@ -46,20 +45,18 @@ class MongoHandler:
                 self._collection_name
             ]
             self._collection.create_index(
-                'ID', unique=True
+                'id', unique=True
             )  # create index on doc.id field if index not exist.
             return self._collection
         else:
             return self._collection
 
     def add(self, docs: DocumentArray, **kwargs):
-        """Insert document ID, VECS and METAS from docs into mongodb instance."""
+        """Insert document from docs into mongodb instance."""
         dict_docs = []
         for doc in docs:
-            item = {}
-            item['ID'] = doc.id
-            item['VECS'] = doc.embedding.tolist()
-            item['METAS'] = doc_without_embedding(doc)
+            item = doc.dict()
+            item['embedding'] = list(doc.embedding.flatten())
             dict_docs.append(item)
         self.collection.insert_many(
             documents=dict_docs,
@@ -67,29 +64,31 @@ class MongoHandler:
         )
 
     def update(self, docs: DocumentArray, **kwargs):
-        """Update item ID, VECS and METAS from docs based on doc id."""
+        """Update item from docs based on doc id."""
         for doc in docs:
-            embed = []
+            item = doc.dict()
+            item['embedding'] = []
             if doc.embedding:
-                embed = doc.embedding.tolist()
-            self.collection.update_one(
-                filter={'ID': {'$eq': doc.id}},
-                update={'$set': {'VECS': embed, 'METAS': doc_without_embedding(doc)}},
+                item['embedding'] = list(doc.embedding.flatten())
+            self.collection.replace_one(
+                filter={'id': {'$eq': doc.id}},
+                replacement=item,
                 upsert=True,
             )
 
     def delete(self, docs: DocumentArray, **kwargs):
         """Delete item from docs based on doc id."""
         doc_ids = [doc.id for doc in docs]
-        self.collection.delete_many(filter={'ID': {'$in': doc_ids}})
+        self.collection.delete_many(filter={'id': {'$in': doc_ids}})
 
     def search(self, docs: DocumentArray, **kwargs):
         for doc in docs:
             result = self.collection.find_one(
-                filter={'ID': doc.id}, projection={'_id': False, 'METAS': 1}
+                filter={'id': doc.id}, projection={'_id': False}
             )
             if result:
-                retrieved_doc = Document(result['METAS'])
+                result.pop('embedding')
+                retrieved_doc = Document(result)
                 doc.update(retrieved_doc)
 
     def get_size(self):
