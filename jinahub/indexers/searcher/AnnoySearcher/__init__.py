@@ -22,14 +22,14 @@ class AnnoySearcher(Executor):
     """
 
     def __init__(
-        self,
-        top_k: int = 10,
-        metric: str = 'euclidean',
-        num_trees: int = 10,
-        dump_path: Optional[str] = None,
-        default_traversal_paths: List[str] = ['r'],
-        reverse_score: bool = True,
-        **kwargs,
+            self,
+            top_k: int = 10,
+            metric: str = 'euclidean',
+            num_trees: int = 10,
+            dump_path: Optional[str] = None,
+            default_traversal_paths: List[str] = ['r'],
+            is_distance: bool = False,
+            **kwargs,
     ):
         """
         Initialize an AnnoyIndexer
@@ -39,7 +39,7 @@ class AnnoySearcher(Executor):
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
         :param dump_path: the path to load ids and vecs
         :param traverse_path: traverse path on docs, e.g. ['r'], ['c']
-        :param reverse_score: True if add reversed distance as the `similarity` for match score, else return `distance` as score for match score.
+        :param is_distance: Boolean flag that describes if distance metric need to be reinterpreted as similarities.
         :param args:
         :param kwargs:
         """
@@ -48,7 +48,7 @@ class AnnoySearcher(Executor):
         self.metric = metric
         self.num_trees = num_trees
         self.default_traversal_paths = default_traversal_paths
-        self.reverse_score = reverse_score
+        self.is_distance = is_distance
         self.logger = get_logger(self)
         dump_path = dump_path or kwargs.get('runtime_args', {}).get('dump_path', None)
         if dump_path is not None:
@@ -87,10 +87,15 @@ class AnnoySearcher(Executor):
             )
             for idx, dist in zip(indices, dists):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                if self.reverse_score:
-                    match.scores['similarity'] = 1 / (1 + dist)
+                if self.is_distance:
+                    match.scores[self.metric] = dist
                 else:
-                    match.scores['distance'] = dist
+                    if self.metric == 'angular' or self.metric == 'hamming':
+                        match.scores[self.metric] = 1 - dist
+                    elif self.metric == 'euclidean' or self.metric == 'manhattan':
+                        match.scores[self.metric] = 1 / (1 + dist)
+                    else:
+                        match.scores[self.metric] = dist
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
