@@ -91,8 +91,8 @@ def test_faiss_indexer(metas, tmpdir_dump):
     assert len(query_docs[0].matches) == 4
     for d in query_docs:
         assert (
-            d.matches[0].scores[indexer.distance].value
-            >= d.matches[1].scores[indexer.distance].value
+            d.matches[0].scores[indexer.metric].value
+            >= d.matches[1].scores[indexer.metric].value
         )
 
 
@@ -293,7 +293,7 @@ def test_faiss_normalization(metas, distance, tmpdir):
 
     indexer = FaissSearcher(
         index_key='Flat',
-        distance=distance,
+        metric=distance,
         normalize=True,
         requires_training=True,
         metas=metas,
