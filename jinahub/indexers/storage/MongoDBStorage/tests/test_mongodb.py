@@ -82,22 +82,19 @@ def test_mongo_storage(docs_to_index, tmpdir):
     assert docs_to_search[0].text == ''  # find no result
 
 
-@pytest.mark.parametrize('shards', [2, 3, 7])
+@pytest.mark.parametrize('shards', [2])
 def test_dump(tmpdir, shards, docs_to_index):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
-    def _get_flow() -> Flow:
-        return Flow().add(
-            uses={
-                'jtype': 'MongoDBStorage',
-                'with': {},
-                'metas': metas,
-            }
-        )
-
     # indexing
-    with _get_flow() as f:
+    with Flow().add(
+        uses={
+            'jtype': 'MongoDBStorage',
+            'with': {},
+            'metas': metas,
+        }
+    ) as f:
         f.index(inputs=docs_to_index)
         f.post(on='/dump', parameters={'dump_path': dump_path, 'shards': shards})
 

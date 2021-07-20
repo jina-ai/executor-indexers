@@ -9,12 +9,6 @@ from jina.logging.logger import JinaLogger
 from jina import Document, DocumentArray
 
 
-def doc_without_embedding(d: Document):
-    new_doc = Document(d, copy=True)
-    new_doc.ClearField('embedding')
-    return new_doc.dict()
-
-
 class MongoHandler:
     def __init__(
         self,
