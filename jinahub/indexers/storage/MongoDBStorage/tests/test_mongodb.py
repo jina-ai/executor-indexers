@@ -15,7 +15,7 @@ compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
 
 
 @pytest.fixture
-def mongo_docker_compose(request):
+def docker_compose(request):
     os.system(
         f"docker-compose -f {request.param} --project-directory . up  --build -d --remove-orphans"
     )
