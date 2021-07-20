@@ -10,13 +10,20 @@ from jina_commons.indexers.dump import import_metas, import_vectors
 from .. import MongoDBStorage
 from .. import MongoHandler
 
+cur_dir = os.path.dirname(os.path.abspath(__file__))
+compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
 
-@pytest.fixture(autouse=True)
-def mongo_docker_compose():
-    os.system(f"docker-compose . up  --build -d --remove-orphans")
+
+@pytest.fixture
+def mongo_docker_compose(request):
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . up  --build -d --remove-orphans"
+    )
     time.sleep(5)
     yield
-    os.system(f"docker-compose . down --remove-orphans")
+    os.system(
+        f"docker-compose -f {request.param} --project-directory . down --remove-orphans"
+    )
 
 
 @pytest.fixture
@@ -61,7 +68,8 @@ def _assert_dump_data(dump_path, docs, shards, pea_id):
     )
 
 
-def test_mongo_storage(docs_to_index, tmpdir):
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
     # add
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
@@ -83,7 +91,8 @@ def test_mongo_storage(docs_to_index, tmpdir):
 
 
 @pytest.mark.parametrize('shards', [2])
-def test_dump(tmpdir, shards, docs_to_index):
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
+def test_dump(tmpdir, shards, docs_to_index, docker_compose):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
