@@ -61,9 +61,9 @@ class NumpySearcher(Executor):
             for position, dist in zip(_positions, _dists):
                 d = Document(id=self._ids[position], embedding=self._vecs[position])
                 if self.is_distance:
-                    d.scores['distance'] = dist
+                    d.scores['cosine'] = dist
                 else:
-                    d.scores['distance'] = 1 - dist
+                    d.scores['cosine'] = 1 - dist
                 _q.matches.append(d)
 
     @staticmethod
