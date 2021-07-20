@@ -4,11 +4,17 @@ __license__ = "Apache-2.0"
 from typing import Tuple, Generator, Dict, List
 
 import numpy as np
-from jina import Executor, requests, DocumentArray
+from jina import Executor, requests, DocumentArray, Document
 
 from jina_commons import get_logger
 from jina_commons.indexers.dump import export_dump_streaming
 from .postgreshandler import PostgreSQLHandler
+
+
+def doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    return new_doc.SerializeToString()
 
 
 class PostgreSQLStorage(Executor):
@@ -65,7 +71,10 @@ class PostgreSQLStorage(Executor):
             cursor.execute(f'SELECT * from {handler.table} ORDER BY ID')
             records = cursor.fetchall()
             for rec in records:
-                yield rec[0], np.frombuffer(bytes(rec[1])), bytes(rec[2])
+                doc = Document(bytes(rec[1]))
+                vec = doc.embedding
+                metas = doc_without_embedding(doc)
+                yield rec[0], vec, metas
 
     @property
     def size(self):
@@ -83,6 +92,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -96,6 +107,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -109,6 +122,8 @@ class PostgreSQLStorage(Executor):
         :param docs: list of Documents
         :param parameters: parameters to the request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
@@ -121,7 +136,6 @@ class PostgreSQLStorage(Executor):
 
         :param parameters: a dictionary containing the parameters for the dump
         """
-
         path = parameters.get('dump_path')
         if path is None:
             self.logger.error(f'No "dump_path" provided for {self}')
@@ -147,6 +161,8 @@ class PostgreSQLStorage(Executor):
         :param docs: the DocumentArray to search with (they only need to have the `.id` set)
         :param parameters: the parameters to this request
         """
+        if docs is None:
+            return
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )

@@ -50,7 +50,7 @@ where
 
 - `flow_storage` is the Flow with the storage Indexer
 - `target_peapod` is the name of the executor, defined in your `flow.yml`
-- `dump_path` is the path (on local disk) where you want the data to be stored
+- `dump_path` is the path (on local disk) where you want the data to be stored. **NOTE** The folder needs to be empty. Otherwise, the dump will be cancelled. 
 - `shards` is the nr of shards you have in your search Flow. **NOTE** This doesn't change the value in the Flow. You need to keep track of how you configured your search Flow
 
 For performing the **rolling update**, we can see the usage in the same test:

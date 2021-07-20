@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from jina import Document, DocumentArray, Flow
 from jina.logging.profile import TimeContext
+from jina_commons.indexers.dump import import_vectors, import_metas
 
 from .. import PostgreSQLStorage
 from ..postgreshandler import doc_without_embedding
@@ -25,9 +26,8 @@ def docker_compose(request):
 d_embedding = np.array([1, 1, 1, 1, 1, 1, 1])
 c_embedding = np.array([2, 2, 2, 2, 2, 2, 2])
 
-
 cur_dir = os.path.dirname(os.path.abspath(__file__))
-compose_yml = os.path.abspath(os.path.join(cur_dir, '../docker-compose.yml'))
+compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -86,13 +86,14 @@ def validate_db_side(postgres_indexer, expected_data):
     with postgres_indexer.handler as handler:
         cursor = handler.connection.cursor()
         cursor.execute(
-            f'SELECT ID, VECS, METAS from {postgres_indexer.table} ORDER BY ID::int'
+            f'SELECT ID, DOC from {postgres_indexer.table} ORDER BY ID::int'
         )
         record = cursor.fetchall()
         for i in range(len(expected_data)):
             np.testing.assert_equal(ids[i], str(record[i][0]))
-            np.testing.assert_equal(vecs[i], np.frombuffer(record[i][1]))
-            np.testing.assert_equal(metas[i], bytes(record[i][2]))
+            doc = Document(bytes(record[i][1]))
+            np.testing.assert_equal(vecs[i], doc.embedding)
+            np.testing.assert_equal(metas[i], doc_without_embedding(doc))
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
@@ -131,7 +132,7 @@ def test_postgres(tmpdir, docker_compose):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mwu(tmpdir, docker_compose):
+def test_mwu_empty_dump(tmpdir, docker_compose):
     f = Flow().add(uses=PostgreSQLStorage)
 
     with f:
@@ -139,3 +140,18 @@ def test_mwu(tmpdir, docker_compose):
             on='/index', inputs=DocumentArray([Document()]), return_results=True
         )
         print(f'{resp}')
+
+    dump_path = os.path.join(tmpdir, 'dump')
+
+    with f:
+        f.post(
+            on='/dump',
+            parameters={'dump_path': os.path.join(tmpdir, 'dump'), 'shards': 1},
+        )
+
+    # assert dump contents
+    ids, vecs = import_vectors(dump_path, pea_id='0')
+    assert ids is not None
+    ids, metas = import_metas(dump_path, pea_id='0')
+    assert vecs is not None
+    assert metas is not None

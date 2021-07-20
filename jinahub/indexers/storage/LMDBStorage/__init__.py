@@ -101,6 +101,8 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        if docs is None:
+            return
         with self._handler() as env:
             with env.begin(write=True) as transaction:
                 for d in docs.traverse_flat(traversal_paths):
@@ -116,6 +118,8 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        if docs is None:
+            return
         with self._handler() as env:
             with env.begin(write=True) as transaction:
                 for d in docs.traverse_flat(traversal_paths):
@@ -135,6 +139,8 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        if docs is None:
+            return
         with self._handler() as env:
             with env.begin(write=True) as transaction:
                 for d in docs.traverse_flat(traversal_paths):
@@ -150,6 +156,8 @@ class LMDBStorage(Executor):
         traversal_paths = parameters.get(
             'traversal_paths', self.default_traversal_paths
         )
+        if docs is None:
+            return
         docs_to_get = docs.traverse_flat(traversal_paths)
         with self._handler() as env:
             with env.begin(write=True) as transaction:

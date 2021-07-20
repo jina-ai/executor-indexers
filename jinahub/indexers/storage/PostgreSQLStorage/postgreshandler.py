@@ -87,8 +87,7 @@ class PostgreSQLHandler:
                 cursor.execute(
                     f'CREATE TABLE {self.table} ( \
                     ID VARCHAR PRIMARY KEY,  \
-                    VECS BYTEA,  \
-                    METAS BYTEA);'
+                    DOC BYTEA);'
                 )
                 self.logger.info('Successfully created table')
             except (Exception, psycopg2.Error) as error:
@@ -110,12 +109,11 @@ class PostgreSQLHandler:
         try:
             psycopg2.extras.execute_batch(
                 cursor,
-                f'INSERT INTO {self.table} (ID, VECS, METAS) VALUES (%s, %s, %s)',
+                f'INSERT INTO {self.table} (ID, DOC) VALUES (%s, %s)',
                 [
                     (
                         doc.id,
-                        doc.embedding.tobytes() if doc.embedding is not None else None,
-                        doc_without_embedding(doc),
+                        doc.SerializeToString(),
                     )
                     for doc in docs
                 ],
@@ -138,11 +136,10 @@ class PostgreSQLHandler:
         cursor = self.connection.cursor()
         psycopg2.extras.execute_batch(
             cursor,
-            f'UPDATE {self.table} SET VECS = %s, METAS = %s WHERE ID = %s',
+            f'UPDATE {self.table} SET DOC = %s WHERE ID = %s',
             [
                 (
-                    doc.embedding.tobytes() if doc.embedding is not None else None,
-                    doc_without_embedding(doc),
+                    doc.SerializeToString(),
                     doc.id,
                 )
                 for doc in docs
@@ -175,13 +172,12 @@ class PostgreSQLHandler:
         cursor = self.connection.cursor()
         for doc in docs:
             # retrieve metadata
-            cursor.execute(f'SELECT METAS FROM {self.table} WHERE ID = %s;', (doc.id,))
+            cursor.execute(f'SELECT DOC FROM {self.table} WHERE ID = %s;', (doc.id,))
             result = cursor.fetchone()
             data = bytes(result[0])
             retrieved_doc = Document(data)
-            # how to assign all fields but embedding?
-            doc.content = retrieved_doc.content
-            doc.mime_type = doc.mime_type
+            retrieved_doc.pop('embedding')
+            doc.MergeFrom(retrieved_doc)
 
     def _close_connection(self, connection):
         # restore it to the pool
