@@ -5,7 +5,7 @@ from typing import Tuple, Generator, Dict, List, Optional
 
 import numpy as np
 from jina.logging.logger import JinaLogger
-from jina import Executor, requests, DocumentArray
+from jina import Executor, requests, DocumentArray, Document
 from jina_commons.indexers.dump import export_dump_streaming
 
 from .mongohandler import MongoHandler
@@ -111,8 +111,8 @@ class MongoDBStorage(Executor):
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         # always order the dump by id as integer
-        cursor = self._handler.collection.find({})
-        for document in cursor:
-            yield document['ID'], np.asarray(document['VECS']), json.dumps(
+        documents = self._handler.collection.find({})
+        for document in documents:
+            yield document['ID'], np.asarray(document['VECS']), Document(
                 document['METAS']
-            ).encode('utf-8')
+            ).SerializeToString()

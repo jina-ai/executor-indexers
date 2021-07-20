@@ -1,9 +1,11 @@
 import os
 import time
+import json
 
 import pytest
 import numpy as np
 from jina import Document, DocumentArray, Flow
+from jina_commons.indexers.dump import import_metas, import_vectors
 
 from .. import MongoDBStorage
 from .. import MongoHandler
@@ -11,10 +13,10 @@ from .. import MongoHandler
 
 @pytest.fixture(autouse=True)
 def mongo_docker_compose():
-    os.system(f"docker-compose --project-directory . up  --build -d --remove-orphans")
+    os.system(f"docker-compose . up  --build -d --remove-orphans")
     time.sleep(5)
     yield
-    os.system(f"docker-compose --project-directory . down --remove-orphans")
+    os.system(f"docker-compose . down --remove-orphans")
 
 
 @pytest.fixture
@@ -25,6 +27,38 @@ def docs_to_index():
         d.embedding = np.random.rand(1, 20)
         docu_array.append(d)
     return docu_array
+
+
+def _assert_dump_data(dump_path, docs, shards, pea_id):
+    size_shard = len(docs) // shards
+    size_shard_modulus = len(docs) % shards
+    ids_dump, vectors_dump = import_vectors(
+        dump_path,
+        str(pea_id),
+    )
+    if pea_id == shards - 1:
+        docs_expected = docs[
+            (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
+        ]
+    else:
+        docs_expected = docs[(pea_id) * size_shard : (pea_id + 1) * size_shard]
+    print(f'### pea {pea_id} has {len(docs_expected)} docs')
+
+    # TODO these might fail if we implement any ordering of elements on dumping / reloading
+    ids_dump = list(ids_dump)
+    vectors_dump = list(vectors_dump)
+    np.testing.assert_equal(ids_dump, [d.id for d in docs_expected])
+    np.testing.assert_allclose(vectors_dump, [d.embedding for d in docs_expected])
+
+    _, metas_dump = import_metas(
+        dump_path,
+        str(pea_id),
+    )
+    metas_dump = list(metas_dump)
+    np.testing.assert_equal(
+        metas_dump,
+        [_doc_without_embedding(d) for d in docs_expected],
+    )
 
 
 def test_mongo_storage(docs_to_index, tmpdir):
@@ -46,10 +80,29 @@ def test_mongo_storage(docs_to_index, tmpdir):
     docs_to_search = DocumentArray([Document(id=doc_id_to_delete)])
     assert len(docs_to_search) == 1
     assert docs_to_search[0].text == ''  # find no result
-    # test dump
-    parameters = {'dump_path': os.path.join(str(tmpdir), 'dump.json'), 'shards': 2}
-    storage.dump(parameters=parameters)
-    assert os.path.exists(os.path.join(str(tmpdir), 'dump.json'))
+
+
+@pytest.mark.parametrize('shards', [2, 3, 7])
+def test_dump(tmpdir, shards, docs_to_index):
+    metas = {'workspace': str(tmpdir), 'name': 'storage'}
+    dump_path = os.path.join(tmpdir, 'dump_dir')
+
+    def _get_flow() -> Flow:
+        return Flow().add(
+            uses={
+                'jtype': 'MongoDBStorage',
+                'with': {},
+                'metas': metas,
+            }
+        )
+
+    # indexing
+    with _get_flow() as f:
+        f.index(inputs=docs_to_index)
+        f.post(on='/dump', parameters={'dump_path': dump_path, 'shards': shards})
+
+    for pea_id in range(shards):
+        _assert_dump_data(dump_path, docs_to_index, shards, pea_id)
 
 
 def test_mwu(tmpdir):
