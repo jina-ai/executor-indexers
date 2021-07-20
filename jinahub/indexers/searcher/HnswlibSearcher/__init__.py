@@ -23,10 +23,10 @@ class HnswlibSearcher(Executor):
     def __init__(
             self,
             default_top_k: int = 10,
-            distance: str = 'cosine',
+            metric: str = 'cosine',
             dump_path: Optional[str] = None,
             default_traversal_paths: Optional[List[str]] = None,
-            reverse_score: bool = True,
+            is_distance: bool = False,
             ef_construction: int = 400,
             ef_query: int = 50,
             max_connection: int = 64,
@@ -49,9 +49,9 @@ class HnswlibSearcher(Executor):
         """
         super().__init__(*args, **kwargs)
         self.default_top_k = default_top_k
-        self.distance = distance
+        self.metric = metric
         self.default_traversal_paths = default_traversal_paths or ['r']
-        self.reverse_score = reverse_score
+        self.is_distance = is_distance
         self.ef_construction = ef_construction
         self.ef_query = ef_query
         self.max_connection = max_connection
@@ -63,7 +63,7 @@ class HnswlibSearcher(Executor):
             self._ids = np.array(list(ids))
             self._vecs = np.array(list(vecs))
             num_dim = self._vecs.shape[1]
-            self._indexer = hnswlib.Index(space=self.distance, dim=num_dim)
+            self._indexer = hnswlib.Index(space=self.metric, dim=num_dim)
             self._indexer.init_index(max_elements=len(self._vecs), ef_construction=self.ef_construction,
                                      M=self.max_connection)
 
@@ -96,10 +96,14 @@ class HnswlibSearcher(Executor):
             indices, dists = self._indexer.knn_query(doc.embedding, k=top_k)
             for idx, dist in zip(indices[0], dists[0]):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])
-                if self.reverse_score:
-                    match.scores['similarity'] = 1 / (1 + dist)
+                if self.is_distance:
+                    match.scores[self.metric] = dist
                 else:
-                    match.scores['distance'] = dist
+                    if self.metric == 'cosine' or self.metric == 'ip':
+                        match.scores[self.metric] = 1 - dist
+                    else:
+                        match.scores[self.metric] = 1 / (1 + dist)
+
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
