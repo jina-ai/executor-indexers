@@ -61,7 +61,7 @@ class NumpySearcher(Executor):
             for position, dist in zip(_positions, _dists):
                 d = Document(id=self._ids[position], embedding=self._vecs[position])
                 if self.reverse_score:
-                    d.scores['similarity'] = 1 / (1 - dist)
+                    d.scores['similarity'] = 1 - dist
                 else:
                     d.scores['distance'] = dist
                 _q.matches.append(d)
