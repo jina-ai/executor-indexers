@@ -55,7 +55,7 @@ class MongoHandler:
             dict_docs.append(item)
         self.collection.insert_many(
             documents=dict_docs,
-            ordered=False,  # all document inserts will be attempted.
+            ordered=True,  # all document inserts will be attempted.
         )
 
     def update(self, docs: DocumentArray, **kwargs):

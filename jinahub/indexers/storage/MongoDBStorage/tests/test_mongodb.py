@@ -31,7 +31,7 @@ def docs_to_index():
     docu_array = DocumentArray()
     for idx in range(0, 10):
         d = Document(text=f'hello {idx}')
-        d.embedding = np.random.rand(1, 20)
+        d.embedding = np.random.random(20)
         docu_array.append(d)
     return docu_array
 
@@ -66,6 +66,12 @@ def _assert_dump_data(dump_path, docs, shards, pea_id):
         metas_dump,
         [_doc_without_embedding(d) for d in docs_expected],
     )
+
+
+def _doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True)
+    new_doc.ClearField('embedding')
+    return new_doc.SerializeToString()
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])

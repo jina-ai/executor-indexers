@@ -117,7 +117,9 @@ class MongoDBStorage(Executor):
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         # always order the dump by id as integer
-        records = self._handler.collection.find({}, projection={'_id': False})
+        records = self._handler.collection.find({}, projection={'_id': False}).sort(
+            'id'
+        )
         for record in records:
             vec = np.array(record['embedding'])
             record.pop('embedding')
