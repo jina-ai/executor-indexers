@@ -50,7 +50,7 @@ class MongoHandler:
         dict_docs = []
         for doc in docs:
             item = doc.dict()
-            if doc.embedding.size != 0:
+            if doc.embedding:
                 item['embedding'] = list(doc.embedding.flatten())
             dict_docs.append(item)
         self.collection.insert_many(
@@ -63,7 +63,7 @@ class MongoHandler:
         for doc in docs:
             item = doc.dict()
             item['embedding'] = []
-            if doc.embedding.size != 0:
+            if doc.embedding:
                 item['embedding'] = list(doc.embedding.flatten())
             self.collection.replace_one(
                 filter={'id': {'$eq': doc.id}},
