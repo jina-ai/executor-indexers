@@ -94,7 +94,7 @@ def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
     assert docs_to_search[0].text == ''  # find no result
 
 
-@pytest.mark.parametrize('shards', [2])
+@pytest.mark.parametrize('shards', [2, 5, 7])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_dump(docs_to_index, tmpdir, shards, docker_compose):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
