@@ -1,7 +1,7 @@
 import numpy as np
 from jina import Flow, Document, DocumentArray
 
-from jinahub.indexers.simple import SimpleIndexer
+from jinahub.indexers.SimpleIndexer import SimpleIndexer
 
 
 def test_simple_indexer_flow(tmpdir):
