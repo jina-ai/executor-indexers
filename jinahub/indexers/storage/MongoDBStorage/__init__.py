@@ -12,7 +12,7 @@ from .mongohandler import MongoHandler
 
 
 def doc_without_embedding(d: Document):
-    new_doc = Document(d, copy=True)
+    new_doc = Document(d, copy=True, hash_content=False)
     new_doc.ClearField('embedding')
     return new_doc.SerializeToString()
 
@@ -117,9 +117,7 @@ class MongoDBStorage(Executor):
 
     def _get_generator(self) -> Generator[Tuple[str, np.array, bytes], None, None]:
         # always order the dump by id as integer
-        records = self._handler.collection.find({}, projection={'_id': False}).sort(
-            'id'
-        )
+        records = self._handler.collection.find({}, projection={'_id': False})
         for record in records:
             vec = np.array(record['embedding'])
             record.pop('embedding')

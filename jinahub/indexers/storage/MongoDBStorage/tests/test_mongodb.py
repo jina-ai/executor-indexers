@@ -26,8 +26,7 @@ def docker_compose(request):
     )
 
 
-@pytest.fixture
-def docs_to_index():
+def get_docs_to_index():
     docu_array = DocumentArray()
     for idx in range(0, 10):
         d = Document(text=f'hello {idx}')
@@ -64,19 +63,20 @@ def _assert_dump_data(dump_path, docs, shards, pea_id):
     metas_dump = list(metas_dump)
     np.testing.assert_equal(
         metas_dump,
-        [_doc_without_embedding(d) for d in docs_expected],
+        [doc_without_embedding(d) for d in docs_expected],
     )
 
 
-def _doc_without_embedding(d: Document):
-    new_doc = Document(d, copy=True)
+def doc_without_embedding(d: Document):
+    new_doc = Document(d, copy=True, hash_content=False)
     new_doc.ClearField('embedding')
     return new_doc.SerializeToString()
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
+def test_mongo_storage(tmpdir, docker_compose):
     # add
+    docs_to_index = get_docs_to_index()
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
     assert storage.size == 10
@@ -98,7 +98,8 @@ def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
 
 @pytest.mark.parametrize('shards', [2])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_dump(tmpdir, shards, docs_to_index, docker_compose):
+def test_dump(tmpdir, shards, docker_compose):
+    docs_to_index = get_docs_to_index()
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
