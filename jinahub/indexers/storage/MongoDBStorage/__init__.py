@@ -1,10 +1,8 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
-import json
 from typing import Tuple, Generator, Dict, List, Optional
 
 import numpy as np
-from jina.logging.logger import JinaLogger
 from jina import Executor, requests, DocumentArray, Document
 from jina_commons.indexers.dump import export_dump_streaming
 
@@ -90,14 +88,14 @@ class MongoDBStorage(Executor):
 
         path = parameters.get('dump_path')
         if path is None:
-            self.logger.error(f'No "dump_path" provided for {self}')
+            raise ValueError(f'No "dump_path" provided for {self}')
 
-        shards = int(parameters.get('shards'), 1)
+        shards = parameters.get('shards', None)
         if shards is None:
-            self.logger.info(f'No "shards" provided for {self}, use 1 shards.')
+            raise ValueError(f'No "shards" provided for {self}.')
 
         export_dump_streaming(
-            path, shards=shards, size=self.size, data=self._get_generator()
+            path, shards=int(shards), size=self.size, data=self._get_generator()
         )
 
     @property
