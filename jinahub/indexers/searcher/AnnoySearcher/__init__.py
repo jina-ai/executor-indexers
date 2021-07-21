@@ -23,7 +23,7 @@ class AnnoySearcher(Executor):
 
     def __init__(
             self,
-            top_k: int = 10,
+            default_top_k: int = 10,
             metric: str = 'euclidean',
             num_trees: int = 10,
             dump_path: Optional[str] = None,
@@ -34,7 +34,7 @@ class AnnoySearcher(Executor):
         """
         Initialize an AnnoyIndexer
 
-        :param top_k: get tok k vectors
+        :param default_top_k: get tok k vectors
         :param metric: Metric can be "angular", "euclidean", "manhattan", "hamming", or "dot"
         :param num_trees: builds a forest of n_trees trees. More trees gives higher precision when querying.
         :param dump_path: the path to load ids and vecs
@@ -44,7 +44,7 @@ class AnnoySearcher(Executor):
         :param kwargs:
         """
         super().__init__(**kwargs)
-        self.top_k = top_k
+        self.default_top_k = default_top_k
         self.metric = metric
         self.num_trees = num_trees
         self.default_traversal_paths = default_traversal_paths
@@ -83,7 +83,7 @@ class AnnoySearcher(Executor):
 
         for doc in docs.traverse_flat(traversal_paths):
             indices, dists = self._indexer.get_nns_by_vector(
-                doc.embedding, self.top_k, include_distances=True
+                doc.embedding, self.default_top_k, include_distances=True
             )
             for idx, dist in zip(indices, dists):
                 match = Document(id=self._ids[idx], embedding=self._vecs[idx])

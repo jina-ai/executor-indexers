@@ -34,7 +34,7 @@ def test_metric(tmpdir, metric, is_distance):
         'replica_id': 0,
     }
 
-    indexer = NumpySearcher(dump_path='tests/dump1', top_k=TOP_K, runtime_args=runtime, metric=metric,
+    indexer = NumpySearcher(dump_path='tests/dump1', default_top_k=TOP_K, runtime_args=runtime, metric=metric,
                             is_distance=is_distance)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})

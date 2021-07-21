@@ -35,7 +35,7 @@ def metas(tmpdir):
 def test_metric(tmpdir, metric, is_distance):
     metas = {'workspace': str(tmpdir), 'name': 'searcher', 'pea_id': 0, 'replica_id': 0}
 
-    indexer = HnswlibSearcher(dump_path=DUMP_PATH, top_k=TOP_K, metas=metas, metric=metric, is_distance=is_distance)
+    indexer = HnswlibSearcher(dump_path=DUMP_PATH, default_top_k=TOP_K, metas=metas, metric=metric, is_distance=is_distance)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})
 
