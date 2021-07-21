@@ -73,8 +73,6 @@ def test_faiss_indexer_empty(metas, tmpdir_dump):
 
 
 def test_faiss_indexer(metas, tmpdir_dump):
-    print(f'dump path = {tmpdir_dump}')
-
     train_filepath = os.path.join(os.environ['TEST_WORKSPACE'], 'train.tgz')
     train_data = np.array(np.random.random([1024, 10]), dtype=np.float32)
     with gzip.open(train_filepath, 'wb', compresslevel=1) as f:
@@ -100,8 +98,6 @@ def test_faiss_indexer(metas, tmpdir_dump):
                          [('l2', True), ('inner_product', True),
                           ('l2', False), ('inner_product', False)])
 def test_faiss_metric(metas, tmpdir_dump, metric, is_distance):
-    print(f'dump path = {tmpdir_dump}')
-
     train_filepath = os.path.join(os.environ['TEST_WORKSPACE'], 'train.tgz')
     train_data = np.array(np.random.random([1024, 10]), dtype=np.float32)
     with gzip.open(train_filepath, 'wb', compresslevel=1) as f:
