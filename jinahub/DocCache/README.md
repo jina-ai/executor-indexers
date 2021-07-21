@@ -76,7 +76,7 @@ pods:
 
    ```python
    from jina import Flow
-   from jinahub.cache import DocCache
+   from jinahub.DocCache import DocCache
    
    f = Flow().add(uses=DocCache)
    ```
