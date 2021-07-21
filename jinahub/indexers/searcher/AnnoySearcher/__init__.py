@@ -93,12 +93,12 @@ class AnnoySearcher(Executor):
                     else:
                         match.scores[self.metric] = dist
                 else:
-                    if self.metric == 'angular' or self.metric == 'hamming':
-                        match.scores[self.metric] = 1 - dist
-                    elif self.metric == 'euclidean' or self.metric == 'manhattan':
-                        match.scores[self.metric] = 1 / (1 + dist)
-                    else:
+                    if self.metric == 'dot':
                         match.scores[self.metric] = dist
+                    elif self.metric == 'angular' or self.metric == 'hamming':
+                        match.scores[self.metric] = 1 - dist
+                    else:
+                        match.scores[self.metric] = 1 / (1 + dist)
                 doc.matches.append(match)
 
     @requests(on='/fill_embedding')
