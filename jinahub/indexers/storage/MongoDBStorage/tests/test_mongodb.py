@@ -25,9 +25,14 @@ def docker_compose(request):
 
 
 @pytest.fixture
-def docs_to_index():
+def num_docs():
+    return 10
+
+
+@pytest.fixture
+def docs_to_index(num_docs):
     docu_array = DocumentArray()
-    for idx in range(0, 10):
+    for idx in range(0, num_docs):
         d = Document(text=f'hello {idx}')
         d.embedding = np.random.random(20)
         docu_array.append(d)
@@ -73,11 +78,11 @@ def doc_without_embedding(d: Document):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
+def test_mongo_storage(docs_to_index, tmpdir, docker_compose, num_docs):
     # add
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
-    assert storage.size == 10
+    assert storage.size == num_docs
     # update & search
     doc_id_to_update = docs_to_index[0].id
     storage.update(

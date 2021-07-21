@@ -101,7 +101,7 @@ class MongoDBStorage(Executor):
         )
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Obtain the size of the table
 
         .. # noqa: DAR201
@@ -120,7 +120,6 @@ class MongoDBStorage(Executor):
         records = self._handler.collection.find({}, projection={'_id': False})
         for record in records:
             vec = np.array(record['embedding'])
-            record.pop('embedding')
             doc = Document(record)
             metas = doc_without_embedding(doc)
             yield doc.id, vec, metas
