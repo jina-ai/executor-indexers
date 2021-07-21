@@ -1,6 +1,5 @@
 import os
 import time
-import json
 
 import pytest
 import numpy as np
@@ -8,7 +7,6 @@ from jina import Document, DocumentArray, Flow
 from jina_commons.indexers.dump import import_metas, import_vectors
 
 from .. import MongoDBStorage
-from .. import MongoHandler
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
@@ -26,7 +24,8 @@ def docker_compose(request):
     )
 
 
-def get_docs_to_index():
+@pytest.fixture
+def docs_to_index():
     docu_array = DocumentArray()
     for idx in range(0, 10):
         d = Document(text=f'hello {idx}')
@@ -74,9 +73,8 @@ def doc_without_embedding(d: Document):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mongo_storage(tmpdir, docker_compose):
+def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
     # add
-    docs_to_index = get_docs_to_index()
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
     assert storage.size == 10
@@ -98,8 +96,7 @@ def test_mongo_storage(tmpdir, docker_compose):
 
 @pytest.mark.parametrize('shards', [2])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_dump(tmpdir, shards, docker_compose):
-    docs_to_index = get_docs_to_index()
+def test_dump(docs_to_index, tmpdir, shards, docker_compose):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 

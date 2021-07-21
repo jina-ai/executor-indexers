@@ -3,7 +3,6 @@ __license__ = "Apache-2.0"
 
 from typing import Optional
 
-import numpy as np
 from pymongo import MongoClient
 from jina.logging.logger import JinaLogger
 from jina import Document, DocumentArray
@@ -14,10 +13,10 @@ class MongoHandler:
         self,
         host: str = 'localhost',
         port: int = 27017,
-        username: Optional[str] = '',
-        password: Optional[str] = '',
-        database: str = 'jina_index',
-        collection: str = 'jina_index',
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        database: str = 'jina_index_db',
+        collection: str = 'jina_index_collection',
     ):
         self._logger = JinaLogger('mongo_handler')
         self._database_name = database
@@ -86,7 +85,7 @@ class MongoHandler:
                 retrieved_doc = Document(result)
                 doc.update(retrieved_doc)
 
-    def get_size(self):
+    def get_size(self) -> int:
         """Get the size of collection"""
         return self.collection.count()
 

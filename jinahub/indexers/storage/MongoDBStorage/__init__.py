@@ -11,7 +11,7 @@ from jina_commons.indexers.dump import export_dump_streaming
 from .mongohandler import MongoHandler
 
 
-def doc_without_embedding(d: Document):
+def doc_without_embedding(d: Document) -> str:
     new_doc = Document(d, copy=True, hash_content=False)
     new_doc.ClearField('embedding')
     return new_doc.SerializeToString()
@@ -22,8 +22,8 @@ class MongoDBStorage(Executor):
         self,
         host: str = '127.0.0.1',
         port: int = 27017,
-        username: Optional[str] = '',
-        password: Optional[str] = '',
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         database: str = 'jina_index',
         collection: str = 'jina_index',
         default_traversal_paths: List[str] = ['r'],
@@ -92,9 +92,9 @@ class MongoDBStorage(Executor):
         if path is None:
             self.logger.error(f'No "dump_path" provided for {self}')
 
-        shards = int(parameters.get('shards'))
+        shards = int(parameters.get('shards'), 1)
         if shards is None:
-            self.logger.error(f'No "shards" provided for {self}')
+            self.logger.info(f'No "shards" provided for {self}, use 1 shards.')
 
         export_dump_streaming(
             path, shards=shards, size=self.size, data=self._get_generator()
