@@ -91,9 +91,41 @@ def test_faiss_indexer(metas, tmpdir_dump):
     assert len(query_docs[0].matches) == 4
     for d in query_docs:
         assert (
-            d.matches[0].scores[indexer.metric].value
-            >= d.matches[1].scores[indexer.metric].value
+                d.matches[0].scores[indexer.metric].value
+                >= d.matches[1].scores[indexer.metric].value
         )
+
+
+@pytest.mark.parametrize(['metric', 'is_distance'],
+                         [('l2', True), ('inner_product', True),
+                          ('l2', False), ('inner_product', False)])
+def test_faiss_metric(metas, tmpdir_dump, metric, is_distance):
+    print(f'dump path = {tmpdir_dump}')
+
+    train_filepath = os.path.join(os.environ['TEST_WORKSPACE'], 'train.tgz')
+    train_data = np.array(np.random.random([1024, 10]), dtype=np.float32)
+    with gzip.open(train_filepath, 'wb', compresslevel=1) as f:
+        f.write(train_data.tobytes())
+
+    indexer = FaissSearcher(
+        index_key='IVF10,PQ2',
+        train_filepath=train_filepath,
+        metric=metric,
+        is_distance=is_distance,
+        dump_path=tmpdir_dump,
+        metas=metas,
+        runtime_args={'pea_id': 0},
+    )
+    query = np.array(np.random.random([10, 10]), dtype=np.float32)
+    docs = _get_docs_from_vecs(query)
+    indexer.search(docs, parameters={'top_k': 4})
+    assert len(docs[0].matches) == 4
+
+    for i in range(len(docs[0].matches) - 1):
+        if not is_distance:
+            assert docs[0].matches[i].scores[metric].value >= docs[0].matches[i + 1].scores[metric].value
+        else:
+            assert docs[0].matches[i].scores[metric].value <= docs[0].matches[i + 1].scores[metric].value
 
 
 @pytest.mark.parametrize('train_data', ['new', 'none', 'index'])
