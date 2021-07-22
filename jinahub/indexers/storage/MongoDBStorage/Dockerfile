@@ -1,8 +1,7 @@
 FROM jinaai/jina:2.0.10 as base
 
-# install and upgrade pip
-RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git
-RUN python3.7 -m pip install --upgrade pip
+# install git
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # setup the workspace
 COPY requirements.txt /requirements.txt
