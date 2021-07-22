@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 from jina import Document, DocumentArray
@@ -5,6 +7,7 @@ from jina import Document, DocumentArray
 from .. import NumpySearcher
 
 TOP_K = 5
+cur_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_query_vector(tmpdir):
@@ -14,7 +17,9 @@ def test_query_vector(tmpdir):
         'pea_id': 0,
         'replica_id': 0,
     }
-    indexer = NumpySearcher(dump_path='tests/dump1', runtime_args=runtime)
+
+    dump_path = os.path.join(cur_dir, 'dump1')
+    indexer = NumpySearcher(dump_path=dump_path, runtime_args=runtime)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     TOP_K = 5
     indexer.search(docs, {'top_k': TOP_K})
@@ -34,7 +39,8 @@ def test_metric(tmpdir, metric, is_distance):
         'replica_id': 0,
     }
 
-    indexer = NumpySearcher(dump_path='tests/dump1', default_top_k=TOP_K, runtime_args=runtime, metric=metric,
+    dump_path = os.path.join(cur_dir, 'dump1')
+    indexer = NumpySearcher(dump_path=dump_path, default_top_k=TOP_K, runtime_args=runtime, metric=metric,
                             is_distance=is_distance)
     docs = DocumentArray([Document(embedding=np.random.random(7))])
     indexer.search(docs, {})
