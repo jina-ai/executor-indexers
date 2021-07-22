@@ -1,4 +1,4 @@
-FROM jinaai/jina:2.0 as base
+FROM jinaai/jina:2.0.10 as base
 
 # install and upgrade pip
 RUN apt-get update && apt-get install -y python3.7 python3.7-dev python3-pip git
@@ -8,7 +8,7 @@ RUN python3.7 -m pip install --upgrade pip
 COPY requirements.txt /requirements.txt
 
 # install Jina and third-party requirements
-RUN python3.7 -m pip install -r requirements.txt
+RUN python3.7 -m pip install -r requirements.txt --no-cache-dir
 
 COPY . /workspace
 WORKDIR /workspace
