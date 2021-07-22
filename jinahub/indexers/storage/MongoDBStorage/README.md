@@ -17,8 +17,9 @@
 
 ## 🌱 Prerequisites
 
-- This Executor works on Python 3.7 and 3.8. 
+- This Executor works on Python 3.7 and 3.8.
 - Make sure to install the [requirements](requirements.txt)
+- Make sure you have a MongoDB instance running and accessible.
 
 ## 🚀 Usages
 

@@ -10,6 +10,8 @@ from .. import MongoDBStorage
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 compose_yml = os.path.abspath(os.path.join(cur_dir, 'docker-compose.yml'))
+num_docs = 10
+num_shards = 2
 
 
 @pytest.fixture
@@ -25,17 +27,7 @@ def docker_compose(request):
 
 
 @pytest.fixture
-def num_docs():
-    return 10
-
-
-@pytest.fixture
-def shards():
-    return 2
-
-
-@pytest.fixture
-def docs_to_index(num_docs):
+def docs_to_index():
     docu_array = DocumentArray()
     for idx in range(0, num_docs):
         d = Document(text=f'hello {idx}')
@@ -44,14 +36,14 @@ def docs_to_index(num_docs):
     return docu_array
 
 
-def _assert_dump_data(dump_path, docs, shards, pea_id):
-    size_shard = len(docs) // shards
-    size_shard_modulus = len(docs) % shards
+def _assert_dump_data(dump_path, docs, pea_id):
+    size_shard = len(docs) // num_shards
+    size_shard_modulus = len(docs) % num_shards
     ids_dump, vectors_dump = import_vectors(
         dump_path,
         str(pea_id),
     )
-    if pea_id == shards - 1:
+    if pea_id == num_shards - 1:
         docs_expected = docs[
             (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
         ]
@@ -83,7 +75,7 @@ def doc_without_embedding(d: Document):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_mongo_storage(docs_to_index, tmpdir, docker_compose, num_docs):
+def test_mongo_storage(docs_to_index, tmpdir, docker_compose):
     # add
     storage = MongoDBStorage()
     storage.add(docs=docs_to_index, parameters={})
@@ -105,7 +97,7 @@ def test_mongo_storage(docs_to_index, tmpdir, docker_compose, num_docs):
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_dump(docs_to_index, tmpdir, docker_compose, shards):
+def test_dump(docs_to_index, tmpdir, docker_compose):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
@@ -118,10 +110,10 @@ def test_dump(docs_to_index, tmpdir, docker_compose, shards):
         }
     ) as f:
         f.index(inputs=docs_to_index)
-        f.post(on='/dump', parameters={'dump_path': dump_path, 'shards': shards})
+        f.post(on='/dump', parameters={'dump_path': dump_path, 'shards': num_shards})
 
-    for pea_id in range(shards):
-        _assert_dump_data(dump_path, docs_to_index, shards, pea_id)
+    for pea_id in range(num_shards):
+        _assert_dump_data(dump_path, docs_to_index, num_shards, pea_id)
 
 
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
