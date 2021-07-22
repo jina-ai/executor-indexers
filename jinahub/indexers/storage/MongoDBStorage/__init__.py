@@ -118,6 +118,6 @@ class MongoDBStorage(Executor):
         records = self._handler.collection.find({}, projection={'_id': False})
         for record in records:
             vec = np.array(record['embedding'])
-            doc = Document(record)
+            doc = Document(record, hash_content=False)
             metas = doc_without_embedding(doc)
             yield doc.id, vec, metas
