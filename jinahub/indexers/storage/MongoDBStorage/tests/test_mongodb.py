@@ -124,6 +124,7 @@ def test_dump(docs_to_index, tmpdir, docker_compose, shards):
         _assert_dump_data(dump_path, docs_to_index, shards, pea_id)
 
 
+@pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
 def test_mwu(tmpdir):
     f = Flow().add(uses=MongoDBStorage)
 
