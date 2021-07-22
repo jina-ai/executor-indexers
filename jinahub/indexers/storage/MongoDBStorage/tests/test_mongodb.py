@@ -30,6 +30,11 @@ def num_docs():
 
 
 @pytest.fixture
+def shards():
+    return 2
+
+
+@pytest.fixture
 def docs_to_index(num_docs):
     docu_array = DocumentArray()
     for idx in range(0, num_docs):
@@ -99,9 +104,8 @@ def test_mongo_storage(docs_to_index, tmpdir, docker_compose, num_docs):
     assert docs_to_search[0].text == ''  # find no result
 
 
-@pytest.mark.parametrize('shards', [2, 5, 7])
 @pytest.mark.parametrize('docker_compose', [compose_yml], indirect=['docker_compose'])
-def test_dump(docs_to_index, tmpdir, shards, docker_compose):
+def test_dump(docs_to_index, tmpdir, docker_compose, shards):
     metas = {'workspace': str(tmpdir), 'name': 'storage'}
     dump_path = os.path.join(tmpdir, 'dump_dir')
 
