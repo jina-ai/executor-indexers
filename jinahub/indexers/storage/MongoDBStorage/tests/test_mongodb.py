@@ -36,14 +36,14 @@ def docs_to_index():
     return docu_array
 
 
-def _assert_dump_data(dump_path, docs, pea_id):
-    size_shard = len(docs) // num_shards
-    size_shard_modulus = len(docs) % num_shards
+def _assert_dump_data(dump_path, docs, shards, pea_id):
+    size_shard = len(docs) // shards
+    size_shard_modulus = len(docs) % shards
     ids_dump, vectors_dump = import_vectors(
         dump_path,
         str(pea_id),
     )
-    if pea_id == num_shards - 1:
+    if pea_id == shards - 1:
         docs_expected = docs[
             (pea_id) * size_shard : (pea_id + 1) * size_shard + size_shard_modulus
         ]
