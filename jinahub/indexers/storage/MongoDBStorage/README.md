@@ -87,7 +87,7 @@ pods:
 
 	```shell
 	git clone https://github.com/jina-ai/executor-indexers/
-	cd jinahub/indexers/indexer/MongoDBStorage
+	cd jinahub/indexers/storage/MongoDBStorage
 	docker build -t mongo-image .
 	```
 
@@ -126,4 +126,3 @@ Check [tests](tests/test_mongodb.py) for more usage scenarios.
 ### Returns
 
 Nothing
-
