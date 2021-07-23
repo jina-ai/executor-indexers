@@ -51,9 +51,17 @@ class NumpySearcher(Executor):
             'traversal_paths', self.default_traversal_paths
         )
 
-        doc_embeddings = np.stack(
-            docs.traverse_flat(traversal_paths).get_attributes('embedding')
-        )
+        doc_embeddings = docs.traverse_flat(traversal_paths).get_attributes('embedding')
+
+        if not docs:
+            self.logger.info('No documents to search for')
+            return
+
+        if not doc_embeddings:
+            self.logger.info('None of the docs have any embeddings')
+            return
+
+        doc_embeddings = np.stack(doc_embeddings)
 
         q_emb = _ext_A(_norm(doc_embeddings))
         d_emb = _ext_B(_norm(self._vecs))
