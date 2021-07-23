@@ -11,7 +11,7 @@ if [[ -d "tests/" ]]; then
   echo running tests in $test_dir
   python -m venv .venv
   source .venv/bin/activate
-  pip install pytest pytest-mock
+  pip install pytest pytest-mock wheel
   pip install -r requirements.txt
   pytest -s -v tests/
   local_exit_code=$?
