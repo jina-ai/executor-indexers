@@ -66,3 +66,22 @@ def test_empty_shard(tmpdir):
     indexer.search(docs, {'top_k': TOP_K})
     assert len(docs) == 1
     assert len(docs[0].matches) == 0
+
+
+def test_empty_documents(tmpdir):
+    runtime = {
+        'workspace': str(tmpdir),
+        'name': 'searcher',
+        'pea_id': 0,
+        'replica_id': 0,
+    }
+    indexer = NumpySearcher(dump_path='tests/dump1', runtime_args=runtime)
+    docs = DocumentArray([Document(id=0)])
+    TOP_K = 5
+    indexer.search(docs, {'top_k': TOP_K})
+    assert len(docs) == 1
+    assert len(docs[0].matches) == 0
+
+    docs2 = DocumentArray()
+    indexer.search(docs2, {'top_k': TOP_K})
+    assert len(docs2) == 0
