@@ -22,6 +22,12 @@
 
 Additionally, you will need a running MongoDB instnace. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters.
 
+You can start one in a Docker container, like so: 
+
+```bash
+docker run --name mongo-storage  -p 127.0.0.1:27017:27017/tcp -d mongo:latest
+```
+
 ## 🚀 Usages
 
 ### 🚚 Via JinaHub
