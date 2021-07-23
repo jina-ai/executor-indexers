@@ -19,7 +19,8 @@
 
 - This Executor works on Python 3.7 and 3.8.
 - Make sure to install the [requirements](requirements.txt)
-- Make sure you have a MongoDB instance running and accessible.
+
+Additionally, you will need a running MongoDB instnace. This can be a local instance, a Docker image, or a virtual machine in the cloud. Make sure you have the credentials and connection parameters.
 
 ## 🚀 Usages
 
