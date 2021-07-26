@@ -1,3 +1,5 @@
+NOT MAINTAINED. MOVED TO https://github.com/jina-ai/executors
+
 # Jina Indexers
 
 This repository contains a selection of Executors for Jina 2.0.
